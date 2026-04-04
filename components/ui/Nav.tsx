@@ -1,83 +1,66 @@
 'use client'
-
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { motion } from 'framer-motion'
+import { ArrowRight } from 'lucide-react'
 
 const NAV_LINKS = [
-  { href: '/',             label: 'Home' },
-  { href: '/products',     label: 'Range' },
-  { href: '/how-it-works', label: 'How It Works' },
-  { href: '/ar-view',      label: 'AR View' },
-  { href: '/about',        label: 'Our Story' },
-  { href: '/drop',         label: 'Drop 001' },
+  { href: '/#home',         id: 'home',         label: 'Home' },
+  { href: '/#how-it-works', id: 'how-it-works', label: 'How It Works' },
+  { href: '/products',      id: 'range',        label: 'Range' }, 
+  { href: '/#about',        id: 'about',        label: 'Story' },
 ]
 
 export default function Nav() {
-  const [scrolled, setScrolled] = useState(false)
-  const [menuOpen, setMenuOpen] = useState(false)
+  const [activeId, setActiveId] = useState('home')
   const pathname = usePathname()
 
   useEffect(() => {
-    const fn = () => setScrolled(window.scrollY > 40)
-    window.addEventListener('scroll', fn, { passive: true })
-    return () => window.removeEventListener('scroll', fn)
-  }, [])
+    const handleScroll = () => {
+      // If on product routes, force Range active
+      if (pathname.includes('/products')) {
+        setActiveId('range')
+        return
+      }
 
-  useEffect(() => { setMenuOpen(false) }, [pathname])
+      const sectionIds = ['home', 'how-it-works', 'range', 'about']
+      const scrollPos = window.scrollY + 200
+
+      for (const id of [...sectionIds].reverse()) {
+        const el = document.getElementById(id)
+        if (el && scrollPos >= el.offsetTop) {
+          setActiveId(id)
+          break
+        }
+      }
+    }
+
+    window.addEventListener('scroll', handleScroll)
+    handleScroll()
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [pathname])
 
   return (
-    <>
-      <nav className={`fixed top-0 left-0 right-0 z-[500] flex items-center justify-between px-6 md:px-12 transition-all duration-300 ${
-        scrolled
-          ? 'py-3 bg-void/95 backdrop-blur-xl shadow-[0_1px_0_rgba(198,255,0,0.06)]'
-          : 'py-5 bg-gradient-to-b from-void/90 to-transparent backdrop-blur-sm'
-      }`}>
-        <Link href="/" className="font-display text-[28px] tracking-[4px] text-acid no-underline cursor-none leading-none">
-          TESSCH<span className="text-chrome">.</span>
-        </Link>
-
-        <ul className="hidden md:flex gap-7 list-none">
-          {NAV_LINKS.map(({ href, label }) => (
-            <li key={href}>
-              <Link href={href} className={`nav-underline font-mono text-[10px] tracking-[2px] uppercase no-underline transition-colors duration-200 cursor-none ${
-                pathname === href ? 'text-acid' : 'text-muted hover:text-acid'
-              }`}>
+    
+    <nav className="fixed top-0 left-0 right-0 z-[500] flex items-center justify-between px-6 md:px-12 py-5 bg-[#d4604d]">
+      <Link href="/" className="font-display text-2xl text-[#e5f1ee] font-bold">TESSCH.</Link>
+      <ul className="hidden lg:flex gap-8 list-none m-0 p-0">
+        {NAV_LINKS.map(({ href, label, id }) => {
+          const isActive = activeId === id
+          return (
+            <li key={id} className="relative">
+              <Link href={href} className={`font-mono text-[9px] uppercase tracking-[2px] font-bold transition-colors ${isActive ? 'text-[#17191d]' : 'text-[#e5f1ee]/70'}`}>
                 {label}
               </Link>
+              {isActive && (
+                <motion.span layoutId="navDot" className="absolute -bottom-3 left-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full bg-[#17191d]" />
+              )}
             </li>
-          ))}
-        </ul>
-
-        <Link href="/drop" className="hidden md:inline-block clip-btn bg-acid text-void font-mono text-[10px] font-bold tracking-[2px] uppercase px-5 py-3 no-underline cursor-none transition-colors hover:bg-white">
-          Pre-Order Now
-        </Link>
-
-        <button
-          className="md:hidden flex flex-col gap-[5px] p-1 bg-transparent border-0 cursor-none"
-          onClick={() => setMenuOpen((v) => !v)}
-          aria-label="Toggle menu"
-        >
-          <span className={`block w-6 h-px bg-chrome transition-all duration-300 ${menuOpen ? 'rotate-45 translate-y-[6px]' : ''}`} />
-          <span className={`block w-6 h-px bg-chrome transition-all duration-300 ${menuOpen ? 'opacity-0' : ''}`} />
-          <span className={`block w-6 h-px bg-chrome transition-all duration-300 ${menuOpen ? '-rotate-45 -translate-y-[6px]' : ''}`} />
-        </button>
-      </nav>
-
-      <div className={`mobile-menu fixed inset-0 z-[490] bg-void/98 backdrop-blur-xl flex flex-col items-center justify-center gap-8 ${menuOpen 
-    ? 'opacity-100 pointer-events-auto translate-y-0' 
-    : 'opacity-0 pointer-events-none -translate-y-10'
-  }`}>
-        {NAV_LINKS.map(({ href, label }) => (
-          <Link key={href} href={href} className="font-display text-[48px] tracking-[4px] text-chrome no-underline hover:text-acid transition-colors duration-200 cursor-none">
-            {label}
-          </Link>
-        ))}
-        <Link href="/drop" className="clip-btn bg-acid text-void font-mono text-xs font-bold tracking-widest uppercase px-10 py-4 no-underline cursor-none mt-4 hover:bg-white transition-colors inline-block">
-          Pre-Order Now
-        </Link>
-        <p className="shriya-credit mt-6">Created by — Shriya</p>
-      </div>
-    </>
+          )
+        })}
+      </ul>
+      <button className="bg-[#17191d] text-white font-mono text-[10px] px-6 py-2 uppercase">Pre-Order</button>
+    </nav>
   )
 }

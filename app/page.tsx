@@ -1,384 +1,263 @@
-'use client'
+"use client";
 
-import dynamic from 'next/dynamic'
-import Link from 'next/link'
-import { useState, useEffect, useRef } from 'react'
-import SectionLabel from '@/components/ui/SectionLabel'
-import PreOrderModal from '@/components/ui/PreOrderModal'
-import { COLORWAYS, REVIEWS, TICKER_ITEMS, MARQUEE_WORDS, DROP_DATE, type Product } from '@/lib/data'
+import dynamic from "next/dynamic";
+import { useState, useEffect, useRef } from "react";
+import { motion, useScroll, useTransform } from "framer-motion";
+import SectionLabel from "@/components/ui/SectionLabel";
+import PreOrderModal from "@/components/ui/PreOrderModal"; 
+import HowItWorksPage from "./how-it-works/page";
+import FinalDropCTA from "./drop/page";
+import ProductsPage from "./products/page";
+import StoryPage from "./about/page";
+import RangeMarquee from "@/components/ui/Marque";
+import {
+  REVIEWS,
+  TICKER_ITEMS,
+  MARQUEE_WORDS,
+  DROP_DATE,
+  type Product,
+  TIMELINE,
+} from "@/lib/data";
 
-const HeroCanvas = dynamic(() => import('@/components/3d/HeroCanvas'), { ssr: false })
+const HeroCanvas = dynamic(() => import("@/components/3d/HeroCanvas"), {
+  ssr: false,
+});
 
 function useCountdown(target: number) {
-  const [time, setTime] = useState({ d: 0, h: 0, m: 0, s: 0 })
+  const [time, setTime] = useState({ d: 0, h: 0, m: 0, s: 0 });
   useEffect(() => {
     const tick = () => {
-      const diff = Math.max(0, target - Date.now())
+      const diff = Math.max(0, target - Date.now());
       setTime({
         d: Math.floor(diff / 86400000),
         h: Math.floor((diff % 86400000) / 3600000),
         m: Math.floor((diff % 3600000) / 60000),
         s: Math.floor((diff % 60000) / 1000),
-      })
-    }
-    tick()
-    const id = setInterval(tick, 1000)
-    return () => clearInterval(id)
-  }, [target])
-  return time
+      });
+    };
+    tick();
+    const id = setInterval(tick, 1000);
+    return () => clearInterval(id);
+  }, [target]);
+  return time;
 }
 
-function useCounter(target: number, active: boolean) {
-  const [val, setVal] = useState(0)
-  useEffect(() => {
-    if (!active) return
-    const start = performance.now()
-    const tick = (now: number) => {
-      const p    = Math.min((now - start) / 2000, 1)
-      const ease = 1 - Math.pow(1 - p, 3)
-      setVal(Math.floor(ease * target))
-      if (p < 1) requestAnimationFrame(tick)
-      else setVal(target)
-    }
-    requestAnimationFrame(tick)
-  }, [active, target])
-  return val >= 1000 ? (val / 1000).toFixed(0) + 'K' : String(val)
-}
-
-const pad = (n: number) => String(n).padStart(2, '0')
+const pad = (n: number) => String(n).padStart(2, "0");
 
 export default function HomePage() {
-  const [modalOpen, setModalOpen]             = useState(false)
-  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
-  const [statsActive, setStatsActive]         = useState(false)
-  const [notifyEmail, setNotifyEmail]         = useState('')
-  const [notifyDone, setNotifyDone]           = useState(false)
+  const [modalOpen, setModalOpen] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const countdown = useCountdown(DROP_DATE);
 
-  const statsRef  = useRef<HTMLDivElement>(null)
-  const countdown = useCountdown(DROP_DATE)
-
-  const c1 = useCounter(12000, statsActive)
-  const c2 = useCounter(47,    statsActive)
-  const c3 = useCounter(89000, statsActive)
-  const c4 = useCounter(4200,  statsActive)
-
-  useEffect(() => {
-    const obs = new IntersectionObserver(
-      ([e]) => { if (e.isIntersecting) setStatsActive(true) },
-      { threshold: 0.3 }
-    )
-    if (statsRef.current) obs.observe(statsRef.current)
-    return () => obs.disconnect()
-  }, [])
+  const containerRef = useRef(null);
+  const { scrollYProgress } = useScroll({ target: containerRef });
+  const yText = useTransform(scrollYProgress, [0, 1], [0, -100]);
 
   const openModal = (p: Product | null = null) => {
-    setSelectedProduct(p)
-    setModalOpen(true)
-  }
-
-  const handleNotify = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (notifyEmail.includes('@')) setNotifyDone(true)
-  }
-
-  const tickerDouble = [...TICKER_ITEMS, ...TICKER_ITEMS]
+    setSelectedProduct(p);
+    setModalOpen(true);
+  };
 
   return (
-    <>
+    <div className="bg-[#e5f1ee] text-[#17191d] selection:bg-[#d4604d] selection:text-white">
       <PreOrderModal
         open={modalOpen}
         onClose={() => setModalOpen(false)}
         initialProduct={selectedProduct}
       />
 
-      {/* ══ HERO ══════════════════════════════════════════════ */}
-      <section className="relative h-screen flex items-center overflow-hidden">
-        <HeroCanvas />
-
-        <div
-          className="absolute inset-0 pointer-events-none"
-          style={{ background: 'radial-gradient(ellipse at 72% 50%,rgba(198,255,0,0.045),transparent 55%)' }}
-        />
-
-        <div className="relative z-10 px-6 md:px-12 max-w-[680px]">
-          {/* Drop badge */}
-          <div className="flex items-center gap-3 mb-5">
-            <span className="w-7 h-px bg-acid flex-shrink-0" />
-            <span className="font-mono text-[10px] tracking-[3px] uppercase text-acid">
-              Drop Zero — 2026
-            </span>
-            <span className="w-2 h-2 rounded-full bg-fire animate-livedot flex-shrink-0" />
-            <span className="font-mono text-[9px] tracking-[2px] uppercase text-fire">Live</span>
-          </div>
-
-          {/* H1 */}
-          <h1
-            className="font-display leading-[0.88] mb-5 reveal"
-            style={{ fontSize: 'clamp(72px,11vw,148px)', letterSpacing: '-1px' }}
-          >
-            <span className="text-chrome block">BREAK</span>
-            <span className="stroke-text block">THE</span>
-            <span className="text-acid block">GRID</span>
-          </h1>
-
-          <p className="text-[15px] text-muted leading-[1.78] mb-8 max-w-[400px] reveal">
-            Keep the sole. <strong className="text-chrome">Swap the upper.</strong>
-            <br />
-            Physics-defying silhouettes. Smarter by design.
-          </p>
-
-          <div className="flex flex-wrap gap-3 reveal">
-            <button
-              onClick={() => openModal()}
-              className="clip-btn bg-acid text-void font-mono text-[11px] font-bold tracking-[2px] uppercase px-8 py-4 border-0 cursor-none transition-all hover:bg-white hover:-translate-y-0.5"
-            >
-              Pre-Order Now
-            </button>
-            <Link
-              href="/ar-view"
-              className="font-mono text-[11px] tracking-[2px] uppercase text-chrome px-8 py-4 border border-white/[0.18] cursor-none hover:border-acid hover:text-acid transition-all no-underline flex items-center"
-            >
-              See in AR →
-            </Link>
-          </div>
-        </div>
-
-        {/* Drag hint desktop */}
-        <div className="absolute right-6 md:right-12 bottom-36 z-10 text-right hidden md:block">
-          <p className="font-mono text-[9px] tracking-[2px] uppercase text-muted mb-2">
-            Drag to flick
-          </p>
-          <div className="w-14 h-14 border border-acid/30 rounded-full flex items-center justify-center ml-auto text-acid text-xl animate-pulsering">
-            ↻
-          </div>
-        </div>
-
-        {/* Scroll cue */}
-        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10 flex flex-col items-center gap-2">
-          <div className="w-px h-11 bg-gradient-to-b from-acid to-transparent animate-scan" />
-          <span className="font-mono text-[8px] tracking-[3px] uppercase text-muted">Scroll</span>
-        </div>
-      </section>
-
-      {/* ══ MARQUEE ═══════════════════════════════════════════ */}
-      <div className="bg-acid overflow-hidden py-3">
-        <div className="flex whitespace-nowrap animate-marquee hover:[animation-play-state:paused]">
-          {MARQUEE_WORDS.map((text, i) => (
-            <span
-              key={i}
-              className="font-display text-[16px] tracking-[4px] text-void px-7 flex-shrink-0"
-            >
-              {text}
-              {i % 8 !== 7 && <span className="text-fire mx-2">✦</span>}
-            </span>
-          ))}
-        </div>
-      </div>
-
-      {/* ══ STATS ═════════════════════════════════════════════ */}
-      <div
-        ref={statsRef}
-        className="grid grid-cols-2 md:grid-cols-4 border-t border-b border-acid/[0.08] bg-acid/[0.025]"
-      >
-        {[
-          { val: c1, label: 'Pairs Pre-Ordered' },
-          { val: c2, label: 'Countries Reached' },
-          { val: c3, label: 'Community Members' },
-          { val: c4, label: '5-Star Reviews' },
-        ].map(({ val, label }, i) => (
-          <div
-            key={i}
-            className={`px-6 md:px-8 py-10 ${i < 3 ? 'border-r border-acid/[0.08]' : ''}`}
-          >
-            <span
-              className="font-display block text-acid"
-              style={{ fontSize: 'clamp(48px,6vw,76px)', lineHeight: 1 }}
-            >
-              {val}
-            </span>
-            <span className="font-mono text-[9px] tracking-[2px] uppercase text-muted mt-2 block">
-              {label}
-            </span>
-          </div>
-        ))}
-      </div>
-
-      {/* ══ COLORWAYS ═════════════════════════════════════════ */}
-      <section className="px-6 md:px-12 py-24">
-        <SectionLabel>Colorways</SectionLabel>
-        <h2
-          className="font-display mb-12 reveal"
-          style={{ fontSize: 'clamp(44px,5.5vw,76px)', lineHeight: 1 }}
-        >
-          PICK YOUR
-          <br />
-          UNIVERSE
-        </h2>
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-0.5">
-          {COLORWAYS.map((cw, i) => (
-            <div key={i} className="cw-card overflow-hidden cursor-none reveal">
-              <div
-                className="cw-swatch h-[180px] flex items-center justify-center font-display text-[40px] tracking-wide overflow-hidden"
-                style={{ background: cw.bg, color: cw.text }}
-              >
-                {cw.name.split(' ')[0]}
-              </div>
-              <div className="px-4 py-3 bg-[rgba(10,4,30,0.9)] border-t border-white/[0.05]">
-                <span
-                  className="font-mono text-[9px] tracking-[2px] uppercase"
-                  style={{ color: cw.text }}
-                >
-                  {cw.name}
-                </span>
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* ══ REVIEWS ═══════════════════════════════════════════ */}
+      {/* ══ HERO SECTION ══════════════════════════════════════════════ */}
       <section
-        className="px-6 md:px-12 py-24"
-        style={{
-          background:
-            'radial-gradient(ellipse at 50% 50%,rgba(198,255,0,0.02),transparent)',
-        }}
+        ref={containerRef}
+        id="home"
+        className="relative min-h-screen flex flex-col justify-center overflow-hidden pt-20"
       >
-        <SectionLabel>The Culture</SectionLabel>
-        <h2
-          className="font-display mb-10 reveal"
-          style={{ fontSize: 'clamp(44px,5.5vw,76px)', lineHeight: 1 }}
-        >
-          WHAT THE
-          <br />
-          WORLD SAYS
-        </h2>
-
-        {/* Live ticker */}
-        <div className="flex items-center gap-5 border border-acid/[0.12] bg-white/[0.02] px-5 py-4 mb-12 overflow-hidden">
-          <div className="flex items-center gap-2 font-mono text-[8px] tracking-[3px] uppercase text-fire font-bold flex-shrink-0">
-            <span className="w-1.5 h-1.5 rounded-full bg-fire animate-livedot" />
-            Live
-          </div>
-          <div className="overflow-hidden flex-1">
-            <div className="flex gap-10 whitespace-nowrap animate-ticker">
-              {tickerDouble.map((item, i) => (
-                <span key={i} className="font-mono text-[11px] text-chrome flex-shrink-0">
-                  {item}
-                </span>
-              ))}
-            </div>
-          </div>
+        {/* Background Subtle Tech Elements */}
+        <div className="absolute top-0 left-0 w-full h-full opacity-20 pointer-events-none">
+          <div className="absolute top-[10%] left-[2%] w-px h-[80%] bg-gradient-to-b from-transparent via-[#d4604d] to-transparent" />
+          <div className="absolute top-[20%] right-[10%] w-[420px] h-[280px] rounded-full border border-[#d4604d]/20 blur-3xl" />
         </div>
 
-        {/* Review cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-0.5">
-          {REVIEWS.map((r, i) => (
-            <div
-              key={i}
-              className="bg-[rgba(10,4,30,0.9)] p-7 border border-white/[0.04] relative overflow-hidden hover:border-acid/20 transition-colors reveal"
+        <div className="relative z-10 px-4 md:px-12 grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+          {/* LEFT: ENHANCED TAGLINE */}
+          <div className="lg:col-span-7 flex flex-col gap-6">
+            <motion.div
+              initial={{ x: -50, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              className="flex items-center gap-3"
             >
-              <span className="absolute top-3 right-5 font-display text-[64px] text-acid opacity-[0.08] leading-none select-none">
-                &ldquo;
+              <span className="w-12 h-px bg-[#d4604d]" />
+              <span className="font-mono text-[10px] tracking-[4px] uppercase text-[#d4604d] font-bold">
+                Next-Gen Modular System
               </span>
-              <div className="text-acid text-[11px] tracking-[2px] mb-3">★★★★★</div>
-              <p className="text-[13px] text-chrome leading-[1.72] mb-5">
-                &ldquo;{r.text}&rdquo;
-              </p>
-              <div className="flex items-center gap-3 border-t border-white/[0.06] pt-4">
-                <div className="w-9 h-9 rounded-full bg-gradient-to-br from-acid to-fire flex items-center justify-center font-bold text-void text-[11px] flex-shrink-0">
-                  {r.init}
-                </div>
-                <div>
-                  <div className="text-[13px] font-semibold text-chrome">{r.name}</div>
-                  <div className="font-mono text-[9px] text-muted tracking-[1px]">
-                    {r.loc} · {r.product}
-                  </div>
-                </div>
+            </motion.div>
+
+            <div className="relative">
+              <motion.h1
+                style={{ y: yText }}
+                className="font-display leading-[0.82] select-none"
+              >
+                <span className="block text-[clamp(60px,12vw,160px)] pb-2 font-black tracking-tighter text-[#17191d]">
+                  BREAK
+                </span>
+                <span
+                  className="block text-[clamp(60px,12vw,160px)] pb-2 font-black tracking-tighter stroke-text relative -mt-4 lg:-mt-8"
+                  style={{
+                    WebkitTextStroke: "2px #17191d",
+                    color: "transparent",
+                  }}
+                >
+                  THE
+                  <motion.span
+                    initial={{ width: 0 }}
+                    animate={{ width: "100%" }}
+                    transition={{ delay: 0.5, duration: 1 }}
+                    className="absolute top-1/2 left-0 h-[8px] bg-[#d4604d] z-[-1]"
+                  />
+                </span>
+                <span className="block text-[clamp(60px,12vw,160px)] pb-2 font-black tracking-tighter text-[#d4604d] -mt-4 lg:-mt-8">
+                  GRID
+                </span>
+              </motion.h1>
+
+              <motion.p
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.8 }}
+                className="mt-8 text-[16px] md:text-[18px] text-[#17191d]/80 leading-relaxed max-w-[450px] font-medium"
+              >
+                Keep the sole.{" "}
+                <span className="text-[#d4604d] underline decoration-2 underline-offset-4 font-bold">
+                  Swap the upper.
+                </span>
+                The world&apos;s first fully modular sneaker designed to evolve
+                with your environment.
+              </motion.p>
+            </div>
+
+            <div className="flex flex-wrap gap-4 mt-4">
+              <button
+                onClick={() => openModal()}
+                className="clip-btn bg-[#d4604d] text-white font-mono text-[12px] font-bold tracking-[2px] uppercase px-10 py-5 transition-all hover:bg-[#17191d] hover:scale-105"
+              >
+                Pre-Order Drop 001
+              </button>
+            </div>
+          </div>
+
+          {/* RIGHT: ANIMATED SNEAKER VIDEO SLOT */}
+          <motion.div
+            initial={{ scale: 0.6, opacity: 0 }}
+            animate={{ scale: 0.8, opacity: 1 }}
+            transition={{ duration: 1, ease: "circOut" }}
+            className="lg:col-span-5 relative -mt-8 -mr-2"
+          >
+            {/* Stylized Backdrop for Depth */}
+            <div className="absolute -inset-4 border border-[#17191d]/10 rounded-2xl rotate-3 pointer-events-none" />
+            <div className="absolute -inset-4 bg-[#d4604d]/5 rounded-2xl -rotate-3 pointer-events-none" />
+
+            <div className="relative aspect-[16/20] w-full overflow-hidden rounded-xl bg-white shadow-2xl border-4 border-white group">
+              {/* Replace the 'src' with your Veo sneaker video link */}
+              <video
+                autoPlay
+                loop
+                muted
+                playsInline
+                className="w-full h-full object-cover grayscale-[20%] group-hover:grayscale-0 transition-all duration-700"
+              >
+                <source
+                  src="https://res.cloudinary.com/dttnc62hp/video/upload/q_auto/f_auto/v1775055748/WhatsApp_Video_2026-04-01_at_20.22.23_eoqimx.mp4"
+                  type="video/mp4"
+                />
+              </video>
+
+              {/* Overlay Tech Data */}
+              <div className="absolute bottom-4 left-4 font-mono text-[9px] text-[#17191d] bg-white/80 backdrop-blur-sm px-3 py-2 rounded">
+                DATA_REF: SNKR_MOD_001 // SCALE 1:1
               </div>
             </div>
-          ))}
+
+            {/* Float Elements */}
+            <div className="absolute -bottom-6 -right-6 w-24 h-24 bg-[#d4604d] clip-btn flex items-center justify-center text-white font-display text-xl animate-spin-slow">
+              ✦
+            </div>
+          </motion.div>
+        </div>
+
+        {/* Scroll Indicator */}
+        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2">
+          <span className="font-mono text-[8px] tracking-[4px] uppercase text-[#17191d]/40">
+            Explore
+          </span>
+          <div className="w-px h-12 bg-gradient-to-b from-[#d4604d] to-transparent" />
         </div>
       </section>
 
-      {/* ══ MINI COUNTDOWN CTA ════════════════════════════════ */}
+      {/* ══ HOW IT WORKS ═════════════════════════════════════════ */}
+      <section id="how-it-works" className="px-6 md:px-12 py-24 bg-white">
+        <SectionLabel>Innovation</SectionLabel>
+        <HowItWorksPage />
+      </section>
+
+      {/*MARQUE */}
+      <section className="-mt-20">
+        <RangeMarquee />
+      </section>
+
+      {/* ══ RANGE (COLORWAYS) ═════════════════════════════════════════ */}
+      <section>
+        <ProductsPage />
+      </section>
+
+      {/* ══ ABOUT US ═══════════════════════════════════════════ */}
       <section
-        className="px-6 md:px-12 py-20 border-t border-fire/[0.10] text-center"
-        style={{
-          background: 'linear-gradient(135deg,rgba(255,61,0,0.07),transparent 50%)',
-        }}
+        id="about"
+        className="px-6 md:px-12 py-20 bg-[#17191d] text-[#e5f1ee]"
       >
-        <h2
-          className="font-display mb-3 reveal"
-          style={{ fontSize: 'clamp(36px,5vw,60px)' }}
-        >
-          DROP 001 IN{' '}
-          <span className="text-fire">
-            {pad(countdown.d)}D {pad(countdown.h)}H {pad(countdown.m)}M
+        <SectionLabel>Our Story</SectionLabel>
+        <StoryPage />
+      </section>
+
+      {/* ══ PRE-ORDER / DROP ═══════════════════════════════════ */}
+      <section
+        id="pre-order"
+        className="px-6 md:px-12 py-24 text-center border-t border-[#17191d]/10"
+      >
+        <FinalDropCTA/>
+        {/* <h2 className="font-display text-[clamp(40px,8vw,100px)] mb-6">
+          DROP 001{" "}
+          <span className="text-[#d4604d]">
+            {pad(countdown.d)}:{pad(countdown.h)}:{pad(countdown.m)}
           </span>
         </h2>
-        <p className="font-mono text-[10px] tracking-[2px] text-muted mb-8">
-          APRIL 04, 2026 — 12:00 IST
-        </p>
-
-        {!notifyDone ? (
-          <form onSubmit={handleNotify} className="flex max-w-[440px] mx-auto mb-8">
-            <input
-              type="email"
-              placeholder="your@email.com"
-              value={notifyEmail}
-              onChange={(e) => setNotifyEmail(e.target.value)}
-              className="flex-1 bg-white/[0.04] border border-white/[0.12] border-r-0 text-chrome font-mono text-[11px] px-5 py-3.5 outline-none focus:border-acid transition-colors placeholder:text-muted"
-            />
-            <button
-              type="submit"
-              className="bg-acid text-void font-mono text-[10px] font-bold tracking-[2px] uppercase px-5 py-3.5 border-0 cursor-none hover:bg-white transition-colors whitespace-nowrap"
-            >
-              Notify Me
-            </button>
-          </form>
-        ) : (
-          <div className="max-w-[440px] mx-auto mb-8 border border-acid/25 bg-acid/[0.05] px-6 py-4">
-            <p className="font-mono text-[11px] tracking-[1px] text-acid">
-              🔥 You&apos;re on the list.
-            </p>
-          </div>
-        )}
-
-        <div className="flex flex-wrap gap-4 justify-center">
-          <Link
-            href="/drop"
-            className="clip-btn bg-acid text-void font-mono text-[11px] font-bold tracking-[2px] uppercase px-10 py-4 no-underline cursor-none hover:bg-white transition-colors inline-block"
-          >
-            See Drop 001 →
-          </Link>
-          <Link
-            href="/products"
-            className="border border-acid/25 text-acid font-mono text-[11px] tracking-[2px] uppercase px-8 py-4 no-underline cursor-none hover:bg-acid hover:text-void transition-all inline-block"
-          >
-            Browse Range
-          </Link>
-        </div>
+        <button
+          onClick={() => openModal()}
+          className="bg-[#17191d] text-[#e5f1ee] px-16 py-6 font-mono text-[14px] font-bold uppercase tracking-widest hover:bg-[#d4604d] transition-colors"
+        >
+          Secure Your Pair
+        </button> */}
       </section>
 
-  {/* ══ INSTAGRAM STRIP ═══════════════════════════════════ */}
-      <div className="border-t border-white/[0.05] px-6 md:px-12 py-12 flex flex-col md:flex-row items-center justify-between gap-6">
-        <div>
-          <p className="font-mono text-[9px] tracking-[3px] uppercase text-muted mb-1">
-            Follow the Drop
-          </p>
-          <p className="font-display text-[28px] tracking-wide">@TESSCHSTORE</p>
+      {/* ══ FOOTER STRIP ═══════════════════════════════════════ */}
+      <footer className="border-t border-[#17191d]/5 px-6 md:px-12 py-12 flex justify-between items-center">
+        <p className="font-mono text-[10px] tracking-widest uppercase opacity-40">
+          ©2026 TESSCH® SYSTEM
+        </p>
+        <div className="flex gap-8">
+          <a
+            href="#"
+            className="font-mono text-[10px] tracking-widest uppercase hover:text-[#d4604d]"
+          >
+            Instagram
+          </a>
+          <a
+            href="#"
+            className="font-mono text-[10px] tracking-widest uppercase hover:text-[#d4604d]"
+          >
+            Discord
+          </a>
         </div>
-        
-        <a
-          href="https://instagram.com/tesschstore"
-          target="_blank"
-          rel="noreferrer"
-          className="flex items-center gap-3 border border-acid/25 text-acid font-mono text-[10px] tracking-[2px] uppercase px-7 py-3.5 hover:bg-acid hover:text-void transition-all cursor-none no-underline"
-        >
-          📷 Follow on Instagram
-        </a>
-      </div>
-    </>
-  )
+      </footer>
+    </div>
+  );
 }

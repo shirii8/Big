@@ -1,65 +1,103 @@
+'use client'
+
 import Link from 'next/link'
 
 export default function Footer() {
   return (
-    <footer className="border-t border-white/[0.04] pt-16 pb-8 px-6 md:px-12">
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-10 md:gap-16 mb-12">
-        <div className="col-span-2 md:col-span-1">
-          <Link href="/" className="font-display text-[36px] tracking-[4px] text-acid no-underline cursor-none block mb-4 leading-none">
-            TESSCH<span className="text-chrome">.</span>
-          </Link>
-          <p className="text-[13px] text-muted leading-relaxed max-w-[260px] mb-5">
-            Modular sneakers. Community first, brand second. Built for the youth who want smarter, not just cheaper.
-          </p>
-          <div className="flex gap-3">
-            {['𝕏', '▶', '📷', '🎵'].map((icon, i) => (
-              <a key={i} href="https://instagram.com/tesschstore" target="_blank" rel="noreferrer"
-                className="w-9 h-9 border border-white/[0.08] flex items-center justify-center text-muted text-sm no-underline cursor-none transition-all hover:border-acid hover:text-acid">
-                {icon}
-              </a>
-            ))}
+    <footer className="bg-[#e5f1ee] border-t-2 border-[#17191d] pt-16 pb-8 px-6 md:px-12 text-[#17191d]">
+      <div className="max-w-7xl mx-auto">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-12 mb-16">
+          
+          {/* ── BRAND COLUMN ── */}
+          <div className="flex flex-col justify-between">
+            <div>
+              <Link href="/" className="font-display text-[32px] tracking-tighter uppercase font-bold leading-none">
+                TESSCH<span className="text-[#d4604d]">.</span>
+              </Link>
+              <p className="font-mono text-[10px] uppercase tracking-[2px] mt-4 opacity-60 max-w-[240px]">
+                Modular footwear architecture. <br/> smarter, not cheaper.
+              </p>
+            </div>
+            
+            <div className="mt-8 flex flex-col gap-2">
+              <p className="font-mono text-[9px] uppercase tracking-[3px] opacity-40">The Channel</p>
+              <div className="flex gap-4">
+                <a href="https://instagram.com/tesschstore" target="_blank" rel="noreferrer" className="font-mono text-[11px] font-bold hover:text-[#d4604d] transition-colors">INSTAGRAM</a>
+                <a href="https://www.linkedin.com/company/tesschstore/" target="_blank" rel="noreferrer" className="font-mono text-[11px] font-bold hover:text-[#d4604d] transition-colors">LINKEDIN</a>
+              </div>
+            </div>
           </div>
-        </div>
 
-        <div>
-          <h4 className="font-mono text-[9px] tracking-[3px] uppercase text-acid mb-5">Shop</h4>
-          <ul className="list-none flex flex-col gap-3">
-            {[['All Drops','/products'],['Void Runner X1','/products'],['Acid Flux Low','/products'],['Chrome Ghost Mid','/products'],['Accessories','/products']].map(([label, href]) => (
-              <li key={label}><Link href={href} className="text-[13px] text-muted no-underline cursor-none hover:text-chrome transition-colors">{label}</Link></li>
-            ))}
-          </ul>
-        </div>
-
-        <div>
-          <h4 className="font-mono text-[9px] tracking-[3px] uppercase text-acid mb-5">Culture</h4>
-          <ul className="list-none flex flex-col gap-3">
-            {[['Our Story','/about'],['How It Works','/how-it-works'],['AR View','/ar-view'],['Drop 001','/drop'],['Instagram','https://instagram.com/tesschstore']].map(([label, href]) => (
-              <li key={label}><Link href={href} className="text-[13px] text-muted no-underline cursor-none hover:text-chrome transition-colors">{label}</Link></li>
-            ))}
-          </ul>
-        </div>
-
-        <div>
-          <h4 className="font-mono text-[9px] tracking-[3px] uppercase text-acid mb-5">Support</h4>
-          <ul className="list-none flex flex-col gap-3">
-            {['Size Guide','Track Order','Returns','FAQ','Contact'].map((label) => (
-              <li key={label}><a href="#" className="text-[13px] text-muted no-underline cursor-none hover:text-chrome transition-colors">{label}</a></li>
-            ))}
-          </ul>
-          <div className="mt-6 pt-5 border-t border-white/[0.05]">
-            <p className="font-mono text-[9px] tracking-[2px] uppercase text-muted mb-1">Investor Enquiries</p>
-            <a href="mailto:hello@tessch.in" className="text-[12px] text-acid no-underline cursor-none hover:text-white transition-colors">hello@tessch.in</a>
+          {/* ── NAV COLUMN ── */}
+          <div className="grid grid-cols-2 gap-8">
+            <div>
+              <h4 className="font-mono text-[9px] tracking-[3px] uppercase opacity-40 mb-6">Explore</h4>
+              <ul className="flex flex-col gap-3">
+                {[
+                  { label: 'Home', href: '/#home' },
+                  { label: 'How It Works', href: '/#how-it-works' },
+                  { label: 'Range', href: '/products' },
+                  { label: 'Story', href: '/#about' }
+                ].map((link) => (
+                  <li key={link.label}>
+                    <Link href={link.href} className="font-mono text-[11px] uppercase font-bold hover:text-[#d4604d] transition-colors">
+                      {link.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div>
+              <h4 className="font-mono text-[9px] tracking-[3px] uppercase opacity-40 mb-6">Legal</h4>
+              <ul className="flex flex-col gap-3">
+                {['Privacy', 'Terms', 'Shipment'].map((item) => (
+                  <li key={item} className="font-mono text-[11px] uppercase opacity-60 hover:opacity-100 cursor-pointer">{item}</li>
+                ))}
+              </ul>
+            </div>
           </div>
-        </div>
-      </div>
 
-      <div className="border-t border-white/[0.04] pt-6 flex flex-col md:flex-row items-center justify-between gap-4">
-        <p className="font-mono text-[9px] text-muted tracking-[1px]">© {new Date().getFullYear()} TESSCH — TESSCH.IN — ALL RIGHTS RESERVED</p>
-        <p className="shriya-credit">Created by — Shriya</p>
-        <div className="flex gap-4">
-          {['Privacy','Terms','Cookies'].map((label) => (
-            <a key={label} href="#" className="font-mono text-[9px] text-muted no-underline cursor-none hover:text-chrome transition-colors tracking-[1px]">{label}</a>
-          ))}
+          {/* ── FOUNDERS / CONTACT ── */}
+          <div className="bg-[#17191d] text-[#e5f1ee] p-8 flex flex-col justify-between">
+            <div>
+              <h4 className="font-mono text-[9px] tracking-[3px] uppercase opacity-40 mb-6 text-[#e5f1ee]">Co-Founders</h4>
+              <div className="space-y-4">
+                <div>
+                  <p className="font-display text-xl uppercase tracking-tight">Mihir Mandloi</p>
+                  <p className="font-mono text-[9px] opacity-40 uppercase">Product & Vision</p>
+                </div>
+                <div>
+                  <p className="font-display text-xl uppercase tracking-tight">Pratham Shah</p>
+                  <p className="font-mono text-[9px] opacity-40 uppercase">Operations & Strategy</p>
+                </div>
+              </div>
+            </div>
+            
+            <div className="mt-10 pt-6 border-t border-[#e5f1ee]/10 flex flex-col gap-2">
+              <p className="font-mono text-[9px] uppercase tracking-[2px] opacity-40">Contact</p>
+              <a href="https://www.linkedin.com/company/tesschstore/" className="font-mono text-[11px] font-bold hover:text-[#d4604d] transition-colors">@TESSCH.IN</a>
+              <a href="https://www.instagram.com/tesschstore/" className="font-mono text-[11px] font-bold hover:text-[#d4604d] transition-colors">@TESSCHSTORE</a>
+            </div>
+          </div>
+
+        </div>
+
+        {/* ── SUB-FOOTER ── */}
+        <div className="border-t border-[#17191d]/10 pt-8 flex flex-col md:flex-row items-center justify-between gap-6">
+          <div className="flex items-center gap-4">
+             <p className="font-mono text-[9px] opacity-40 uppercase tracking-[1px]">
+               © {new Date().getFullYear()} TESSCH ARCHIVE
+             </p>
+             <div className="h-3 w-[1px] bg-[#17191d]/20 hidden md:block" />
+             <p className="font-mono text-[9px] font-bold uppercase tracking-[2px]">
+               Created by — Shriya
+             </p>
+          </div>
+          
+          <div className="flex gap-6">
+            <span className="font-mono text-[9px] opacity-40 uppercase">Upper</span>
+            <span className="font-mono text-[9px] opacity-40 uppercase">Sole</span>
+          </div>
         </div>
       </div>
     </footer>

@@ -1,0 +1,21 @@
+'use client';
+
+import { ReactLenis } from '@studio-freight/react-lenis';
+
+export default function SmoothScroll({ children }: { children: React.ReactNode }) {
+  return (
+    <ReactLenis 
+      root 
+      options={{ 
+        lerp: 0.1,         // Speed of the "smoothness" (0 to 1)
+        duration: 1.5,     // How long the scroll animation lasts
+        smoothWheel: true,
+        wheelMultiplier: 1, 
+        touchMultiplier: 2,
+        infinite: false,
+      }}
+    >
+      {children}
+    </ReactLenis>
+  );
+}

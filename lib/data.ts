@@ -67,7 +67,7 @@ export const PRODUCTS: Product[] = [
 ]
 
 export const COLORWAYS: Colorway[] = [
-  { name: 'Acid Void',    bg: 'linear-gradient(135deg,#C6FF00,#08000F)', text: '#C6FF00' },
+  { name: 'Grime',    bg: 'linear-gradient(135deg,#C6FF00,#08000F)', text: '#C6FF00' },
   { name: 'Fire Ember',   bg: 'linear-gradient(135deg,#FF3D00,#1a0a00)', text: '#FF3D00' },
   { name: 'Chrome Ghost', bg: 'linear-gradient(135deg,#E8E8FF,#2a2a4a)', text: '#E8E8FF' },
   { name: 'Ultra Violet', bg: 'linear-gradient(135deg,#9B59B6,#1a0a2e)', text: '#CE93D8' },

@@ -1,0 +1,70 @@
+generator client {
+  provider = "prisma-client-js"
+  // If generate still fails, add this line:
+  output   = "../node_modules/@prisma/client"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  password      String?   // Hashed
+  name          String?
+  role          Role  @default(USER)
+  team          Team?     @relation(fields: [teamID], references: [id], onDelete: setNull)
+  orders        Order[]
+  cartItems     CartItem[]
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+model Team {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  name          String?
+  role          Role  @default(USER)
+  code          String  @unique
+  members       User[]
+
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+enum Role{
+  ADMIN
+  MANAGER
+  USER
+  GUEST
+}
+model Product {
+  id          String     @id @default(cuid())
+  name        String
+  price       Float
+  category    String     // Upper or Sole
+  image       String
+  stock       Int        @default(100)
+  cartItems   CartItem[]
+}
+
+model CartItem {
+  id        String   @id @default(cuid())
+  userId    String
+  productId String
+  size      String
+  qty       Int      @default(1)
+  user      User     @relation(fields: [userId], references: [id])
+  product   Product  @relation(fields: [productId], references: [id])
+}
+
+model Order {
+  id          String   @id @default(cuid())
+  userId      String
+  totalAmount Float
+  status      String   @default("PENDING") // PENDING, PAID, SHIPPED
+  stripeId    String?  @unique
+  user        User     @relation(fields: [userId], references: [id])
+  createdAt   DateTime @default(now())
+}

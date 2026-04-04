@@ -1,8 +1,12 @@
 import type { NextConfig } from "next";
+/** @type {import('next').NextConfig} */
 
-const nextConfig: NextConfig = {
-  /* config options here */
-  reactCompiler: true,
+const nextConfig = {
+  experimental: {
+    turbo: {
+      root: './', // Tells Next.js the root is where THIS config file sits
+    },
+  },
 };
 
 export default nextConfig;

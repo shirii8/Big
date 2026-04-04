@@ -1,8 +1,8 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import Link from "next/link";
-import { useState } from "react";
+import { useState, useRef } from "react";
+import { motion, AnimatePresence, useScroll, useTransform } from "framer-motion";
 import SectionLabel from "@/components/ui/SectionLabel";
 
 const ModularCanvas = dynamic(() => import("@/components/3d/ModularCanvas"), {
@@ -12,317 +12,206 @@ const ModularCanvas = dynamic(() => import("@/components/3d/ModularCanvas"), {
 const STEPS = [
   {
     num: "01",
-    title: "Keep the Sole",
-    desc: "Your sole is the investment. High-quality, engineered to last years. The foundation that never changes — cushioning, grip, structure. You buy it once.",
-    detail:
-      "The sole unit contains the full midsole, outsole, and cushioning system. It's what you're actually paying for when you buy a premium sneaker.",
+    title: "THE FOUNDATION",
+    desc: "Your sole is the investment. High-quality, engineered to last years. The foundation that never changes.",
+    detail: "Full-length EVA midsole + Multi-directional rubber outsole. Built for a 5-year lifecycle.",
   },
   {
     num: "02",
-    title: "Swap the Upper",
-    desc: "New colorway? New season? Just click the new upper into place. 30 seconds. No tools. No waste.",
-    detail:
-      "Uppers are sold at a fraction of the full shoe price — roughly 30–40% of buying a whole new pair.",
+    title: "MECHANICAL LOCK",
+    desc: "Just click the new upper into place. 30 seconds. No tools. No waste.",
+    detail: "Interlocking magnetic rail system tested for high-lateral movement and vertical jumps.",
   },
   {
     num: "03",
-    title: "Less Spend. Less Waste.",
-    desc: "Instead of buying a whole new pair every season, you're buying only what actually changes. Better for your wallet. Better for the planet.",
-    detail:
-      "With TESSCH, you buy 1 sole and swap uppers each season — saving ~60% of total spend and eliminating 75% of material waste.",
-  },
-  {
-    num: "04",
-    title: "Community Designs",
-    desc: "Community members propose upper designs. The most-hyped ones get produced. You vote on drops. We build what the culture actually wants.",
-    detail:
-      "Every month we open a design brief. Top 3 go to community vote. The winner goes into production.",
-  },
-];
-
-const FAQ = [
-  {
-    q: "How hard is it to swap the upper?",
-    a: "30 seconds. Grip the upper at the heel, pull up and away. The new one clicks in from toe to heel. No tools, no glue.",
-  },
-  {
-    q: "Will the upper stay on during wear?",
-    a: "Yes. The connection uses an interlocking rail system with friction clips. Tested for 500+ swaps and running, jumping, and lateral movement.",
-  },
-  {
-    q: "Are uppers from different drops compatible?",
-    a: "Yes. All TESSCH uppers use the same universal sole interface. Every upper ever made by TESSCH fits every sole ever made.",
-  },
-  {
-    q: "What happens when the sole wears out?",
-    a: "We'll have a sole replacement program. Send in your worn sole, pay a fraction of a new pair, get a fresh one. Your uppers transfer over.",
-  },
-  {
-    q: "Can I buy just the sole first?",
-    a: "Yes. The sole is sold as a standalone. We recommend pairing it with the Acid Void colorway to start.",
+    title: "CIRCULAR LOGIC",
+    desc: "Better for your wallet. Better for the planet. Swap only what actually wears out.",
+    detail: "Saves ~60% of total spend and eliminates 75% of footwear material waste annually.",
   },
 ];
 
 export default function HowItWorksPage() {
   const [activeStep, setActiveStep] = useState(0);
-  const [openFaq, setOpenFaq] = useState<number | null>(null);
+  const containerRef = useRef(null);
+  const { scrollYProgress } = useScroll({ target: containerRef });
+  
+  const xLeft = useTransform(scrollYProgress, [0, 0.5], [0, -50]);
+  const xRight = useTransform(scrollYProgress, [0, 0.5], [0, 50]);
 
   return (
-    <>
-      {/* ══ PAGE HEADER ═══════════════════════════════════════ */}
-      <section className="pt-36 pb-16 px-6 md:px-12 relative overflow-hidden">
-        <div
-          className="absolute inset-0 pointer-events-none"
-          style={{
-            background:
-              "radial-gradient(ellipse at 30% 50%,rgba(198,255,0,0.04),transparent 55%)",
-          }}
-        />
-        <SectionLabel>The Modular System</SectionLabel>
-        <h1
-          className="font-display reveal"
-          style={{
-            fontSize: "clamp(56px,8vw,110px)",
-            lineHeight: 0.92,
-            letterSpacing: "-1px",
-          }}
+    <div className="bg-[#e5f1ee] text-[#17191d] overflow-x-hidden" ref={containerRef}>
+      
+      {/* ══ HERO: ARCHITECTURAL HEADER ════════════════════════ */}
+      <section className="relative pt-44 pb-24 px-6 md:px-12 flex flex-col items-center text-center">
+        {/* Background Grid Elements */}
+        <div className="absolute inset-0 opacity-[0.03] pointer-events-none" 
+             style={{ backgroundImage: `linear-gradient(#17191d 1px, transparent 1px), linear-gradient(90deg, #17191d 1px, transparent 1px)`, size: '40px 40px' }} />
+        
+        <motion.div 
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="relative z-10"
         >
-          <span className="text-chrome block">ONE</span>
-          <span className="stroke-text block">SOLE</span>
-          <span className="text-acid block">INFINITE.</span>
-        </h1>
-        <p className="text-[15px] text-muted leading-[1.78] mt-6 max-w-[480px] reveal">
-          The idea is simple. The execution took 18 months. Here is exactly how
-          it works.
-        </p>
+          <SectionLabel>Technical Blueprint</SectionLabel>
+          <h1 className="font-display leading-[0.85] mt-6 tracking-tighter" style={{ fontSize: "clamp(60px, 12vw, 140px)" }}>
+            ONE SOLE.<br />
+            <span className="text-[#d4604d] italic">INFINITE</span> <span className="stroke-text" style={{ WebkitTextStroke: '2px #17191d', color: 'transparent' }}>UPPERS.</span>
+          </h1>
+          <p className="font-mono text-[11px] uppercase tracking-[4px] mt-8 text-[#17191d]/60 max-w-xl mx-auto">
+            Deconstructing the traditional sneaker silhouette into a modular hardware system.
+          </p>
+        </motion.div>
       </section>
 
-      {/* ══ INTERACTIVE DEMO ══════════════════════════════════ */}
-      <section
-        className="px-6 md:px-12 py-20"
-        style={{
-          background:
-            "radial-gradient(ellipse at 50%,rgba(198,255,0,0.025),transparent 70%)",
-        }}
-      >
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-12 md:gap-16 items-center">
-          <div className="h-[420px] md:h-[500px] border border-white/[0.05] relative overflow-hidden reveal">
-            <ModularCanvas step={activeStep} />
-            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 font-mono text-[9px] tracking-[2px] uppercase text-acid/50 whitespace-nowrap pointer-events-none">
-              Click a step → watch the upper swap live
-            </div>
-          </div>
-
-          <div className="flex flex-col gap-0 reveal">
+      {/* ══ INTERACTIVE EXPLODED VIEW ═════════════════════════ */}
+      <section className="px-6 md:px-12 py-12 relative">
+        <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+          
+          {/* Left: Interactive Info Stack */}
+          <div className="lg:col-span-4 sticky top-32 space-y-4 z-20">
             {STEPS.map((s, i) => (
-              <div
+              <motion.div
                 key={i}
-                className={`modular-step px-6 py-5 ${activeStep === i ? "active" : ""}`}
-                onClick={() => setActiveStep(i)}
+                onMouseEnter={() => setActiveStep(i)}
+                className={`group p-8 border transition-all duration-500 cursor-none relative overflow-hidden ${
+                  activeStep === i 
+                  ? "bg-[#17191d] border-[#17191d] shadow-2xl" 
+                  : "bg-white/40 border-[#17191d]/10 backdrop-blur-sm"
+                }`}
               >
-                <div className="step-num">{s.num}</div>
-                <div className="font-display text-[22px] tracking-wide text-chrome mb-1.5">
+                <span className={`font-mono text-[10px] mb-4 block ${activeStep === i ? "text-[#d4604d]" : "text-[#17191d]/40"}`}>
+                  PROTOCOL_{s.num}
+                </span>
+                <h3 className={`font-display text-2xl mb-3 ${activeStep === i ? "text-[#e5f1ee]" : "text-[#17191d]"}`}>
                   {s.title}
-                </div>
-                <div className="text-[13px] text-muted leading-relaxed mb-2">
-                  {s.desc}
-                </div>
+                </h3>
+                <AnimatePresence mode="wait">
+                  {activeStep === i && (
+                    <motion.p 
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: 'auto' }}
+                      exit={{ opacity: 0, height: 0 }}
+                      className="text-sm leading-relaxed text-[#e5f1ee]/70"
+                    >
+                      {s.desc}
+                      <span className="block mt-4 pt-4 border-t border-white/10 text-[11px] text-[#d4604d] font-bold uppercase tracking-wider">
+                        {s.detail}
+                      </span>
+                    </motion.p>
+                  )}
+                </AnimatePresence>
+
+                {/* Decorative scanning line */}
                 {activeStep === i && (
-                  <div className="mt-3 pt-3 border-t border-acid/20">
-                    <p className="text-[12px] text-chrome/70 leading-relaxed">
-                      {s.detail}
-                    </p>
-                  </div>
+                  <motion.div 
+                    layoutId="scan"
+                    className="absolute top-0 left-0 w-full h-[2px] bg-[#d4604d] shadow-[0_0_15px_#d4604d]"
+                    animate={{ top: ['0%', '100%', '0%'] }}
+                    transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
+                  />
                 )}
-              </div>
+              </motion.div>
             ))}
           </div>
+
+          {/* Right: 3D Visual Stage */}
+          <div className="lg:col-span-8 sticky top-24 h-[70vh] lg:h-[85vh] rounded-3xl overflow-hidden bg-white shadow-inner border-4 border-white">
+             {/* Tech Overlay Elements */}
+             <div className="absolute top-8 left-8 z-10 font-mono text-[10px] space-y-1 text-[#17191d]/40">
+                <p>SIM_STATE: ACTIVE</p>
+                <p>INTERFACE_VER: 2.04</p>
+                <p>COORD: 45.23 // 12.89</p>
+             </div>
+             
+             <div className="absolute inset-0 flex items-center justify-center">
+                <ModularCanvas step={activeStep} />
+             </div>
+
+             {/* Dynamic Depth Circles */}
+             <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
+                <div className="w-[300px] h-[300px] border border-[#d4604d]/10 rounded-full animate-ping opacity-20" />
+                <div className="w-[500px] h-[500px] border border-[#d4604d]/5 rounded-full absolute animate-pulse" />
+             </div>
+          </div>
         </div>
       </section>
 
-      {/* ══ NUMBERS ═══════════════════════════════════════════ */}
-      <section className="px-6 md:px-12 py-20 border-t border-white/[0.05]">
-        <SectionLabel>By the Numbers</SectionLabel>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-0.5 mt-8">
-          {[
-            { stat: "30s", label: "Upper swap time", sub: "No tools needed" },
-            { stat: "~40%", label: "Cost vs full new pair", sub: "Per upper" },
-            { stat: "500+", label: "Swap cycles tested", sub: "Zero failures" },
-            { stat: "75%", label: "Less material waste", sub: "Per season" },
-          ].map(({ stat, label, sub }) => (
-            <div
-              key={label}
-              className="border border-white/[0.06] bg-white/[0.02] p-6 hover:border-acid/20 transition-colors reveal"
-            >
-              <div className="font-display text-[52px] text-acid leading-none mb-2">
-                {stat}
-              </div>
-              <div className="font-mono text-[9px] tracking-[2px] uppercase text-chrome mb-1">
-                {label}
-              </div>
-              <div className="font-mono text-[9px] text-muted">{sub}</div>
+      {/* ══ THE "WHY" SECTION: STATS & LAYERS ═════════════════ */}
+      {/* <section className="py-32 px-6 md:px-12 bg-[#17191d] text-[#e5f1ee] relative overflow-hidden"> */}
+        {/* Large Decorative Text Layer */}
+        {/* <div className="absolute bottom-0 right-0 font-display text-[20vw] rounded-r-4xl leading-none opacity-[0.03] select-none translate-y-1/4">
+          /TESSCH/
+        </div>
+
+        <div className="max-w-6xl mx-auto">
+          <SectionLabel>Impact Report</SectionLabel>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-20 mt-12">
+            <div>
+              <h2 className="font-display text-5xl md:text-7xl tracking-tighter leading-none mb-8">
+                ENGINEERED FOR <br/>
+                <span className="text-[#d4604d]">LONGEVITY.</span>
+              </h2>
+              <p className="text-lg text-[#e5f1ee]/60 leading-relaxed max-w-md">
+                We calculated that 80% of sneaker waste comes from uppers that fray while the sole is still perfectly functional. We simply removed the friction.
+              </p>
             </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
+              {[
+                { val: "30s", label: "Swap Time", sub: "Instant aesthetic shift" },
+                { val: "75%", label: "Less Waste", sub: "Material conservation" },
+                { val: "5-Year", label: "Sole Life", sub: "Built for endurance" },
+                { val: "∞", label: "Possibility", sub: "Community uppers" },
+              ].map((stat, i) => (
+                <div key={i} className="border-l border-[#d4604d]/30 pl-6 py-2">
+                  <div className="font-display text-5xl text-[#d4604d] mb-1">{stat.val}</div>
+                  <div className="font-mono text-[10px] uppercase tracking-widest text-[#e5f1ee]">{stat.label}</div>
+                  <div className="text-[11px] text-[#e5f1ee]/40 mt-1">{stat.sub}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div> */}
+      {/* </section> */}
+
+      {/* ══ FAQ: MINIMALIST ACCORDION ════════════════════════ */}
+      <section className="py-24 px-6 md:px-12 max-w-4xl mx-auto">
+        <SectionLabel>Intelligence</SectionLabel>
+        <h2 className="font-display text-5xl mb-16">COMMON QUERIES</h2>
+        
+        <div className="space-y-4">
+          {[
+            { q: "Durability during movement?", a: "The interlocking rail system is designed for high-impact sports. It uses friction-lock technology that tightens as weight is applied." },
+            { q: "Universal compatibility?", a: "Every upper ever dropped by TESSCH is compatible with the version 1.0 sole interface. Your collection never expires." },
+            { q: "Sole replacement program?", a: "When your tread finally goes smooth, send us the sole. We recycle the EVA and send you a fresh foundation at cost price." }
+          ].map((item, i) => (
+            <details key={i} className="group border-b border-[#17191d]/10 pb-6">
+              <summary className="list-none cursor-none flex justify-between items-center font-display text-xl uppercase hover:text-[#d4604d] transition-colors">
+                {item.q}
+                <span className="text-2xl group-open:rotate-45 transition-transform">+</span>
+              </summary>
+              <p className="mt-4 text-[#17191d]/60 leading-relaxed font-medium">
+                {item.a}
+              </p>
+            </details>
           ))}
         </div>
       </section>
 
-      {/* ══ ANATOMY ═══════════════════════════════════════════ */}
-      <section
-        className="px-6 md:px-12 py-20 border-t border-white/[0.05]"
-        style={{
-          background:
-            "radial-gradient(ellipse at 80% 50%,rgba(255,61,0,0.04),transparent 60%)",
-        }}
-      >
-        <SectionLabel>Anatomy of a TESSCH</SectionLabel>
-        <h2
-          className="font-display mb-12 reveal"
-          style={{ fontSize: "clamp(36px,4.5vw,60px)", lineHeight: 1 }}
-        >
-          WHAT YOU&apos;RE
-          <br />
-          <span className="text-acid">ACTUALLY BUYING</span>
-        </h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-0.5">
-          {[
-            {
-              label: "THE SOLE UNIT",
-              borderCls: "border-acid/30",
-              bgCls: "bg-acid/[0.03]",
-              titleCls: "text-acid",
-              dotCls: "bg-acid",
-              price: "₹12,000 — ₹16,000",
-              badge: "Buy once",
-              items: [
-                "Full-length EVA midsole — engineered cushioning",
-                "Rubber outsole with multi-directional grip",
-                "Magnetic rail interface system",
-                "Internal reinforcement frame",
-                "Lasts 3–5 years of regular wear",
-              ],
-            },
-            {
-              label: "THE UPPER",
-              borderCls: "border-fire/25",
-              bgCls: "bg-fire/[0.03]",
-              titleCls: "text-fire",
-              dotCls: "bg-fire",
-              price: "₹5,000 — ₹8,000",
-              badge: "Swap seasonally",
-              items: [
-                "Choice of carbon mesh, knit, leather, or synthetic",
-                "Colour-matched laces included",
-                "Click-lock heel mechanism pre-installed",
-                "Toe-cap reinforcement",
-                "New drops every season",
-              ],
-            },
-          ].map(
-            ({
-              label,
-              borderCls,
-              bgCls,
-              titleCls,
-              dotCls,
-              price,
-              badge,
-              items,
-            }) => (
-              <div
-                key={label}
-                className={`border p-8 reveal ${borderCls} ${bgCls}`}
-              >
-                <div className="flex items-center justify-between mb-6">
-                  <div
-                    className={`font-mono text-[9px] tracking-[3px] uppercase ${titleCls}`}
-                  >
-                    {label}
-                  </div>
-                  <div className="font-mono text-[9px] tracking-[2px] uppercase bg-void border border-white/[0.08] px-2 py-1 text-muted">
-                    {badge}
-                  </div>
-                </div>
-                <div
-                  className={`font-display text-[36px] ${titleCls} leading-none mb-6`}
-                >
-                  {price}
-                </div>
-                <ul className="flex flex-col gap-2.5">
-                  {items.map((item) => (
-                    <li
-                      key={item}
-                      className="flex items-start gap-3 text-[13px] text-chrome/80 leading-relaxed"
-                    >
-                      <span
-                        className={`w-1.5 h-1.5 rounded-full flex-shrink-0 mt-1.5 ${dotCls}`}
-                      />
-                      {item}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ),
-          )}
+      {/* ══ FINAL CTA ═════════════════════════════════════════ */}
+      {/* <section className="pb-32 px-6 text-center">
+        <div className="max-w-3xl mx-auto p-16 bg-[#d4604d] clip-btn relative overflow-hidden group">
+          <div className="absolute inset-0 bg-[#17191d] translate-y-full group-hover:translate-y-0 transition-transform duration-500" />
+          
+          <div className="relative z-10">
+            <h2 className="font-display text-5xl md:text-7xl text-[#e5f1ee] mb-8">READY TO EVOLVE?</h2>
+            <a href="/products" className="inline-block bg-[#e5f1ee] text-[#17191d] font-mono text-xs font-bold tracking-widest uppercase px-12 py-5 hover:scale-105 transition-transform">
+              EXPLORE THE RANGE →
+            </a>
+          </div>
         </div>
-      </section>
+      </section> */}
 
-      {/* ══ FAQ ═══════════════════════════════════════════════ */}
-      <section className="px-6 md:px-12 py-20 border-t border-white/[0.05]">
-        <SectionLabel>Questions</SectionLabel>
-        <h2
-          className="font-display mb-10 reveal"
-          style={{ fontSize: "clamp(36px,4.5vw,60px)", lineHeight: 1 }}
-        >
-          FAQ
-        </h2>
-        <div className="flex flex-col gap-0 max-w-[720px]">
-          {FAQ.map(({ q, a }, i) => (
-            <div key={i} className="border-b border-white/[0.06]">
-              <button
-                onClick={() => setOpenFaq(openFaq === i ? null : i)}
-                className="w-full flex items-center justify-between py-5 text-left cursor-none bg-transparent border-0 group"
-              >
-                <span
-                  className={`w-5 h-5 flex items-center justify-center border border-acid/30 text-acid font-mono text-xs transition-all duration-300 ${
-                    openFaq === i
-                      ? "bg-acid text-void rotate-90"
-                      : "bg-transparent"
-                  }`}
-                >
-                  {openFaq === i ? "—" : "+"}
-                </span>
-              </button>
-              {openFaq === i && (
-                <div className="pb-5">
-                  <p className="text-[13px] text-muted leading-[1.75]">{a}</p>
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* ══ CTA ═══════════════════════════════════════════════ */}
-      <section className="px-6 md:px-12 py-20 border-t border-acid/[0.08] text-center">
-        <h2
-          className="font-display mb-4"
-          style={{ fontSize: "clamp(36px,4.5vw,60px)", lineHeight: 1 }}
-        >
-          READY TO
-          <br />
-          <span className="text-acid">SWAP?</span>
-        </h2>
-        <p className="text-[14px] text-muted mb-8 max-w-[400px] mx-auto leading-relaxed">
-          Pick your sole. Choose your first upper. Change your style whenever
-          you want.
-        </p>
-        <Link
-          href="/products"
-          className="clip-btn bg-acid text-void font-mono text-[11px] font-bold tracking-[2px] uppercase px-10 py-4 no-underline cursor-none hover:bg-white transition-colors inline-block"
-        >
-          Browse the Range →
-        </Link>
-      </section>
-    </>
+    </div>
   );
 }
