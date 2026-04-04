@@ -14,7 +14,7 @@ model User {
   password      String?   // Hashed
   name          String?
   role          Role  @default(USER)
-  team          Team?     @relation(fields: [teamID], references: [id], onDelete: setNull)
+  // team          Team?     @relation(fields: [teamID], references: [id], onDelete: setNull)
   orders        Order[]
   cartItems     CartItem[]
   createdAt     DateTime  @default(now())
@@ -27,7 +27,7 @@ model Team {
   name          String?
   role          Role  @default(USER)
   code          String  @unique
-  members       User[]
+  // members       User[]
 
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
