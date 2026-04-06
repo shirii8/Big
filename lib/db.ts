@@ -1,16 +1,25 @@
-// lib/db.ts
-import { PrismaClient } from '@prisma/client'
-import { PrismaPg } from '@prisma/adapter-pg'
-import { Pool } from 'pg'
+import { PrismaClient } from "@prisma/client";
 
-const connectionString = `${process.env.DATABASE_URL}`
-const pool = new Pool({ connectionString })
-const adapter = new PrismaPg(pool)
+// 1. Create a function that returns a new Prisma Client instance
+const prismaClientSingleton = () => {
+  return new PrismaClient();
+};
 
-const globalForPrisma = global as unknown as { prisma: PrismaClient }
+// 2. Define the global type for the Prisma instance
+declare global {
+  // Using 'prismaGlobal' helps avoid conflicts with other local variables named 'prisma'
+  var prismaGlobal: undefined | ReturnType<typeof prismaClientSingleton>;
+}
 
-export const prisma = 
-  globalForPrisma.prisma || 
-  new PrismaClient({ adapter }) // v7 REQUIRES the adapter here
+// 3. Check if we already have a connection saved in the global space
+// If not, create a new one using the singleton function above
+const db = globalThis.prismaGlobal ?? prismaClientSingleton();
 
-if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma
+// 4. Export 'db' so you can use it in your API routes and Server Actions
+export default db;
+
+// 5. In development mode, save the connection to the global object
+// This prevents Next.js from creating a new connection every time you save a file
+if (process.env.NODE_ENV !== "production") {
+  globalThis.prismaGlobal = db;
+}

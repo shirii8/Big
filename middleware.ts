@@ -1,12 +1,10 @@
-// middleware.ts
-export { auth as middleware } from "@/lib/auth"
+import { NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
+
+export function middleware(request: NextRequest) {
+  return NextResponse.next();
+}
 
 export const config = {
-  // Only protect these routes. Add more as needed.
-  matcher: [
-    "/cart/:path*",
-    "/checkout/:path*",
-    "/api/cart/:path*",
-    "/api/checkout/:path*",
-  ],
-}
+  matcher: ['/((?!_next/static|_next/image|favicon.ico).*)',],
+};

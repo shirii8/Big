@@ -3,48 +3,43 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { motion } from 'framer-motion'
-import { ArrowRight } from 'lucide-react'
+import { ShoppingCart, User } from 'lucide-react'
+import { RegisterLink, LoginLink, LogoutLink } from "@kinde-oss/kinde-auth-nextjs/components"
+import { useKindeBrowserClient } from "@kinde-oss/kinde-auth-nextjs"
+import { useCart } from '@/context/CartContext'
 
 const NAV_LINKS = [
   { href: '/#home',         id: 'home',         label: 'Home' },
   { href: '/#how-it-works', id: 'how-it-works', label: 'How It Works' },
-  { href: '/products',      id: 'range',        label: 'Range' }, 
+  { href: '/products',      id: 'range',        label: 'Range' },
   { href: '/#about',        id: 'about',        label: 'Story' },
 ]
 
 export default function Nav() {
   const [activeId, setActiveId] = useState('home')
   const pathname = usePathname()
+  const { isAuthenticated, user, isLoading } = useKindeBrowserClient()
+  const { totalItems } = useCart()
 
   useEffect(() => {
     const handleScroll = () => {
-      // If on product routes, force Range active
-      if (pathname.includes('/products')) {
-        setActiveId('range')
-        return
-      }
-
+      if (pathname.includes('/products')) { setActiveId('range'); return }
       const sectionIds = ['home', 'how-it-works', 'range', 'about']
       const scrollPos = window.scrollY + 200
-
       for (const id of [...sectionIds].reverse()) {
         const el = document.getElementById(id)
-        if (el && scrollPos >= el.offsetTop) {
-          setActiveId(id)
-          break
-        }
+        if (el && scrollPos >= el.offsetTop) { setActiveId(id); break }
       }
     }
-
     window.addEventListener('scroll', handleScroll)
     handleScroll()
     return () => window.removeEventListener('scroll', handleScroll)
   }, [pathname])
 
   return (
-    
     <nav className="fixed top-0 left-0 right-0 z-[500] flex items-center justify-between px-6 md:px-12 py-5 bg-[#d4604d]">
       <Link href="/" className="font-display text-2xl text-[#e5f1ee] font-bold">TESSCH.</Link>
+
       <ul className="hidden lg:flex gap-8 list-none m-0 p-0">
         {NAV_LINKS.map(({ href, label, id }) => {
           const isActive = activeId === id
@@ -60,7 +55,51 @@ export default function Nav() {
           )
         })}
       </ul>
-      <button className="bg-[#17191d] text-white font-mono text-[10px] px-6 py-2 uppercase">Pre-Order</button>
+
+      <div className="text-white font-mono text-[10px] px-6 py-2 uppercase flex flex-row gap-2 items-center">
+        {isLoading ? (
+          <span className="opacity-50 animate-pulse px-4 py-2">...</span>
+        ) : isAuthenticated ? (
+          <>
+            {/* Profile */}
+            <Link href="/profile" className="flex items-center gap-1.5 bg-white/20 hover:bg-white/30 rounded-full px-4 py-2 transition-colors">
+              <User size={12} />
+              <span>{user?.given_name ?? 'Profile'}</span>
+            </Link>
+
+            {/* Cart with badge */}
+            <Link href="/cart" className="relative flex items-center gap-1.5 bg-white/20 hover:bg-white/30 rounded-full px-4 py-2 transition-colors">
+              <ShoppingCart size={12} />
+              <span>Cart</span>
+              {totalItems > 0 && (
+                <span className="absolute -top-1 -right-1 w-4 h-4 bg-[#17191d] text-white rounded-full text-[8px] flex items-center justify-center font-bold">
+                  {totalItems}
+                </span>
+              )}
+            </Link>
+
+            {/* Logout */}
+            <LogoutLink postLogoutRedirectURL="/">
+              <button className="bg-[#17191d] text-[#e5f1ee] rounded-full px-4 py-2 hover:bg-black transition-colors">
+                Logout
+              </button>
+            </LogoutLink>
+          </>
+        ) : (
+          <>
+            <LoginLink postLoginRedirectURL="/">
+              <button className="bg-white/20 hover:bg-white/30 rounded-full px-4 py-2 transition-colors">
+                Sign in
+              </button>
+            </LoginLink>
+            <RegisterLink postLoginRedirectURL="/">
+              <button className="bg-[#17191d] text-[#e5f1ee] rounded-full px-4 py-2 hover:bg-black transition-colors">
+                Sign up
+              </button>
+            </RegisterLink>
+          </>
+        )}
+      </div>
     </nav>
   )
 }

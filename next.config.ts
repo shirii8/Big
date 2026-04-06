@@ -1,11 +1,12 @@
-import type { NextConfig } from "next";
-/** @type {import('next').NextConfig} */
+import type { NextConfig } from 'next';
 
-const nextConfig = {
-  experimental: {
-    turbo: {
-      root: './', // Tells Next.js the root is where THIS config file sits
-    },
+const nextConfig: NextConfig = {
+  transpilePackages: ["@/lib/auth"],
+
+  async rewrites() {
+    return [
+      // Your proxy rules go here
+    ];
   },
 };
 

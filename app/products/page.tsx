@@ -30,7 +30,7 @@ export default function ProductsPortal() {
         <div className="absolute bottom-[-5%] left-[-5%] font-display text-[20vw] opacity-[0.03] pointer-events-none group-hover:opacity-[0.08] transition-opacity">SKIN</div>
       </Link>
 
-      {/* ── RIGHT: SOLES PORTAL ── */}
+      {/* ── RIGHT: sneaker (build) PORTAL ── */}
       <Link href="/products/sneaker" className="relative flex-1 group overflow-hidden">
         <motion.div 
           initial={{ x: 100, opacity: 0 }} animate={{ x: 0, opacity: 1 }}
