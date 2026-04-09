@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from "@/lib/db"
 import { getKindeServerSession } from '@kinde-oss/kinde-auth-nextjs/server'
 import { sendOrderConfirmation, sendOwnerAlert } from '@/lib/mailer'
@@ -19,7 +19,7 @@ export async function GET() {
   return NextResponse.json(orders)
 }
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   const { getUser } = getKindeServerSession()
   const user = await getUser()
   if (!user?.id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -39,15 +39,8 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Invalid address' }, { status: 400 })
     }
 
-    // Look up real variant IDs
     const resolvedItems = await Promise.all(
-      items.map(async (item: {
-        upper: { id: string; price: number }
-        sole?: { price: number }
-        size: string
-        quantity: number
-        type: string
-      }) => {
+      items.map(async (item: any) => {
         const variant = await prisma.productVariant.findUnique({
           where: { productId_size: { productId: item.upper.id, size: item.size } },
         })
@@ -55,7 +48,12 @@ export async function POST(req: Request) {
           item.type === 'build'
             ? item.upper.price + (item.sole?.price ?? 3200)
             : item.upper.price
-        return { variant, quantity: item.quantity, price: unitPrice, productType: item.type === 'build' ? 'build' : 'upper' }
+        return { 
+          variant, 
+          quantity: item.quantity, 
+          price: unitPrice, 
+          productType: item.type === 'build' ? 'build' : 'upper' 
+        }
       })
     )
 
@@ -71,8 +69,7 @@ export async function POST(req: Request) {
           discountAmount: discountAmount ?? 0,
           paymentMethod: paymentMethod ?? 'online',
           dodoSessionId: razorpayOrderId ?? null,
-          // COD orders go straight to PENDING, online orders wait for payment verify
-          status: paymentMethod === 'cod' ? 'PENDING' : 'PENDING',
+          status: 'PENDING',
           items: {
             create: resolvedItems
               .filter(i => i.variant !== null)
@@ -90,7 +87,6 @@ export async function POST(req: Request) {
         },
       })
 
-      // Decrement stock
       for (const i of resolvedItems) {
         if (i.variant) {
           await tx.productVariant.update({
@@ -103,7 +99,6 @@ export async function POST(req: Request) {
       return newOrder
     })
 
-    // Trigger emails for COD (online triggers on /verify)
     if (paymentMethod === 'cod') {
       const emailItems = order.items.map(i => ({
         name: i.variant.product.name,
@@ -113,13 +108,24 @@ export async function POST(req: Request) {
         productType: i.productType,
       }))
 
+      // CRITICAL FIX: Explicitly map fields to remove 'line2', 'id', etc.
+      // and convert 'null' to 'undefined' for the phone number.
+      const sanitizedAddress = {
+        line1: order.address.line1,
+        city: order.address.city,
+        state: order.address.state,
+        postalCode: order.address.postalCode,
+        phone: order.address.phone ?? undefined, 
+      }
+
+      // Using sanitizedAddress for both mailer functions
       sendOrderConfirmation({
         to: dbUser!.email,
         name: dbUser?.firstName ?? 'Customer',
         orderId: order.id,
         items: emailItems,
         total: order.totalAmount,
-        address: order.address,
+        address: sanitizedAddress,
         paymentMethod: 'Cash on Delivery',
       })
 
@@ -129,7 +135,7 @@ export async function POST(req: Request) {
         customerName: `${dbUser?.firstName ?? ''} ${dbUser?.lastName ?? ''}`.trim(),
         total: order.totalAmount,
         paymentMethod: 'COD',
-        address: order.address,
+        address: sanitizedAddress,
         items: emailItems,
       })
     }
