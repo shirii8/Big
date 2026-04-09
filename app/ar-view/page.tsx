@@ -4,7 +4,7 @@ import dynamic from 'next/dynamic'
 import Link from 'next/link'
 import { useState } from 'react'
 import SectionLabel from '@/components/ui/SectionLabel'
-import { COLORWAYS, PRODUCTS } from '@/lib/data'
+import { PRODUCTS } from '@/lib/data'
 
 const ARCanvas = dynamic(() => import('@/components/3d/ARCanvas'), { ssr: false })
 

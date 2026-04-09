@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { dodo } from '@/lib/dodopayments'
 import { getKindeServerSession } from '@kinde-oss/kinde-auth-nextjs/server'
-import prisma from '@/lib/db'
+import { prisma } from "@/lib/db"
 
 export async function POST(req: Request) {
   const { getUser } = getKindeServerSession()
