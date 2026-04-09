@@ -1,9 +1,9 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { dodo } from '@/lib/dodopayments'
 import { getKindeServerSession } from '@kinde-oss/kinde-auth-nextjs/server'
 import { prisma } from "@/lib/db"
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   const { getUser } = getKindeServerSession()
   const user = await getUser()
   if (!user?.id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -17,52 +17,37 @@ export async function POST(req: Request) {
       discountAmount,
     } = await req.json()
 
-    // Build line items for Dodo
-    const lineItems = items.map((item: {
-      upper: { name: string; price: number }
-      sole?: { price: number }
-      quantity: number
-      type: string
-      size: string
-    }) => {
-      const unitPrice =
-        item.type === 'build'
-          ? item.upper.price + (item.sole?.price ?? 3200)
-          : item.upper.price
-      return {
-        name: `${item.upper.name}${item.type === 'build' ? ' (Full Build)' : ' (Upper Only)'} — ${item.size}`,
-        quantity: item.quantity,
-        unit_amount: Math.round(unitPrice * 100), // paise
-      }
-    })
-
-    // Get user email for Dodo
+    // 1. Get user details from DB
     const dbUser = await prisma.user.findUnique({ where: { id: user.id } })
+    // 2. Get the specific address to satisfy "billing" requirements if needed
+    const address = await prisma.address.findUnique({ where: { id: addressId } })
 
     const session = await dodo.payments.create({
       payment_link: true,
+      // MOVE currency and total amount here (top-level)
+      currency: 'INR',
+      total_amount: Math.round(totalAmount * 100), // paise
+      
       customer: {
         email: dbUser?.email ?? user.email ?? '',
         name: `${dbUser?.firstName ?? ''} ${dbUser?.lastName ?? ''}`.trim() || 'Customer',
       },
-      product_cart: lineItems.map((li: {
-        name: string
-        quantity: number
-        unit_amount: number
-      }) => ({
-        product_id: 'custom',
-        quantity: li.quantity,
+      
+      product_cart: items.map((item: any) => ({
+        // Ensure this matches your Dodo dashboard product IDs or use 'custom' if supported
+        product_id: item.upper.id, 
+        quantity: item.quantity,
       })),
-      // Use billing amount directly
+
+      // 3. FIXED: Billing should only contain address/geographic info
       billing: {
-        currency: 'INR',
-        payment_frequency_interval: 'day',
-        payment_frequency_count: 1,
-        subscription_period_interval: 'day',
-        subscription_period_count: 1,
-        trial_period_days: 0,
-        price: Math.round(totalAmount * 100),
+        city: address?.city ?? '',
+        country: address?.country ?? 'IN',
+        line1: address?.line1 ?? '',
+        state: address?.state ?? '',
+        zip: address?.postalCode ?? '',
       },
+
       return_url: `${process.env.KINDE_SITE_URL}/checkout/success`,
       metadata: {
         userId: user.id,
