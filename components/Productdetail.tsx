@@ -6,8 +6,6 @@ import { ShoppingCart, Layers, Package } from 'lucide-react'
 import { useCart, ItemType } from '@/context/CartContext'
 import Link from 'next/link'
 
-// Paste this INSIDE uppers/page.tsx replacing the existing ProductDetail function
-
 const SIZES = ['UK 6', 'UK 7', 'UK 8', 'UK 9', 'UK 10', 'UK 11']
 
 // Default sole bundled with every full build

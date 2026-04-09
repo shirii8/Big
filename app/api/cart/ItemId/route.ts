@@ -1,31 +1,47 @@
-// import { NextResponse } from "next/server"
-// import { auth } from "@/lib/auth"
-// import { prisma } from "@/lib/db"
+import { NextResponse } from "next/server"
+import prisma from "@/lib/db"
+import { getKindeServerSession } from "@kinde-oss/kinde-auth-nextjs/server"
 
-// export async function GET() {
-//   const session = await auth()
-//   if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+export async function PATCH(
+  req: Request,
+  { params }: { params: { itemId: string } }
+) {
+  const { getUser } = getKindeServerSession()
+  const user = await getUser()
+  if (!user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
 
-//   const cart = await prisma.cartItem.findMany({
-//     where: { userId: session.user.id },
-//     include: { product: true }
-//   })
-//   return NextResponse.json(cart)
-// }
+  const { quantity, productType } = await req.json()
 
-// export async function POST(req: Request) {
-//   const session = await auth()
-//   if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  try {
+    const updated = await prisma.cartItem.update({
+      where: { id: params.itemId, userId: user.id },
+      data: {
+        ...(quantity !== undefined && { quantity }),
+        ...(productType !== undefined && { productType }),
+      },
+    })
+    return NextResponse.json(updated)
+  } catch (error) {
+    console.error("[cart PATCH]", error)
+    return NextResponse.json({ error: "Failed to update item" }, { status: 500 })
+  }
+}
 
-//   const { productId, size, qty } = await req.json()
+export async function DELETE(
+  req: Request,
+  { params }: { params: { itemId: string } }
+) {
+  const { getUser } = getKindeServerSession()
+  const user = await getUser()
+  if (!user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
 
-//   const item = await prisma.cartItem.create({
-//     data: {
-//       userId: session.user.id,
-//       productId,
-//       size,
-//       qty: qty || 1
-//     }
-//   })
-//   return NextResponse.json(item)
-// }
+  try {
+    await prisma.cartItem.delete({
+      where: { id: params.itemId, userId: user.id },
+    })
+    return NextResponse.json({ success: true })
+  } catch (error) {
+    console.error("[cart DELETE]", error)
+    return NextResponse.json({ error: "Failed to delete item" }, { status: 500 })
+  }
+}

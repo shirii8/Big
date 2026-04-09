@@ -1,219 +1,534 @@
-'use client'
+"use client";
 
-import { useState, useCallback } from 'react'
-import { motion } from 'framer-motion'
-import Link from 'next/link'
-import SectionLabel from '@/components/ui/SectionLabel'
+import { useState, useMemo, useEffect, memo, useCallback } from "react";
+import { AnimatePresence, motion, useAnimationControls } from "framer-motion";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import SectionLabel from "@/components/ui/SectionLabel";
+import { useCart } from "@/context/CartContext";
+import { useKindeBrowserClient } from "@kinde-oss/kinde-auth-nextjs";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
-type CartState = 'idle' | 'loading' | 'success' | 'error'
-
-// ─── Sneaker quick-add config ─────────────────────────────────────────────────
-// A sneaker = one upper + one sole bundled together.
-// In the portal we expose a fast "quick-add" flow: pick size, hit add.
-// The actual product IDs used here should match whatever default/featured
-// sneaker bundle you want to promote from the portal (update as needed).
-const FEATURED_SNEAKER = {
-  productId: 'sneaker-featured-01',   // composite bundle ID in your DB
-  name: 'STARTER BUILD',
-  price: '₹14,900',
-  description: 'Upper + Sole · Full pair · Ships in 5–7 days',
+interface Upper {
+  id: string;
+  name: string;
+  category: string;
+  price: string;
+  priceNum: number;
+  description: string;
+  image: string;
+  specs: Record<string, string>;
 }
 
-const SIZES = ['UK 6', 'UK 7', 'UK 8', 'UK 9', 'UK 10', 'UK 11']
+type CartState = "idle" | "loading" | "success" | "error";
 
-// ─── Cart API helper ──────────────────────────────────────────────────────────
-async function addToCart(productId: string, size: string, qty: number, productType: 'sneaker') {
-  const res = await fetch('/api/cart', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ productId, size, qty, productType }),
-  })
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}))
-    throw new Error(err?.error ?? 'Failed to add to cart')
-  }
-  return res.json()
-}
+// ─── Data ─────────────────────────────────────────────────────────────────────
+const UPPERS_DATA: Upper[] = [
+  {
+    id: "u-001",
+    name: "NEON VAPOR",
+    category: "Performance",
+    price: "₹6,400",
+    priceNum: 6400,
+    description:
+      "High-breathability engineered knit designed for peak aerobic output.",
+    image:
+      "https://res.cloudinary.com/dttnc62hp/image/upload/q_auto/f_auto/v1775151261/WhatsApp_Image_2026-04-01_at_02.28.39_1_bqptrs.jpg",
+    specs: { Weight: "120g", Flex: "High", Material: "E-Knit" },
+  },
+  {
+    id: "u-002",
+    name: "CARBON SHIELD",
+    category: "Tactical",
+    price: "₹8,200",
+    priceNum: 8200,
+    description: "Reinforced ripstop nylon with waterproof TPU membrane.",
+    image:
+      "https://res.cloudinary.com/dttnc62hp/image/upload/q_auto/f_auto/v1775151261/WhatsApp_Image_2026-04-01_at_02.28.39_yrd7i8.jpg",
+    specs: { Weight: "180g", Flex: "Mid", Material: "Ripstop" },
+  },
+  {
+    id: "u-003",
+    name: "ARCTIC MINT",
+    category: "Lifestyle",
+    price: "₹5,900",
+    priceNum: 5900,
+    description: "Suede-textured synthetic upper with minimalist aesthetic.",
+    image:
+      "https://res.cloudinary.com/dttnc62hp/image/upload/q_auto/f_auto/v1775151260/WhatsApp_Image_2026-04-01_at_02.28.39_2_nbdalk.jpg",
+    specs: { Weight: "150g", Flex: "Max", Material: "S-Suede" },
+  },
+  {
+    id: "u-004",
+    name: "DESERT PHANTOM",
+    category: "Tactical",
+    price: "₹7,100",
+    priceNum: 7100,
+    description: "Sand-blasted textile finish with reinforced eyelets.",
+    image:
+      "https://res.cloudinary.com/dttnc62hp/image/upload/q_auto/f_auto/v1775151260/WhatsApp_Image_2026-04-01_at_02.28.40_kgvxv4.jpg",
+    specs: { Weight: "165g", Flex: "Low", Material: "Canvas" },
+  },
+  {
+    id: "u-005",
+    name: "ONYX GRID",
+    category: "Performance",
+    price: "₹6,800",
+    priceNum: 6800,
+    description: "Compression-fit upper for lateral stability.",
+    image:
+      "https://res.cloudinary.com/dttnc62hp/image/upload/q_auto/f_auto/v1775151260/WhatsApp_Image_2026-04-01_at_02.28.41_trc3nv.jpg",
+    specs: { Weight: "135g", Flex: "High", Material: "Grid-Silk" },
+  },
+  {
+    id: "u-006",
+    name: "COBALT CORE",
+    category: "Lifestyle",
+    price: "₹5,500",
+    priceNum: 5500,
+    description: "Essential modular upper in deep cobalt.",
+    image:
+      "https://res.cloudinary.com/dttnc62hp/image/upload/q_auto/f_auto/v1775151260/WhatsApp_Image_2026-04-01_at_02.28.40_2_k1xiwk.jpg",
+    specs: { Weight: "145g", Flex: "Max", Material: "Poly-Knit" },
+  },
+  {
+    id: "u-007",
+    name: "LAVA SHELL",
+    category: "Performance",
+    price: "₹7,900",
+    priceNum: 7900,
+    description: "Heat-reactive panels that change color.",
+    image:
+      "https://res.cloudinary.com/dttnc62hp/image/upload/q_auto/f_auto/v1775151259/WhatsApp_Image_2026-04-01_at_02.28.41_2_ekqxok.jpg",
+    specs: { Weight: "125g", Flex: "High", Material: "Thermo-K" },
+  },
+  {
+    id: "u-008",
+    name: "IRON MESH",
+    category: "Tactical",
+    price: "₹8,500",
+    priceNum: 8500,
+    description: "Metallic-infused fibers for extreme durability.",
+    image:
+      "https://res.cloudinary.com/dttnc62hp/image/upload/q_auto/f_auto/v1775151259/WhatsApp_Image_2026-04-01_at_02.28.41_1_qc3d2i.jpg",
+    specs: { Weight: "195g", Flex: "Low", Material: "Meta-Mesh" },
+  },
+  {
+    id: "u-009",
+    name: "GHOST WHITE",
+    category: "Lifestyle",
+    price: "₹6,200",
+    priceNum: 6200,
+    description: "Triple-white aesthetic with easy-clean coating.",
+    image:
+      "https://res.cloudinary.com/dttnc62hp/image/upload/q_auto/f_auto/v1775151258/WhatsApp_Image_2026-04-01_at_02.28.42_3_rchhdv.jpg",
+    specs: { Weight: "140g", Flex: "Mid", Material: "Nano-Syn" },
+  },
+  {
+    id: "u-010",
+    name: "FOREST TRACKER",
+    category: "Tactical",
+    price: "₹7,400",
+    priceNum: 7400,
+    description: "Earth-toned silhouette with extra ankle padding.",
+    image:
+      "https://res.cloudinary.com/dttnc62hp/image/upload/q_auto/f_auto/v1775151258/WhatsApp_Image_2026-04-01_at_02.28.43_1_fvxhqe.jpg",
+    specs: { Weight: "170g", Flex: "Mid", Material: "Cordura" },
+  },
+  {
+    id: "u-011",
+    name: "CYBER PULSE",
+    category: "Performance",
+    price: "₹8,800",
+    priceNum: 8800,
+    description: "Integrated LED piping that syncs with your pace.",
+    image:
+      "https://res.cloudinary.com/dttnc62hp/image/upload/q_auto/f_auto/v1775151258/WhatsApp_Image_2026-04-01_at_02.28.42_mhygsi.jpg",
+    specs: { Weight: "155g", Flex: "High", Material: "Optic-Fiber" },
+  },
+  {
+    id: "u-012",
+    name: "VINTAGE SLAB",
+    category: "Lifestyle",
+    price: "₹5,200",
+    priceNum: 5200,
+    description: "Retro-inspired paneling with modern modular rails.",
+    image:
+      "https://res.cloudinary.com/dttnc62hp/image/upload/q_auto/f_auto/v1775151258/WhatsApp_Image_2026-04-01_at_02.28.42_1_byhuzb.jpg",
+    specs: { Weight: "160g", Flex: "Max", Material: "Leather/Mesh" },
+  },
+  {
+    id: "u-013",
+    name: "NIGHT RAID",
+    category: "Tactical",
+    price: "₹9,200",
+    priceNum: 9200,
+    description: "Stealth-black upper with light-absorbing finish.",
+    image:
+      "https://res.cloudinary.com/dttnc62hp/image/upload/q_auto/f_auto/v1775151258/WhatsApp_Image_2026-04-01_at_02.28.43_uggnck.jpg",
+    specs: { Weight: "185g", Flex: "Low", Material: "Matte-Skin" },
+  },
+  {
+    id: "u-014",
+    name: "ZENITH BLUE",
+    category: "Performance",
+    price: "₹6,900",
+    priceNum: 6900,
+    description: "Weightless sensation upper with industrial rail locking.",
+    image:
+      "https://res.cloudinary.com/dttnc62hp/image/upload/q_auto/f_auto/v1775151261/WhatsApp_Image_2026-04-01_at_02.28.39_yrd7i8.jpg",
+    specs: { Weight: "110g", Flex: "Max", Material: "Silk-Nit" },
+  },
+  {
+    id: "u-015",
+    name: "STORM BREAKER",
+    category: "Tactical",
+    price: "₹8,400",
+    priceNum: 8400,
+    description: "Windproof and snow-resistant modular archive.",
+    image:
+      "https://res.cloudinary.com/dttnc62hp/image/upload/q_auto/f_auto/v1775151260/WhatsApp_Image_2026-04-01_at_02.28.39_2_nbdalk.jpg",
+    specs: { Weight: "210g", Flex: "Low", Material: "Gore-S" },
+  },
+];
+
+const SIZES = ["UK 6", "UK 7", "UK 8", "UK 9", "UK 10", "UK 11"];
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
-export default function ProductsPortal() {
-  return (
-    <div className="bg-[#e5f1ee] min-h-screen flex flex-col lg:flex-row pt-20 overflow-hidden text-[#17191d]">
+export default function UppersPage() {
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const selectedProduct = useMemo(
+    () => UPPERS_DATA.find((p) => p.id === selectedId) ?? null,
+    [selectedId],
+  );
 
-      {/* ── LEFT: UPPERS PORTAL ── */}
-      <Link href="/products/uppers" className="relative flex-1 group overflow-hidden border-r-2 border-[#17191d]/10">
-        <motion.div
-          initial={{ x: -100, opacity: 0 }} animate={{ x: 0, opacity: 1 }}
-          className="absolute inset-0 bg-[#d4604d] translate-y-full group-hover:translate-y-0 transition-transform duration-700 ease-[cubic-bezier(0.23,1,0.32,1)]"
-        />
-        <div className="relative z-10 h-full flex flex-col justify-center p-12 lg:p-20">
-          <SectionLabel>Step 01</SectionLabel>
-          <h2 className="font-display text-7xl lg:text-9xl uppercase tracking-tighter leading-none mb-6 group-hover:text-white transition-colors">
-            THE <br/>UPPERS
-          </h2>
-          <p className="font-mono text-sm max-w-xs uppercase tracking-widest opacity-60 group-hover:text-white group-hover:opacity-90 transition-all">
-            Browse 15 modular skins. Engineered for performance, aesthetics, and seasonal adaptation.
-          </p>
-          <div className="mt-12 w-12 h-12 border-2 border-[#17191d] group-hover:border-white flex items-center justify-center font-bold group-hover:text-white transition-all">
-            →
+  useEffect(() => {
+    document.body.style.overflow = selectedId ? "hidden" : "";
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [selectedId]);
+
+  const ROWS = useMemo(
+    () => [
+      UPPERS_DATA.slice(0, 5),
+      UPPERS_DATA.slice(5, 10),
+      UPPERS_DATA.slice(10, 15),
+    ],
+    [],
+  );
+
+  return (
+    <div className="bg-[#e5f1ee] min-h-screen w-full flex flex-col text-[#17191d]">
+      <header className="pt-32 pb-12 px-6 md:px-12 shrink-0">
+        <SectionLabel>Drop 01 / Modular Archive</SectionLabel>
+        <div className="flex justify-between items-end mt-4 border-b-2 border-[#17191d]/10 pb-6">
+          <h1 className="font-display text-[clamp(36px,6vw,80px)] leading-[0.85] tracking-tighter uppercase">
+            SELECT YOUR <br />
+            <span className="text-[#d4604d]">BUILD.</span>
+          </h1>
+          <div className="text-right hidden md:block">
+            <p className="font-mono text-[10px] uppercase tracking-[3px] font-bold">
+              Protocol_v.1.04
+            </p>
+            <p className="font-mono text-[9px] uppercase tracking-[2px] opacity-40">
+              Hover to Pause & Drag
+            </p>
           </div>
         </div>
-        <div className="absolute bottom-[-5%] left-[-5%] font-display text-[20vw] opacity-[0.03] pointer-events-none group-hover:opacity-[0.08] transition-opacity">SKIN</div>
-      </Link>
+      </header>
 
-      {/* ── RIGHT: SNEAKER PORTAL ── */}
-      <SneakerPortalPanel />
+      <main className="flex flex-col gap-12 py-8 overflow-hidden mb-24">
+        {ROWS.map((row, idx) => (
+          <ArchiveRow
+            key={idx}
+            items={row}
+            onSelect={setSelectedId}
+            reverse={idx === 1}
+          />
+        ))}
+      </main>
+
+      <AnimatePresence>
+        {selectedId && selectedProduct && (
+          <ProductDetail
+            product={selectedProduct}
+            onClose={() => setSelectedId(null)}
+          />
+        )}
+      </AnimatePresence>
     </div>
-  )
+  );
 }
 
-// ─── SneakerPortalPanel ───────────────────────────────────────────────────────
-// Renders the right-side panel. Includes a quick size picker + Add to Cart
-// so the user can grab a complete pair right from the portal landing page,
-// or navigate deeper to the full sneaker builder.
-function SneakerPortalPanel() {
-  const [size, setSize] = useState('UK 9')
-  const [showSizePicker, setShowSizePicker] = useState(false)
-  const [cartState, setCartState] = useState<CartState>('idle')
-  const [errorMsg, setErrorMsg] = useState('')
+// ─── ArchiveRow ───────────────────────────────────────────────────────────────
+function ArchiveRow({
+  items,
+  onSelect,
+  reverse,
+}: {
+  items: Upper[];
+  onSelect: (id: string) => void;
+  reverse: boolean;
+}) {
+  const [isPaused, setIsPaused] = useState(false);
+  const controls = useAnimationControls();
+  const tripled = useMemo(() => [...items, ...items, ...items], [items]);
+  const scrollDistance = items.length * 560;
 
-  const handleAddToCart = useCallback(async (e: React.MouseEvent) => {
-    // Prevent the parent <Link> from navigating when clicking the cart button
-    e.preventDefault()
-    e.stopPropagation()
-
-    if (cartState === 'loading' || cartState === 'success') return
-    setCartState('loading')
-    setErrorMsg('')
-    try {
-      await addToCart(FEATURED_SNEAKER.productId, size, 1, 'sneaker')
-      setCartState('success')
-      setTimeout(() => setCartState('idle'), 2500)
-    } catch (err) {
-      setErrorMsg(err instanceof Error ? err.message : 'Something went wrong')
-      setCartState('error')
-      setTimeout(() => setCartState('idle'), 3000)
+  useEffect(() => {
+    if (!isPaused) {
+      controls.start({
+        x: reverse ? [0, -scrollDistance] : [-scrollDistance, 0],
+        transition: { duration: 40, repeat: Infinity, ease: "linear" },
+      });
+    } else {
+      controls.stop();
     }
-  }, [cartState, size])
-
-  const toggleSizePicker = (e: React.MouseEvent) => {
-    e.preventDefault()
-    e.stopPropagation()
-    setShowSizePicker(prev => !prev)
-  }
-
-  const selectSize = (e: React.MouseEvent, s: string) => {
-    e.preventDefault()
-    e.stopPropagation()
-    setSize(s)
-  }
-
-  const cartLabel = {
-    idle:    `ADD TO CART — ${size}`,
-    loading: 'ADDING...',
-    success: 'ADDED TO CART ✓',
-    error:   'RETRY',
-  }[cartState]
-
-  const cartBg = {
-    idle:    'bg-[#e5f1ee] text-[#17191d] hover:bg-white',
-    loading: 'bg-[#e5f1ee]/60 text-[#17191d]/60 cursor-wait',
-    success: 'bg-emerald-500 text-white',
-    error:   'bg-red-500 text-white hover:bg-red-600',
-  }[cartState]
+  }, [isPaused, controls, reverse, scrollDistance]);
 
   return (
-    <div className="relative flex-1 group overflow-hidden">
-      {/* hover fill */}
+    <div
+      className="relative flex overflow-hidden h-[300px]"
+      onMouseEnter={() => setIsPaused(true)}
+      onMouseLeave={() => setIsPaused(false)}
+    >
       <motion.div
-        initial={{ x: 100, opacity: 0 }} animate={{ x: 0, opacity: 1 }}
-        className="absolute inset-0 bg-[#17191d] translate-y-full group-hover:translate-y-0 transition-transform duration-700 ease-[cubic-bezier(0.23,1,0.32,1)]"
-      />
+        drag="x"
+        animate={controls}
+        dragConstraints={{ left: -scrollDistance * 2, right: 0 }}
+        dragElastic={0.05}
+        className="flex gap-10 px-12 h-full items-center cursor-grab active:cursor-grabbing"
+        style={{ width: "max-content", touchAction: "none" }}
+      >
+        {tripled.map((product, i) => (
+          <ProductCard
+            key={`${product.id}-${i}`}
+            product={product}
+            onSelect={onSelect}
+          />
+        ))}
+      </motion.div>
+    </div>
+  );
+}
 
-      <div className="relative z-10 h-full flex flex-col justify-between p-12 lg:p-20">
-        {/* Top content */}
+// ─── ProductCard ──────────────────────────────────────────────────────────────
+const ProductCard = memo(
+  ({
+    product,
+    onSelect,
+  }: {
+    product: Upper;
+    onSelect: (id: string) => void;
+  }) => (
+    <div
+      onClick={() => onSelect(product.id)}
+      className="w-[480px] md:w-[520px] h-[240px] bg-white border-[3px] border-[#17191d] group flex flex-row overflow-hidden hover:shadow-[12px_12px_0px_#d4604d] transition-shadow duration-300 cursor-pointer shrink-0"
+    >
+      <div className="w-[52%] h-full bg-[#f8fcfb] relative overflow-hidden border-r-[3px] border-[#17191d]">
+        <img
+          src={product.image}
+          className="w-full h-full object-contain mix-blend-multiply scale-105 group-hover:scale-110 transition-transform duration-500 ease-out"
+          alt=""
+        />
+      </div>
+      <div className="w-[48%] h-full p-6 flex flex-col justify-between bg-white group-hover:bg-[#d4604d]/5 transition-colors">
         <div>
-          <SectionLabel>Step 02</SectionLabel>
-          <Link href="/products/sneaker">
-            <h2 className="font-display text-7xl lg:text-9xl uppercase tracking-tighter leading-none mb-6 group-hover:text-[#e5f1ee] transition-colors cursor-pointer">
-              Starter<br/>Build
-            </h2>
-          </Link>
-          <p className="font-mono text-sm max-w-xs uppercase tracking-widest opacity-60 group-hover:text-[#e5f1ee] group-hover:opacity-90 transition-all">
-            The foundation. 15 high-performance base units featuring proprietary cushioning and traction logic.
+          <p className="font-mono text-[9px] text-[#d4604d] font-bold uppercase tracking-[2px] mb-2">
+            {product.category}
           </p>
+          <h3 className="font-display text-2xl md:text-3xl uppercase leading-[0.88] tracking-tighter">
+            {product.name}
+          </h3>
         </div>
-
-        {/* Quick-add section — always visible, styles flip on hover */}
-        <div className="mt-12 space-y-3">
-          {/* Price + description */}
-          <div className="group-hover:text-[#e5f1ee] transition-colors">
-            <p className="font-display text-3xl">{FEATURED_SNEAKER.price}</p>
-            <p className="font-mono text-[9px] uppercase tracking-[2px] opacity-50 mt-1">{FEATURED_SNEAKER.description}</p>
-          </div>
-
-          {/* Size toggle */}
-          <button
-            onClick={toggleSizePicker}
-            className="font-mono text-[10px] font-bold uppercase tracking-[2px] border-2 border-[#17191d] group-hover:border-[#e5f1ee] group-hover:text-[#e5f1ee] px-4 py-2 transition-all flex items-center gap-2"
-          >
-            SIZE: {size}
-            <span className={`transition-transform ${showSizePicker ? 'rotate-180' : ''}`}>▾</span>
-          </button>
-
-          {/* Size grid — slides open */}
-          {showSizePicker && (
-            <div className="flex flex-wrap gap-2">
-              {SIZES.map(s => (
-                <button
-                  key={s}
-                  onClick={(e) => selectSize(e, s)}
-                  className={`font-mono text-[10px] font-bold px-3 py-2 border-2 transition-all ${
-                    size === s
-                      ? 'bg-[#17191d] text-white border-[#17191d] group-hover:bg-[#e5f1ee] group-hover:text-[#17191d] group-hover:border-[#e5f1ee]'
-                      : 'border-[#17191d]/40 group-hover:border-[#e5f1ee]/40 group-hover:text-[#e5f1ee]'
-                  }`}
-                >
-                  {s}
-                </button>
-              ))}
-            </div>
-          )}
-
-          {/* Error */}
-          {cartState === 'error' && errorMsg && (
-            <p className="font-mono text-[10px] text-red-400 uppercase tracking-[1px]">⚠ {errorMsg}</p>
-          )}
-
-          {/* Action row */}
-          <div className="flex items-center gap-3 pt-1">
-            {/* Add to cart */}
-            <button
-              onClick={handleAddToCart}
-              disabled={cartState === 'loading'}
-              className={`font-mono text-[10px] font-bold uppercase tracking-[2px] px-6 py-3 border-2 border-transparent transition-all flex items-center gap-2 ${cartBg}`}
-            >
-              {cartState === 'loading' && (
-                <span className="w-3 h-3 border-2 border-current/40 border-t-current rounded-full animate-spin" />
-              )}
-              {cartLabel}
-            </button>
-
-            {/* Navigate deeper */}
-            <Link
-              href="/products/sneaker"
-              onClick={(e) => e.stopPropagation()}
-              className="w-12 h-12 border-2 border-[#17191d] group-hover:border-[#e5f1ee] flex items-center justify-center font-bold group-hover:text-[#e5f1ee] transition-all hover:scale-105"
-            >
-              →
-            </Link>
-          </div>
+        <div className="flex justify-between items-end">
+          <p className="font-display text-2xl">{product.price}</p>
+          <span className="font-mono text-[10px] font-bold text-[#d4604d] border-b border-[#d4604d] pb-0.5">
+            VIEW DETAIL
+          </span>
         </div>
       </div>
-
-      {/* Decorative watermark */}
-      <div className="absolute top-[-5%] right-[-5%] font-display text-[20vw] opacity-[0.03] pointer-events-none group-hover:opacity-[0.08] transition-opacity">BASE</div>
     </div>
-  )
+  ),
+);
+ProductCard.displayName = "ProductCard";
+
+// ─── ProductDetail ────────────────────────────────────────────────────────────
+function ProductDetail({
+  product,
+  onClose,
+}: {
+  product: Upper;
+  onClose: () => void;
+}) {
+  const [size, setSize] = useState("UK 9");
+  const [cartState, setCartState] = useState<CartState>("idle");
+  const { addItem } = useCart();
+  const { isAuthenticated } = useKindeBrowserClient();
+  const router = useRouter();
+
+  useEffect(() => {
+    setCartState("idle");
+  }, [product.id]);
+
+  const handleAddToCart = useCallback(() => {
+    if (cartState === "loading" || cartState === "success") return;
+
+    if (!isAuthenticated) {
+      router.push("/api/auth/login");
+      return;
+    }
+
+    setCartState("loading");
+
+    addItem(
+      {
+        id: product.id,
+        name: product.name,
+        category: product.category,
+        price: product.priceNum,
+        image: product.image,
+      },
+      size,
+      "upper-only",
+    );
+
+    setCartState("success");
+    setTimeout(() => setCartState("idle"), 2500);
+  }, [cartState, product, size, addItem, isAuthenticated, router]);
+
+  const cartLabel: Record<CartState, string> = {
+    idle: "ADD BUILD TO CART",
+    loading: "ADDING...",
+    success: "ADDED ✓",
+    error: "RETRY",
+  };
+
+  const cartBg: Record<CartState, string> = {
+    idle: "bg-[#17191d] hover:bg-[#d4604d]",
+    loading: "bg-[#17191d]/60 cursor-wait",
+    success: "bg-emerald-600",
+    error: "bg-red-600 hover:bg-red-700",
+  };
+
+  return (
+    <>
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        onClick={onClose}
+        className="fixed inset-0 z-[1000] bg-[#17191d]/60 backdrop-blur-sm"
+      />
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0, scale: 0.95 }}
+        className="fixed inset-4 md:inset-x-20 md:inset-y-12 z-[1001] bg-[#e5f1ee] border-4 border-[#17191d] shadow-[20px_20px_0px_#17191d] flex flex-col md:flex-row overflow-hidden"
+      >
+        {/* Image panel */}
+        <div className="w-full md:w-[52%] h-[40%] md:h-full bg-white flex items-center justify-center p-10 border-b-4 md:border-b-0 md:border-r-4 border-[#17191d]">
+          <img
+            src={product.image}
+            className="max-h-full w-auto object-contain mix-blend-multiply"
+            alt=""
+          />
+        </div>
+
+        {/* Info panel */}
+        <div className="flex-1 p-8 md:p-10 flex flex-col justify-between overflow-y-auto">
+          <div className="space-y-5">
+            {/* Category + close */}
+            <div className="flex justify-between items-start">
+              <span className="font-mono text-[10px] bg-[#d4604d] text-white px-3 py-1 uppercase font-bold">
+                {product.category}
+              </span>
+              <button
+                onClick={onClose}
+                className="text-2xl font-bold hover:text-[#d4604d] transition-colors"
+              >
+                ✕
+              </button>
+            </div>
+
+            <h2 className="font-display text-6xl leading-[0.82] uppercase tracking-tighter">
+              {product.name}
+            </h2>
+
+            {/* Specs */}
+            <div className="grid grid-cols-3 gap-4 border-t-2 border-[#17191d] pt-6">
+              {Object.entries(product.specs).map(([k, v]) => (
+                <div key={k}>
+                  <p className="font-mono text-[9px] uppercase opacity-40 mb-1">
+                    {k}
+                  </p>
+                  <p className="font-display text-xl uppercase leading-tight">
+                    {v}
+                  </p>
+                </div>
+              ))}
+            </div>
+
+            {/* Sole upsell notice */}
+            <div className="flex items-center gap-3 bg-amber-50 border border-amber-200 px-4 py-3">
+              <img
+                className="h-6 w-6 object-contain"
+                src="https://res.cloudinary.com/dttnc62hp/image/upload/q_auto/f_auto/v1775581980/SolidLogo-removebg-preview_hw2e30.png"
+                alt="TESSCH Logo"
+              />
+              <p className="font-mono text-[9px] text-amber-700 uppercase tracking-[1px] leading-relaxed">
+                START SMART. DEFINE YOUR FOUNDATION.
+              </p>
+            </div>
+
+            {/* Size picker */}
+            <div className="border-t-2 border-[#17191d] pt-5">
+              <p className="font-mono text-[9px] uppercase tracking-[3px] opacity-40 mb-3">
+                Select Size
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {SIZES.map((s) => (
+                  <button
+                    key={s}
+                    onClick={() => setSize(s)}
+                    className={`font-mono text-[10px] font-bold px-4 py-2 border-2 transition-all ${
+                      size === s
+                        ? "bg-[#17191d] text-white border-[#17191d]"
+                        : "border-[#17191d]/30 hover:border-[#17191d]"
+                    }`}
+                  >
+                    {s}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Footer: price + CTA */}
+          <div className="pt-6 border-t-2 border-[#17191d] mt-4 space-y-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="font-mono text-[9px] uppercase opacity-40">
+                  Unit Price
+                </p>
+                <p className="font-display text-4xl">{product.price}</p>
+              </div>
+
+              <button
+                onClick={handleAddToCart}
+                disabled={cartState === "loading"}
+                className={`text-white font-mono text-[11px] font-bold uppercase tracking-[3px] px-8 py-4 transition-colors flex items-center gap-2 ${cartBg[cartState]}`}
+              >
+                {cartState === "loading" && (
+                  <span className="w-3 h-3 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+                )}
+                {cartLabel[cartState]}
+              </button>
+            </div>
+          </div>
+        </div>
+      </motion.div>
+    </>
+  );
 }
