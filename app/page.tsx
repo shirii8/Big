@@ -54,7 +54,7 @@ export default function HomePage() {
   
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
-  const countdown = useCountdown(DROP_DATE);
+const countdown = useCountdown(DROP_DATE.getTime());
 
   const containerRef = useRef(null);
   const { scrollYProgress } = useScroll({ target: containerRef });
@@ -169,9 +169,9 @@ export default function HomePage() {
         <StoryPage />
       </section>
 
-      <section id="pre-order" className="px-6 md:px-12 py-24 text-center border-t border-[#17191d]/10">
+      {/* <section id="pre-order" className="px-6 md:px-12 py-24 text-center border-t border-[#17191d]/10">
         <FinalDropCTA/>
-      </section>
+      </section> */}
 
       {/* ══ FOOTER ═══════════════════════════════════════════ */}
       <footer className="border-t border-[#17191d]/5 px-6 md:px-12 py-12 flex justify-between items-center">
