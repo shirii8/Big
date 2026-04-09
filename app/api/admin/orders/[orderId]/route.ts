@@ -1,18 +1,24 @@
-import { NextResponse } from 'next/server'
-import {prisma} from '@/lib/db'
+import { NextRequest, NextResponse } from 'next/server'
+import { prisma } from '@/lib/db'
 import { getKindeServerSession } from '@kinde-oss/kinde-auth-nextjs/server'
 import { sendStatusUpdate } from '@/lib/mailer'
 
-// Only you (admin) can call this
+// 1. Updated Type Definition for Next.js 16
+type RouteContext = {
+  params: Promise<{ orderId: string }>
+}
+
 export async function PATCH(
-  req: Request,
-  { params }: { params: { orderId: string } }
+  req: NextRequest, // Use NextRequest for better type safety
+  context: RouteContext
 ) {
+  // 2. Await the params promise
+  const { orderId } = await context.params
+
   const { getUser } = getKindeServerSession()
   const user = await getUser()
   if (!user?.id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  // Check admin role
   const dbUser = await prisma.user.findUnique({ where: { id: user.id } })
   if (dbUser?.role !== 'ADMIN') {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
@@ -27,12 +33,11 @@ export async function PATCH(
     }
 
     const order = await prisma.order.update({
-      where: { id: params.orderId },
+      where: { id: orderId }, // Using the awaited orderId
       data: { status },
       include: { user: true, address: true },
     })
 
-    // Email the customer about the status change
     await sendStatusUpdate({
       to: order.user.email,
       name: order.user.firstName ?? 'Customer',
@@ -48,11 +53,13 @@ export async function PATCH(
   }
 }
 
-// GET a single order with full details (admin use)
 export async function GET(
-  req: Request,
-  { params }: { params: { orderId: string } }
+  req: NextRequest,
+  context: RouteContext
 ) {
+  // 3. Await the params promise here too
+  const { orderId } = await context.params
+
   const { getUser } = getKindeServerSession()
   const user = await getUser()
   if (!user?.id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -63,7 +70,7 @@ export async function GET(
   }
 
   const order = await prisma.order.findUnique({
-    where: { id: params.orderId },
+    where: { id: orderId }, // Using the awaited orderId
     include: {
       user: true,
       items: { include: { variant: { include: { product: true } } } },
