@@ -108,13 +108,13 @@ export async function POST(req: NextRequest) {
         }))
 
       const sanitizedAddress = {
-        line1: order.address.line1,
-        city: order.address.city,
-        state: order.address.state,
-        postalCode: order.address.postalCode,
-        country: order.address.country,
-        phone: order.address.phone ?? undefined,
-      }
+  line1: order.address.line1,
+  city: order.address.city,
+  state: order.address.state,
+  postalCode: order.address.postalCode,
+  country: order.address.country, // Required by the mailer
+  phone: order.address.phone ?? undefined, // Required by the mailer
+}
 
       sendOrderConfirmation({
         to: dbUser!.email,
