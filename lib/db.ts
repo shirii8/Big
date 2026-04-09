@@ -16,7 +16,7 @@ declare global {
 const db = globalThis.prismaGlobal ?? prismaClientSingleton();
 
 // 4. Export 'db' so you can use it in your API routes and Server Actions
-export default db;
+export const prisma = db;
 
 // 5. In development mode, save the connection to the global object
 // This prevents Next.js from creating a new connection every time you save a file
