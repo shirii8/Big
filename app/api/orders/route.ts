@@ -48,12 +48,8 @@ export async function POST(req: NextRequest) {
           item.type === 'build'
             ? item.upper.price + (item.sole?.price ?? 3200)
             : item.upper.price
-        return { 
-          variant, 
-          quantity: item.quantity, 
-          price: unitPrice, 
-          productType: item.type === 'build' ? 'build' : 'upper' 
-        }
+        const productType = item.type === 'build' ? 'build' : 'upper'
+        return { variant, quantity: item.quantity, price: unitPrice, productType }
       })
     )
 
@@ -100,25 +96,26 @@ export async function POST(req: NextRequest) {
     })
 
     if (paymentMethod === 'cod') {
-      const emailItems = order.items.map(i => ({
-        name: i.variant.product.name,
-        size: i.variant.size,
-        quantity: i.quantity,
-        price: i.price,
-        productType: i.productType,
-      }))
+      // Use resolvedItems instead of order.items to avoid Prisma type inference issues
+      const emailItems = resolvedItems
+        .filter(i => i.variant !== null)
+        .map(i => ({
+          name: i.variant!.product.name,
+          size: i.variant!.size,
+          quantity: i.quantity,
+          price: i.price,
+          productType: i.productType,
+        }))
 
-      // CRITICAL FIX: Explicitly map fields to remove 'line2', 'id', etc.
-      // and convert 'null' to 'undefined' for the phone number.
       const sanitizedAddress = {
         line1: order.address.line1,
         city: order.address.city,
         state: order.address.state,
         postalCode: order.address.postalCode,
-        phone: order.address.phone ?? undefined, 
+        country: order.address.country,
+        phone: order.address.phone ?? undefined,
       }
 
-      // Using sanitizedAddress for both mailer functions
       sendOrderConfirmation({
         to: dbUser!.email,
         name: dbUser?.firstName ?? 'Customer',
