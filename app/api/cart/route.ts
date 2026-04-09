@@ -1,5 +1,6 @@
-import { NextResponse } from "next/server"
-import {prisma} from "@/lib/db"
+import { NextRequest, NextResponse } from "next/server"
+// 1. Fixed: Use named import { prisma } instead of default import
+import { prisma } from "@/lib/db" 
 import { getKindeServerSession } from "@kinde-oss/kinde-auth-nextjs/server"
 
 export async function GET() {
@@ -15,7 +16,8 @@ export async function GET() {
   return NextResponse.json(cart)
 }
 
-export async function POST(req: Request) {
+// 2. Fixed: Use NextRequest instead of Request for framework consistency
+export async function POST(req: NextRequest) {
   try {
     const { getUser } = getKindeServerSession()
     const user = await getUser()
@@ -32,7 +34,6 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "variantId is required" }, { status: 400 })
     }
 
-    // Normalise: accept 'upper-only' from context, store as 'upper'
     const normalisedType = productType === "upper-only" ? "upper" : productType
     if (!["upper", "build"].includes(normalisedType)) {
       return NextResponse.json(
@@ -43,8 +44,6 @@ export async function POST(req: Request) {
 
     const variant = await prisma.productVariant.findUnique({ where: { id: variantId } })
     if (!variant) {
-      // Variant not in DB yet (static IDs) — return a soft success so the
-      // client-side cart (localStorage) still works without crashing
       return NextResponse.json({ ok: true, skipped: true }, { status: 200 })
     }
 
