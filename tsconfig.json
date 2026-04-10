@@ -28,7 +28,9 @@
     "**/*.tsx",
     ".next/types/**/*.ts",
     ".next/dev/types/**/*.ts",
-    "**/*.mts"
-, "app/api/auth/[kindeAuth]/route.ts"  ],
+    "**/*.mts",
+    "generated/**/*.ts", // <--- ADD THIS LINE
+    "app/api/auth/[kindeAuth]/route.ts"
+  ],
   "exclude": ["node_modules"]
 }

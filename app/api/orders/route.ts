@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from "@/lib/db"
+// Importing Prisma from your custom output folder for type-safety
+import { Prisma } from "@/generated/prisma" 
 import { getKindeServerSession } from '@kinde-oss/kinde-auth-nextjs/server'
 import { sendOrderConfirmation, sendOwnerAlert } from '@/lib/mailer'
 
@@ -39,10 +41,12 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Invalid address' }, { status: 400 })
     }
 
+    // Pre-resolve items to calculate prices and check stock
     const resolvedItems = await Promise.all(
       items.map(async (item: any) => {
         const variant = await prisma.productVariant.findUnique({
           where: { productId_size: { productId: item.upper.id, size: item.size } },
+          include: { product: true } // Include product here for later use in mailer
         })
         const unitPrice =
           item.type === 'build'
@@ -55,7 +59,8 @@ export async function POST(req: NextRequest) {
 
     const dbUser = await prisma.user.findUnique({ where: { id: user.id } })
 
-    const order = await prisma.$transaction(async (tx) => {
+    // Transaction with explicit type for 'tx' to satisfy Prisma 7/Turbopack
+    const order = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       const newOrder = await tx.order.create({
         data: {
           userId: user.id,
@@ -83,6 +88,7 @@ export async function POST(req: NextRequest) {
         },
       })
 
+      // Decrement stock levels
       for (const i of resolvedItems) {
         if (i.variant) {
           await tx.productVariant.update({
@@ -95,27 +101,25 @@ export async function POST(req: NextRequest) {
       return newOrder
     })
 
-    if (paymentMethod === 'cod') {
-      // Use resolvedItems instead of order.items to avoid Prisma type inference issues
-      const emailItems = resolvedItems
-        .filter(i => i.variant !== null)
-        .map(i => ({
-          name: i.variant!.product.name,
-          size: i.variant!.size,
-          quantity: i.quantity,
-          price: i.price,
-          productType: i.productType,
-        }))
+    // Handle Mailer Logic for COD
+ const emailItems = order.items.map((item: any) => ({ // Added : any
+  name: item.variant.product.name,
+  size: item.variant.size,
+  quantity: item.quantity,
+  price: item.price,
+  productType: item.productType,
+}))
 
       const sanitizedAddress = {
-  line1: order.address.line1,
-  city: order.address.city,
-  state: order.address.state,
-  postalCode: order.address.postalCode,
-  country: order.address.country, // Required by the mailer
-  phone: order.address.phone ?? undefined, // Required by the mailer
-}
+        line1: order.address.line1,
+        city: order.address.city,
+        state: order.address.state,
+        postalCode: order.address.postalCode,
+        country: order.address.country,
+        phone: order.address.phone ?? undefined,
+      }
 
+      // We don't await these to prevent blocking the response
       sendOrderConfirmation({
         to: dbUser!.email,
         name: dbUser?.firstName ?? 'Customer',
@@ -139,7 +143,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json(order, { status: 201 })
   } catch (e) {
-    console.error('[orders POST]', e)
+    console.error('[orders POST error]', e)
     return NextResponse.json({ error: 'Failed to create order' }, { status: 500 })
   }
 }
