@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from "@/lib/db"
-// Importing Prisma from your custom output folder for type-safety
-import { Prisma } from "@/generated/prisma" 
+import { Prisma } from "../../../generated/prisma/client"
 import { getKindeServerSession } from '@kinde-oss/kinde-auth-nextjs/server'
 import { sendOrderConfirmation, sendOwnerAlert } from '@/lib/mailer'
 
@@ -41,12 +40,11 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Invalid address' }, { status: 400 })
     }
 
-    // Pre-resolve items to calculate prices and check stock
     const resolvedItems = await Promise.all(
       items.map(async (item: any) => {
         const variant = await prisma.productVariant.findUnique({
           where: { productId_size: { productId: item.upper.id, size: item.size } },
-          include: { product: true } // Include product here for later use in mailer
+          include: { product: true },
         })
         const unitPrice =
           item.type === 'build'
@@ -59,9 +57,8 @@ export async function POST(req: NextRequest) {
 
     const dbUser = await prisma.user.findUnique({ where: { id: user.id } })
 
-    // Transaction with explicit type for 'tx' to satisfy Prisma 7/Turbopack
-    const order = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
-      const newOrder = await tx.order.create({
+    const order = await prisma.$transaction(async () => {
+      const newOrder = await prisma.order.create({
         data: {
           userId: user.id,
           totalAmount,
@@ -88,10 +85,9 @@ export async function POST(req: NextRequest) {
         },
       })
 
-      // Decrement stock levels
       for (const i of resolvedItems) {
         if (i.variant) {
-          await tx.productVariant.update({
+          await prisma.productVariant.update({
             where: { id: i.variant.id },
             data: { stock: { decrement: i.quantity } },
           })
@@ -101,47 +97,45 @@ export async function POST(req: NextRequest) {
       return newOrder
     })
 
-    // Handle Mailer Logic for COD
- const emailItems = order.items.map((item: any) => ({ // Added : any
-  name: item.variant.product.name,
-  size: item.variant.size,
-  quantity: item.quantity,
-  price: item.price,
-  productType: item.productType,
-}))
+    const emailItems = order.items.map((item: any) => ({
+      name: item.variant.product.name,
+      size: item.variant.size,
+      quantity: item.quantity,
+      price: item.price,
+      productType: item.productType,
+    }))
 
-      const sanitizedAddress = {
-        line1: order.address.line1,
-        city: order.address.city,
-        state: order.address.state,
-        postalCode: order.address.postalCode,
-        country: order.address.country,
-        phone: order.address.phone ?? undefined,
-      }
-
-      // We don't await these to prevent blocking the response
-      sendOrderConfirmation({
-        to: dbUser!.email,
-        name: dbUser?.firstName ?? 'Customer',
-        orderId: order.id,
-        items: emailItems,
-        total: order.totalAmount,
-        address: sanitizedAddress,
-        paymentMethod: 'Cash on Delivery',
-      })
-
-      sendOwnerAlert({
-        orderId: order.id,
-        customerEmail: dbUser!.email,
-        customerName: `${dbUser?.firstName ?? ''} ${dbUser?.lastName ?? ''}`.trim(),
-        total: order.totalAmount,
-        paymentMethod: 'COD',
-        address: sanitizedAddress,
-        items: emailItems,
-      })
+    const sanitizedAddress = {
+      line1: order.address.line1,
+      city: order.address.city,
+      state: order.address.state,
+      postalCode: order.address.postalCode,
+      country: order.address.country,
+      phone: order.address.phone ?? undefined,
     }
 
+    sendOrderConfirmation({
+      to: dbUser!.email,
+      name: dbUser?.firstName ?? 'Customer',
+      orderId: order.id,
+      items: emailItems,
+      total: order.totalAmount,
+      address: sanitizedAddress,
+      paymentMethod: 'Cash on Delivery',
+    })
+
+    sendOwnerAlert({
+      orderId: order.id,
+      customerEmail: dbUser!.email,
+      customerName: `${dbUser?.firstName ?? ''} ${dbUser?.lastName ?? ''}`.trim(),
+      total: order.totalAmount,
+      paymentMethod: 'COD',
+      address: sanitizedAddress,
+      items: emailItems,
+    })
+
     return NextResponse.json(order, { status: 201 })
+
   } catch (e) {
     console.error('[orders POST error]', e)
     return NextResponse.json({ error: 'Failed to create order' }, { status: 500 })
