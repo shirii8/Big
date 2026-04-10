@@ -5,11 +5,28 @@ if (!process.env.RESEND_API_KEY) {
 }
 
 const resend = new Resend(process.env.RESEND_API_KEY ?? 'missing')
-const FROM = process.env.RESEND_FROM_EMAIL ?? 'orders@tessch.com'
-const OWNER = process.env.OWNER_EMAIL ?? ''
+const FROM   = process.env.RESEND_FROM_EMAIL ?? 'orders@tessch.com'
+const OWNER  = process.env.OWNER_EMAIL ?? ''
 
-// ── Helpers ────────────────────────────────────────────────────────────────────
-function orderStatusColor(status: string) {
+type EmailItem = {
+  name: string
+  size: string
+  quantity: number
+  price: number
+  productType: string
+}
+
+type AddressSnap = {
+  line1: string
+  line2?: string | null
+  city: string
+  state: string
+  postalCode: string
+  country: string
+  phone?: string | null
+}
+
+function orderStatusColor(status: string): string {
   const map: Record<string, string> = {
     PENDING: '#f59e0b', PAID: '#3b82f6',
     SHIPPED: '#8b5cf6', DELIVERED: '#10b981', CANCELLED: '#ef4444',
@@ -17,20 +34,19 @@ function orderStatusColor(status: string) {
   return map[status] ?? '#17191d'
 }
 
-// ── Customer: order confirmation ───────────────────────────────────────────────
 export async function sendOrderConfirmation(opts: {
   to: string
   name: string
   orderId: string
-  items: { name: string; size: string; quantity: number; price: number; productType: string }[]
+  items: EmailItem[]
   total: number
-  address: { line1: string; city: string; state: string; postalCode: string; country: string }
+  address: AddressSnap
   paymentMethod: string
-}) {
-  const itemRows = opts.items.map(i =>
+}): Promise<void> {
+  const itemRows = opts.items.map((i) =>
     `<tr>
       <td style="padding:8px 0;font-family:monospace;font-size:12px;border-bottom:1px solid #e5f1ee">
-        ${i.name} (${i.productType === 'build' ? 'Full Build' : 'Upper Only'}) — ${i.size}
+        ${i.name} (${i.productType === 'build' ? 'Full Build' : 'Upper Only'}) — ${i.size} × ${i.quantity}
       </td>
       <td style="padding:8px 0;font-family:monospace;font-size:12px;text-align:right;border-bottom:1px solid #e5f1ee">
         ₹${(i.price * i.quantity).toLocaleString('en-IN')}
@@ -46,43 +62,37 @@ export async function sendOrderConfirmation(opts: {
       <div style="background:#17191d;padding:40px;font-family:monospace;color:#e5f1ee;max-width:600px;margin:0 auto">
         <h1 style="font-size:32px;letter-spacing:-1px;text-transform:uppercase;margin:0 0 8px">BUILD LOCKED.</h1>
         <p style="color:#d4604d;font-size:10px;text-transform:uppercase;letter-spacing:3px;margin:0 0 32px">Order Confirmed</p>
-
         <p style="font-size:12px;opacity:0.6;margin:0 0 4px">ORDER ID</p>
         <p style="font-size:14px;font-weight:bold;margin:0 0 24px">${opts.orderId.slice(0, 8).toUpperCase()}</p>
-
         <table style="width:100%;border-collapse:collapse;margin-bottom:24px">${itemRows}</table>
-
-        <div style="border-top:2px solid #e5f1ee20;padding-top:16px;display:flex;justify-content:space-between">
+        <div style="border-top:2px solid rgba(229,241,238,0.2);padding-top:16px;display:flex;justify-content:space-between">
           <span style="font-size:12px;opacity:0.6">TOTAL PAID</span>
           <span style="font-size:20px;font-weight:bold;color:#d4604d">₹${opts.total.toLocaleString('en-IN')}</span>
         </div>
-
-        <div style="margin-top:24px;background:#ffffff10;padding:16px">
+        <div style="margin-top:24px;background:rgba(255,255,255,0.05);padding:16px">
           <p style="font-size:10px;opacity:0.4;text-transform:uppercase;letter-spacing:2px;margin:0 0 8px">Delivering To</p>
           <p style="font-size:12px;margin:0">${opts.address.line1}, ${opts.address.city}, ${opts.address.state} — ${opts.address.postalCode}</p>
         </div>
-
         <p style="margin-top:32px;font-size:10px;opacity:0.4;text-transform:uppercase;letter-spacing:2px">
-          Estimated dispatch: 3–5 business days. You'll receive a shipping update when dispatched.
+          Estimated dispatch: 3–5 business days.
         </p>
       </div>
     `,
-  }).catch(e => console.error('[mailer] order confirmation failed:', e))
+  })
 }
 
-// ── Customer: status update ────────────────────────────────────────────────────
 export async function sendStatusUpdate(opts: {
   to: string
   name: string
   orderId: string
   status: string
   trackingId?: string
-}) {
+}): Promise<void> {
   const messages: Record<string, string> = {
     PAID:      'Payment confirmed. Your build is being prepared.',
     SHIPPED:   `Your build is on the way!${opts.trackingId ? ` Tracking: ${opts.trackingId}` : ''}`,
     DELIVERED: 'Your build has been delivered. Enjoy the drop.',
-    CANCELLED: 'Your order has been cancelled. Any payment will be refunded within 5–7 days.',
+    CANCELLED: 'Your order has been cancelled. Refund within 5–7 days.',
   }
 
   await resend.emails.send({
@@ -92,9 +102,7 @@ export async function sendStatusUpdate(opts: {
     html: `
       <div style="background:#17191d;padding:40px;font-family:monospace;color:#e5f1ee;max-width:600px;margin:0 auto">
         <h1 style="font-size:28px;letter-spacing:-1px;text-transform:uppercase;margin:0 0 8px">ORDER UPDATE</h1>
-        <p style="color:${orderStatusColor(opts.status)};font-size:10px;text-transform:uppercase;letter-spacing:3px;margin:0 0 32px">
-          ● ${opts.status}
-        </p>
+        <p style="color:${orderStatusColor(opts.status)};font-size:10px;text-transform:uppercase;letter-spacing:3px;margin:0 0 32px">● ${opts.status}</p>
         <p style="font-size:12px;opacity:0.6;margin:0 0 4px">ORDER ${opts.orderId.slice(0, 8).toUpperCase()}</p>
         <p style="font-size:14px;margin:0 0 24px">${messages[opts.status] ?? 'Your order status has been updated.'}</p>
         <a href="${process.env.KINDE_SITE_URL}/orders"
@@ -103,22 +111,21 @@ export async function sendStatusUpdate(opts: {
         </a>
       </div>
     `,
-  }).catch(e => console.error('[mailer] status update failed:', e))
+  })
 }
 
-// ── Owner: new order alert ────────────────────────────────────────────────────
 export async function sendOwnerAlert(opts: {
   orderId: string
   customerEmail: string
   customerName: string
   total: number
   paymentMethod: string
-  address: { line1: string; city: string; state: string; postalCode: string; phone?: string }
-  items: { name: string; size: string; quantity: number; productType: string }[]
-}) {
+  address: AddressSnap
+  items: EmailItem[]
+}): Promise<void> {
   if (!OWNER) return
 
-  const itemList = opts.items.map(i =>
+  const itemList = opts.items.map((i) =>
     `• ${i.name} (${i.productType === 'build' ? 'Full Build' : 'Upper Only'}) — ${i.size} × ${i.quantity}`
   ).join('\n')
 
@@ -144,5 +151,5 @@ export async function sendOwnerAlert(opts: {
         </a>
       </div>
     `,
-  }).catch(e => console.error('[mailer] owner alert failed:', e))
+  })
 }

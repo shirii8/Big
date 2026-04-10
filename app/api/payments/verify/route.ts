@@ -1,74 +1,104 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from "@/lib/db"
+import { NextResponse } from 'next/server'
+import crypto from 'crypto'
+import {prisma} from '@/lib/db'
 import { getKindeServerSession } from '@kinde-oss/kinde-auth-nextjs/server'
-import { sendOrderConfirmation } from '@/lib/mailer'
+import { sendOrderConfirmation, sendOwnerAlert } from '@/lib/mailer'
 
-export async function POST(req: NextRequest) {
+type OrderItemWithRelations = {
+  id: string
+  quantity: number
+  price: number
+  productType: string
+  variant: {
+    size: string
+    product: {
+      name: string
+      image: string
+    }
+  }
+}
+
+export async function POST(req: Request) {
   const { getUser } = getKindeServerSession()
   const user = await getUser()
   if (!user?.id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-try {
-  // 1. Destructure orderId from the body (assuming Razorpay sends it or you pass it)
-  const { razorpay_order_id, razorpay_payment_id, razorpay_signature, orderId } = await req.json();
+  try {
+    const {
+      razorpay_order_id,
+      razorpay_payment_id,
+      razorpay_signature,
+      internalOrderId,
+    } = await req.json()
 
-  if (!orderId) {
-    return NextResponse.json({ error: 'Order ID is missing' }, { status: 400 });
-  }
+    if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature || !internalOrderId) {
+      return NextResponse.json({ error: 'Missing payment fields' }, { status: 400 })
+    }
 
-  // 2. Use 'prisma' (the name you imported) instead of 'db'
-  const order = await prisma.order.findUnique({
-    where: { id: orderId },
-    include: {
-      items: {
-        include: {
-          variant: {
-            include: { product: true }
-          }
-        }
+    // Verify signature
+    const body = `${razorpay_order_id}|${razorpay_payment_id}`
+    const expectedSig = crypto
+      .createHmac('sha256', process.env.RAZORPAY_KEY_SECRET!)
+      .update(body)
+      .digest('hex')
+
+    if (expectedSig !== razorpay_signature) {
+      console.error('[verify] Signature mismatch')
+      return NextResponse.json({ error: 'Payment verification failed' }, { status: 400 })
+    }
+
+    // Update order to PAID
+    const order = await prisma.order.update({
+      where: { id: internalOrderId },
+      data: {
+        status: 'PAID',
+        dodoPaymentId: razorpay_payment_id,
+        dodoSessionId: razorpay_order_id,
       },
-      address: true,
-      user: true,
-    },
-  });
-
-  if (!order) {
-    return NextResponse.json({ error: 'Order not found' }, { status: 404 });
-  }
+      include: {
+        items: {
+          include: {
+            variant: { include: { product: true } },
+          },
+        },
+        address: true,
+        user: true,
+      },
+    })
 
     // 2. Map items for the email
-    const emailItems = order.items.map((i) => ({
+    const emailItems = (order.items as OrderItemWithRelations[]).map((i) => ({
       name: i.variant.product.name,
       size: i.variant.size,
       quantity: i.quantity,
       price: i.price,
-      productType: (i as any).productType, // Cast to any to bypass the strict inclusion check
+      productType: i.productType,
     }))
 
-    // 3. Sanitize the address
-    const sanitizedAddress = {
-      line1: order.address.line1,
-      city: order.address.city,
-      state: order.address.state,
-      postalCode: order.address.postalCode,
-      country: order.address.country,
-      phone: order.address.phone ?? undefined,
-    }
-
-    // 4. Send Confirmation (Using order.user to avoid 'dbUser' not found error)
-    await sendOrderConfirmation({
+    // Send emails (non-blocking)
+    sendOrderConfirmation({
       to: order.user.email,
       name: order.user.firstName ?? 'Customer',
       orderId: order.id,
       items: emailItems,
       total: order.totalAmount,
-     paymentMethod: (order as any).paymentMethod,
-      address: sanitizedAddress,
-    })
+      address: order.address,
+      paymentMethod: order.paymentMethod,
+    }).catch((e: unknown) => console.error('[verify] confirmation email failed:', e))
 
-    return NextResponse.json({ success: true })
-  } catch (error) {
-    console.error('[verify error]', error)
-    return NextResponse.json({ error: "Verification failed" }, { status: 500 })
+    sendOwnerAlert({
+      orderId: order.id,
+      customerEmail: order.user.email,
+      customerName: `${order.user.firstName ?? ''} ${order.user.lastName ?? ''}`.trim(),
+      total: order.totalAmount,
+      paymentMethod: order.paymentMethod,
+      address: order.address,
+      items: emailItems,
+    }).catch((e: unknown) => console.error('[verify] owner alert failed:', e))
+
+    return NextResponse.json({ success: true, orderId: order.id })
+  } catch (e) {
+    console.error('[verify]', e)
+    return NextResponse.json({ error: 'Internal error' }, { status: 500 })
   }
 }
