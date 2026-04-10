@@ -23,9 +23,9 @@ import {
   TIMELINE,
 } from "@/lib/data";
 
-const HeroCanvas = dynamic(() => import("@/components/3d/HeroCanvas"), {
-  ssr: false,
-});
+// const HeroCanvas = dynamic(() => import("@/components/3d/HeroCanvas"), {
+//   ssr: false,
+// });
 
 function useCountdown(target: number) {
   const [time, setTime] = useState({ d: 0, h: 0, m: 0, s: 0 });
@@ -169,9 +169,9 @@ const countdown = useCountdown(DROP_DATE.getTime());
         <StoryPage />
       </section>
 
-      {/* <section id="pre-order" className="px-6 md:px-12 py-24 text-center border-t border-[#17191d]/10">
+      <section id="pre-order" className="px-6 md:px-12 py-24 text-center border-t border-[#17191d]/10">
         <FinalDropCTA/>
-      </section> */}
+      </section>
 
       {/* ══ FOOTER ═══════════════════════════════════════════ */}
       <footer className="border-t border-[#17191d]/5 px-6 md:px-12 py-12 flex justify-between items-center">
