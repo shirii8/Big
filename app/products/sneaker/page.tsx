@@ -1,222 +1,48 @@
-"use client";
+'use client'
 
-import { useState, useMemo, useEffect, memo, useCallback } from "react";
-import { AnimatePresence, motion, useAnimationControls } from "framer-motion";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import SectionLabel from "@/components/ui/SectionLabel";
-import { useCart } from "@/context/CartContext";
-import { useKindeBrowserClient } from "@kinde-oss/kinde-auth-nextjs";
+import { useState, useMemo, useEffect, memo, useCallback, useRef } from 'react'
+import { AnimatePresence, motion, useAnimationControls } from 'framer-motion'
+import { useRouter } from 'next/navigation'
+import SectionLabel from '@/components/ui/SectionLabel'
+import { useCart } from '@/context/CartContext'
+import { useKindeBrowserClient } from '@kinde-oss/kinde-auth-nextjs'
+import { PRODUCTS, type Product } from '@/lib/data'
+import { ShieldCheck, Package, Layers, AlertTriangle } from 'lucide-react'
 
-// ─── Types ────────────────────────────────────────────────────────────────────
-interface Upper {
-  id: string;
-  name: string;
-  category: string;
-  price: string;
-  priceNum: number;
-  description: string;
-  image: string;
-  specs: Record<string, string>;
+type CartState = 'idle' | 'loading' | 'success' | 'error'
+type BuildChoice = 'upper-only' | 'build'
+
+const SIZES = ['UK 5', 'UK 6', 'UK 7', 'UK 8', 'UK 9', 'UK 10', 'UK 11']
+
+const UPPER_PRICE = 1499
+const SOLE_PRICE  = 1299
+const BUILD_PRICE = UPPER_PRICE + SOLE_PRICE // 2798
+
+const DEFAULT_SOLE = {
+  id: 'sole-default',
+  name: 'CLOUD RUNNER',
+  price: SOLE_PRICE,
+  image: 'https://res.cloudinary.com/dttnc62hp/image/upload/v1775581980/SolidLogo-removebg-preview_hw2e30.png',
 }
-
-type CartState = "idle" | "loading" | "success" | "error";
-
-// ─── Data ─────────────────────────────────────────────────────────────────────
-const UPPERS_DATA: Upper[] = [
-  {
-    id: "u-001",
-    name: "NEON VAPOR",
-    category: "Performance",
-    price: "₹6,400",
-    priceNum: 6400,
-    description:
-      "High-breathability engineered knit designed for peak aerobic output.",
-    image:
-      "https://res.cloudinary.com/dttnc62hp/image/upload/q_auto/f_auto/v1775151261/WhatsApp_Image_2026-04-01_at_02.28.39_1_bqptrs.jpg",
-    specs: { Weight: "120g", Flex: "High", Material: "E-Knit" },
-  },
-  {
-    id: "u-002",
-    name: "CARBON SHIELD",
-    category: "Tactical",
-    price: "₹8,200",
-    priceNum: 8200,
-    description: "Reinforced ripstop nylon with waterproof TPU membrane.",
-    image:
-      "https://res.cloudinary.com/dttnc62hp/image/upload/q_auto/f_auto/v1775151261/WhatsApp_Image_2026-04-01_at_02.28.39_yrd7i8.jpg",
-    specs: { Weight: "180g", Flex: "Mid", Material: "Ripstop" },
-  },
-  {
-    id: "u-003",
-    name: "ARCTIC MINT",
-    category: "Lifestyle",
-    price: "₹5,900",
-    priceNum: 5900,
-    description: "Suede-textured synthetic upper with minimalist aesthetic.",
-    image:
-      "https://res.cloudinary.com/dttnc62hp/image/upload/q_auto/f_auto/v1775151260/WhatsApp_Image_2026-04-01_at_02.28.39_2_nbdalk.jpg",
-    specs: { Weight: "150g", Flex: "Max", Material: "S-Suede" },
-  },
-  {
-    id: "u-004",
-    name: "DESERT PHANTOM",
-    category: "Tactical",
-    price: "₹7,100",
-    priceNum: 7100,
-    description: "Sand-blasted textile finish with reinforced eyelets.",
-    image:
-      "https://res.cloudinary.com/dttnc62hp/image/upload/q_auto/f_auto/v1775151260/WhatsApp_Image_2026-04-01_at_02.28.40_kgvxv4.jpg",
-    specs: { Weight: "165g", Flex: "Low", Material: "Canvas" },
-  },
-  {
-    id: "u-005",
-    name: "ONYX GRID",
-    category: "Performance",
-    price: "₹6,800",
-    priceNum: 6800,
-    description: "Compression-fit upper for lateral stability.",
-    image:
-      "https://res.cloudinary.com/dttnc62hp/image/upload/q_auto/f_auto/v1775151260/WhatsApp_Image_2026-04-01_at_02.28.41_trc3nv.jpg",
-    specs: { Weight: "135g", Flex: "High", Material: "Grid-Silk" },
-  },
-  {
-    id: "u-006",
-    name: "COBALT CORE",
-    category: "Lifestyle",
-    price: "₹5,500",
-    priceNum: 5500,
-    description: "Essential modular upper in deep cobalt.",
-    image:
-      "https://res.cloudinary.com/dttnc62hp/image/upload/q_auto/f_auto/v1775151260/WhatsApp_Image_2026-04-01_at_02.28.40_2_k1xiwk.jpg",
-    specs: { Weight: "145g", Flex: "Max", Material: "Poly-Knit" },
-  },
-  {
-    id: "u-007",
-    name: "LAVA SHELL",
-    category: "Performance",
-    price: "₹7,900",
-    priceNum: 7900,
-    description: "Heat-reactive panels that change color.",
-    image:
-      "https://res.cloudinary.com/dttnc62hp/image/upload/q_auto/f_auto/v1775151259/WhatsApp_Image_2026-04-01_at_02.28.41_2_ekqxok.jpg",
-    specs: { Weight: "125g", Flex: "High", Material: "Thermo-K" },
-  },
-  {
-    id: "u-008",
-    name: "IRON MESH",
-    category: "Tactical",
-    price: "₹8,500",
-    priceNum: 8500,
-    description: "Metallic-infused fibers for extreme durability.",
-    image:
-      "https://res.cloudinary.com/dttnc62hp/image/upload/q_auto/f_auto/v1775151259/WhatsApp_Image_2026-04-01_at_02.28.41_1_qc3d2i.jpg",
-    specs: { Weight: "195g", Flex: "Low", Material: "Meta-Mesh" },
-  },
-  {
-    id: "u-009",
-    name: "GHOST WHITE",
-    category: "Lifestyle",
-    price: "₹6,200",
-    priceNum: 6200,
-    description: "Triple-white aesthetic with easy-clean coating.",
-    image:
-      "https://res.cloudinary.com/dttnc62hp/image/upload/q_auto/f_auto/v1775151258/WhatsApp_Image_2026-04-01_at_02.28.42_3_rchhdv.jpg",
-    specs: { Weight: "140g", Flex: "Mid", Material: "Nano-Syn" },
-  },
-  {
-    id: "u-010",
-    name: "FOREST TRACKER",
-    category: "Tactical",
-    price: "₹7,400",
-    priceNum: 7400,
-    description: "Earth-toned silhouette with extra ankle padding.",
-    image:
-      "https://res.cloudinary.com/dttnc62hp/image/upload/q_auto/f_auto/v1775151258/WhatsApp_Image_2026-04-01_at_02.28.43_1_fvxhqe.jpg",
-    specs: { Weight: "170g", Flex: "Mid", Material: "Cordura" },
-  },
-  {
-    id: "u-011",
-    name: "CYBER PULSE",
-    category: "Performance",
-    price: "₹8,800",
-    priceNum: 8800,
-    description: "Integrated LED piping that syncs with your pace.",
-    image:
-      "https://res.cloudinary.com/dttnc62hp/image/upload/q_auto/f_auto/v1775151258/WhatsApp_Image_2026-04-01_at_02.28.42_mhygsi.jpg",
-    specs: { Weight: "155g", Flex: "High", Material: "Optic-Fiber" },
-  },
-  {
-    id: "u-012",
-    name: "VINTAGE SLAB",
-    category: "Lifestyle",
-    price: "₹5,200",
-    priceNum: 5200,
-    description: "Retro-inspired paneling with modern modular rails.",
-    image:
-      "https://res.cloudinary.com/dttnc62hp/image/upload/q_auto/f_auto/v1775151258/WhatsApp_Image_2026-04-01_at_02.28.42_1_byhuzb.jpg",
-    specs: { Weight: "160g", Flex: "Max", Material: "Leather/Mesh" },
-  },
-  {
-    id: "u-013",
-    name: "NIGHT RAID",
-    category: "Tactical",
-    price: "₹9,200",
-    priceNum: 9200,
-    description: "Stealth-black upper with light-absorbing finish.",
-    image:
-      "https://res.cloudinary.com/dttnc62hp/image/upload/q_auto/f_auto/v1775151258/WhatsApp_Image_2026-04-01_at_02.28.43_uggnck.jpg",
-    specs: { Weight: "185g", Flex: "Low", Material: "Matte-Skin" },
-  },
-  {
-    id: "u-014",
-    name: "ZENITH BLUE",
-    category: "Performance",
-    price: "₹6,900",
-    priceNum: 6900,
-    description: "Weightless sensation upper with industrial rail locking.",
-    image:
-      "https://res.cloudinary.com/dttnc62hp/image/upload/q_auto/f_auto/v1775151261/WhatsApp_Image_2026-04-01_at_02.28.39_yrd7i8.jpg",
-    specs: { Weight: "110g", Flex: "Max", Material: "Silk-Nit" },
-  },
-  {
-    id: "u-015",
-    name: "STORM BREAKER",
-    category: "Tactical",
-    price: "₹8,400",
-    priceNum: 8400,
-    description: "Windproof and snow-resistant modular archive.",
-    image:
-      "https://res.cloudinary.com/dttnc62hp/image/upload/q_auto/f_auto/v1775151260/WhatsApp_Image_2026-04-01_at_02.28.39_2_nbdalk.jpg",
-    specs: { Weight: "210g", Flex: "Low", Material: "Gore-S" },
-  },
-];
-
-const SIZES = ["UK 6", "UK 7", "UK 8", "UK 9", "UK 10", "UK 11"];
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 export default function UppersPage() {
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(null)
   const selectedProduct = useMemo(
-    () => UPPERS_DATA.find((p) => p.id === selectedId) ?? null,
-    [selectedId],
-  );
+    () => PRODUCTS.find(p => p.id === selectedId) ?? null,
+    [selectedId]
+  )
 
   useEffect(() => {
-    document.body.style.overflow = selectedId ? "hidden" : "";
-    return () => {
-      document.body.style.overflow = "";
-    };
-  }, [selectedId]);
+    document.body.style.overflow = selectedId ? 'hidden' : ''
+    return () => { document.body.style.overflow = '' }
+  }, [selectedId])
 
-  const ROWS = useMemo(
-    () => [
-      UPPERS_DATA.slice(0, 5),
-      UPPERS_DATA.slice(5, 10),
-      UPPERS_DATA.slice(10, 15),
-    ],
-    [],
-  );
+  const ROWS = useMemo(() => [
+    PRODUCTS.slice(0, 5),
+    PRODUCTS.slice(5, 10),
+    PRODUCTS.slice(10, 15),
+  ], [])
 
   return (
     <div className="bg-[#e5f1ee] min-h-screen w-full flex flex-col text-[#17191d]">
@@ -228,64 +54,50 @@ export default function UppersPage() {
             <span className="text-[#d4604d]">BUILD.</span>
           </h1>
           <div className="text-right hidden md:block">
-            <p className="font-mono text-[10px] uppercase tracking-[3px] font-bold">
-              Protocol_v.1.04
-            </p>
-            <p className="font-mono text-[9px] uppercase tracking-[2px] opacity-40">
-              Hover to Pause & Drag
-            </p>
+            <p className="font-mono text-[10px] uppercase tracking-[3px] font-bold">Protocol_v.1.04</p>
+            <p className="font-mono text-[9px] uppercase tracking-[2px] opacity-40">Hover to Pause · Drag to Scroll</p>
           </div>
         </div>
       </header>
 
-      <main className="flex flex-col gap-12 py-8 overflow-hidden mb-24">
+      <main className="flex flex-col gap-2 py-2 overflow-hidden mb-24">
         {ROWS.map((row, idx) => (
-          <ArchiveRow
-            key={idx}
-            items={row}
-            onSelect={setSelectedId}
-            reverse={idx === 1}
-          />
+          <ArchiveRow key={idx} items={row} onSelect={setSelectedId} reverse={idx === 1} />
         ))}
       </main>
 
       <AnimatePresence>
         {selectedId && selectedProduct && (
-          <ProductDetail
-            product={selectedProduct}
-            onClose={() => setSelectedId(null)}
-          />
+          <ProductDetail product={selectedProduct} onClose={() => setSelectedId(null)} />
         )}
       </AnimatePresence>
     </div>
-  );
+  )
 }
 
 // ─── ArchiveRow ───────────────────────────────────────────────────────────────
 function ArchiveRow({
-  items,
-  onSelect,
-  reverse,
+  items, onSelect, reverse,
 }: {
-  items: Upper[];
-  onSelect: (id: string) => void;
-  reverse: boolean;
+  items: Product[]
+  onSelect: (id: string) => void
+  reverse: boolean
 }) {
-  const [isPaused, setIsPaused] = useState(false);
-  const controls = useAnimationControls();
-  const tripled = useMemo(() => [...items, ...items, ...items], [items]);
-  const scrollDistance = items.length * 560;
+  const [isPaused, setIsPaused] = useState(false)
+  const controls = useAnimationControls()
+  const tripled = useMemo(() => [...items, ...items, ...items], [items])
+  const scrollDistance = items.length * 560
 
   useEffect(() => {
     if (!isPaused) {
       controls.start({
         x: reverse ? [0, -scrollDistance] : [-scrollDistance, 0],
-        transition: { duration: 40, repeat: Infinity, ease: "linear" },
-      });
+        transition: { duration: 40, repeat: Infinity, ease: 'linear' },
+      })
     } else {
-      controls.stop();
+      controls.stop()
     }
-  }, [isPaused, controls, reverse, scrollDistance]);
+  }, [isPaused, controls, reverse, scrollDistance])
 
   return (
     <div
@@ -299,204 +111,354 @@ function ArchiveRow({
         dragConstraints={{ left: -scrollDistance * 2, right: 0 }}
         dragElastic={0.05}
         className="flex gap-10 px-12 h-full items-center cursor-grab active:cursor-grabbing"
-        style={{ width: "max-content", touchAction: "none" }}
+        style={{ width: 'max-content', touchAction: 'none' }}
       >
         {tripled.map((product, i) => (
-          <ProductCard
-            key={`${product.id}-${i}`}
-            product={product}
-            onSelect={onSelect}
-          />
+          <ProductCard key={`${product.id}-${i}`} product={product} onSelect={onSelect} />
         ))}
       </motion.div>
     </div>
-  );
+  )
 }
 
 // ─── ProductCard ──────────────────────────────────────────────────────────────
-const ProductCard = memo(
-  ({
-    product,
-    onSelect,
-  }: {
-    product: Upper;
-    onSelect: (id: string) => void;
-  }) => (
-    <div
-      onClick={() => onSelect(product.id)}
-      className="w-[480px] md:w-[520px] h-[240px] bg-white border-[3px] border-[#17191d] group flex flex-row overflow-hidden hover:shadow-[12px_12px_0px_#d4604d] transition-shadow duration-300 cursor-pointer shrink-0"
-    >
-      <div className="w-[52%] h-full bg-[#f8fcfb] relative overflow-hidden border-r-[3px] border-[#17191d]">
-        <img
-          src={product.image}
-          className="w-full h-full object-contain mix-blend-multiply scale-105 group-hover:scale-110 transition-transform duration-500 ease-out"
-          alt=""
-        />
+const ProductCard = memo(({
+  product, onSelect,
+}: {
+  product: Product
+  onSelect: (id: string) => void
+}) => (
+  <div
+    onClick={() => onSelect(product.id)}
+    className="w-[480px] md:w-[520px] h-[240px] bg-white border-[3px] border-[#17191d] group flex flex-row overflow-hidden hover:shadow-[12px_12px_0px_#d4604d] transition-shadow duration-300 cursor-pointer shrink-0"
+  >
+    <div className="flex-1 h-full bg-[#f8fcfb] relative overflow-hidden border-r-[3px] border-[#17191d]">
+      <img
+        src={product.image}
+        className="w-full h-full object-contain mix-blend-multiply scale-105 group-hover:scale-110 transition-transform duration-500 ease-out"
+        alt={product.name}
+      />
+    </div>
+    <div className="w-[180px] shrink-0 h-full p-5 flex flex-col justify-between bg-white group-hover:bg-[#d4604d]/5 transition-colors">
+      <div>
+        <p className="font-mono text-[9px] text-[#d4604d] font-bold uppercase tracking-[2px] mb-2">{product.category}</p>
+        <h3 className="font-display text-2xl md:text-3xl uppercase leading-[0.88] tracking-tighter">{product.name}</h3>
       </div>
-      <div className="w-[48%] h-full p-6 flex flex-col justify-between bg-white group-hover:bg-[#d4604d]/5 transition-colors">
-        <div>
-          <p className="font-mono text-[9px] text-[#d4604d] font-bold uppercase tracking-[2px] mb-2">
-            {product.category}
-          </p>
-          <h3 className="font-display text-2xl md:text-3xl uppercase leading-[0.88] tracking-tighter">
-            {product.name}
-          </h3>
-        </div>
-        <div className="flex justify-between items-end">
-          <p className="font-display text-2xl">{product.price}</p>
-          <span className="font-mono text-[10px] font-bold text-[#d4604d] border-b border-[#d4604d] pb-0.5">
-            VIEW DETAIL
-          </span>
-        </div>
+      <div className="flex flex-col gap-1">
+        <p className="font-mono text-[8px] uppercase opacity-40">From</p>
+        <p className="font-display text-2xl">₹{UPPER_PRICE.toLocaleString('en-IN')}</p>
+        <span className="font-mono text-[10px] font-bold text-[#d4604d] border-b border-[#d4604d] pb-0.5 w-fit">VIEW DETAIL</span>
       </div>
     </div>
-  ),
-);
-ProductCard.displayName = "ProductCard";
+  </div>
+))
+ProductCard.displayName = 'ProductCard'
 
 // ─── ProductDetail ────────────────────────────────────────────────────────────
 function ProductDetail({
-  product,
-  onClose,
+  product, onClose,
 }: {
-  product: Upper;
-  onClose: () => void;
+  product: Product
+  onClose: () => void
 }) {
-  const [size, setSize] = useState("UK 9");
-  const [cartState, setCartState] = useState<CartState>("idle");
-  const { addItem } = useCart();
-  const { isAuthenticated } = useKindeBrowserClient();
-  const router = useRouter();
+  const [size, setSize]               = useState('UK 9')
+  const [buildChoice, setBuildChoice] = useState<BuildChoice>('build')
+  const [cartState, setCartState]     = useState<CartState>('idle')
+  const [isZoomed, setIsZoomed]       = useState(false)
+  const [lensPos, setLensPos]         = useState({ x: 50, y: 50 })
+  const imageContainerRef             = useRef<HTMLDivElement>(null)
+
+  const { addItem }         = useCart()
+  const { isAuthenticated } = useKindeBrowserClient()
+  const router              = useRouter()
 
   useEffect(() => {
-    setCartState("idle");
-  }, [product.id]);
+    setCartState('idle')
+    setIsZoomed(false)
+  }, [product.id])
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') isZoomed ? setIsZoomed(false) : onClose()
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [isZoomed, onClose])
+
+  const handleMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    if (!imageContainerRef.current || !isZoomed) return
+    const rect = imageContainerRef.current.getBoundingClientRect()
+    const x = Math.min(100, Math.max(0, ((e.clientX - rect.left) / rect.width) * 100))
+    const y = Math.min(100, Math.max(0, ((e.clientY - rect.top) / rect.height) * 100))
+    setLensPos({ x, y })
+  }, [isZoomed])
 
   const handleAddToCart = useCallback(() => {
-    if (cartState === "loading" || cartState === "success") return;
-
-    if (!isAuthenticated) {
-      router.push("/api/auth/login");
-      return;
-    }
-
-    setCartState("loading");
+    if (cartState === 'loading' || cartState === 'success') return
+    if (!isAuthenticated) { router.push('/api/auth/login'); return }
+    setCartState('loading')
 
     addItem(
       {
         id: product.id,
         name: product.name,
         category: product.category,
-        price: product.priceNum,
+        price: UPPER_PRICE,
         image: product.image,
       },
       size,
-      "upper-only",
-    );
+      buildChoice,
+      buildChoice === 'build' ? DEFAULT_SOLE : undefined
+    )
 
-    setCartState("success");
-    setTimeout(() => setCartState("idle"), 2500);
-  }, [cartState, product, size, addItem, isAuthenticated, router]);
+    setCartState('success')
+    setTimeout(() => {
+      setCartState('idle')
+      onClose()
+    }, 1200)
+  }, [cartState, product, size, buildChoice, addItem, isAuthenticated, router, onClose])
+
+  const displayPrice = buildChoice === 'build'
+    ? `₹${BUILD_PRICE.toLocaleString('en-IN')}`
+    : `₹${UPPER_PRICE.toLocaleString('en-IN')}`
 
   const cartLabel: Record<CartState, string> = {
-    idle: "ADD BUILD TO CART",
-    loading: "ADDING...",
-    success: "ADDED ✓",
-    error: "RETRY",
-  };
-
-  const cartBg: Record<CartState, string> = {
-    idle: "bg-[#17191d] hover:bg-[#d4604d]",
-    loading: "bg-[#17191d]/60 cursor-wait",
-    success: "bg-emerald-600",
-    error: "bg-red-600 hover:bg-red-700",
-  };
+    idle:    buildChoice === 'build' ? 'SECURE YOUR TESSCH →' : 'ADD UPPER TO CART →',
+    loading: 'ADDING...',
+    success: 'ADDED ✓',
+    error:   'RETRY',
+  }
 
   return (
     <>
+      {/* Backdrop */}
       <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
+        initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
         onClick={onClose}
         className="fixed inset-0 z-[1000] bg-[#17191d]/60 backdrop-blur-sm"
       />
+
+      {/* Modal */}
       <motion.div
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        exit={{ opacity: 0, scale: 0.95 }}
-        className="fixed inset-4 md:inset-x-20 md:inset-y-12 z-[1001] bg-[#e5f1ee] border-4 border-[#17191d] shadow-[20px_20px_0px_#17191d] flex flex-col md:flex-row overflow-hidden"
+        initial={{ opacity: 0, scale: 0.96, y: 20 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.96, y: 20 }}
+        transition={{ type: 'spring', damping: 26, stiffness: 300 }}
+        className="fixed inset-4 md:inset-x-12 md:inset-y-8 z-[1001] bg-[#e5f1ee] border-4 border-[#17191d] shadow-[20px_20px_0px_#17191d] flex flex-col md:flex-row overflow-hidden"
       >
-        {/* Image panel */}
-        <div className="w-full md:w-[52%] h-[40%] md:h-full bg-white flex items-center justify-center p-10 border-b-4 md:border-b-0 md:border-r-4 border-[#17191d]">
+
+        {/* ── IMAGE PANEL ─────────────────────────────────────────────────── */}
+        <div
+          ref={imageContainerRef}
+          className="w-full md:w-[48%] h-[42%] md:h-full bg-white flex items-center justify-center border-b-4 md:border-b-0 md:border-r-4 border-[#17191d] relative overflow-hidden select-none"
+          onDoubleClick={() => setIsZoomed(v => !v)}
+          onMouseMove={handleMouseMove}
+          onMouseLeave={() => setIsZoomed(false)}
+          style={{ cursor: isZoomed ? 'zoom-out' : 'zoom-in' }}
+        >
+          {/* Static metadata */}
+          {!isZoomed && (
+            <div className="absolute top-4 left-6 flex flex-col gap-1 pointer-events-none z-10">
+              <span className="font-mono text-[8px] uppercase tracking-[3px] text-[#17191d]/20">
+                Asset // {product.id}
+              </span>
+            </div>
+          )}
+
+          {/* Main image */}
           <img
             src={product.image}
-            className="max-h-full w-auto object-contain mix-blend-multiply"
-            alt=""
+            className={`max-h-[80%] w-auto object-contain mix-blend-multiply pointer-events-none transition-all duration-500 ${isZoomed ? 'opacity-0 scale-95 blur-md' : 'opacity-100 scale-100'}`}
+            alt={product.name}
+            draggable={false}
           />
+
+          {/* Zoom overlay */}
+          <AnimatePresence>
+            {isZoomed && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="absolute inset-0 bg-white z-20"
+                style={{
+                  backgroundImage: `url(${product.image})`,
+                  backgroundSize: '350%',
+                  backgroundPosition: `${lensPos.x}% ${lensPos.y}%`,
+                  backgroundRepeat: 'no-repeat',
+                }}
+              />
+            )}
+          </AnimatePresence>
+
+          {/* Zoom hints */}
+          {!isZoomed && (
+            <motion.div
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.5 }}
+              className="absolute bottom-4 font-mono text-[9px] uppercase tracking-[2px] bg-[#17191d] text-white px-4 py-2 rounded-full"
+            >
+              Double-click to inspect
+            </motion.div>
+          )}
+          {isZoomed && (
+            <div className="absolute bottom-4 right-4 font-mono text-[8px] uppercase tracking-[2px] text-[#d4604d] font-bold z-30 bg-white/90 px-3 py-1.5 rounded-full">
+              Move cursor · Double-click to close
+            </div>
+          )}
         </div>
 
-        {/* Info panel */}
-        <div className="flex-1 p-8 md:p-10 flex flex-col justify-between overflow-y-auto">
-          <div className="space-y-5">
+        {/* ── INFO PANEL ──────────────────────────────────────────────────── */}
+        <div className="flex-1 flex flex-col overflow-y-auto">
+
+          {/* Scrollable content */}
+          <div className="flex-1 p-7 md:p-9 space-y-5">
+
             {/* Category + close */}
             <div className="flex justify-between items-start">
-              <span className="font-mono text-[10px] bg-[#d4604d] text-white px-3 py-1 uppercase font-bold">
+              <span className="font-mono text-[10px] bg-[#d4604d] text-white px-3 py-1 uppercase font-bold tracking-[1px]">
                 {product.category}
               </span>
               <button
                 onClick={onClose}
-                className="text-2xl font-bold hover:text-[#d4604d] transition-colors"
+                className="w-8 h-8 flex items-center justify-center border-2 border-[#17191d] hover:bg-[#17191d] hover:text-white transition-colors text-lg font-bold"
               >
                 ✕
               </button>
             </div>
 
-            <h2 className="font-display text-6xl leading-[0.82] uppercase tracking-tighter">
-              {product.name}
-            </h2>
+            {/* Name */}
+            <h2 className="font-display text-5xl leading-[0.85] uppercase tracking-tighter">{product.name}</h2>
 
             {/* Specs */}
-            <div className="grid grid-cols-3 gap-4 border-t-2 border-[#17191d] pt-6">
+            <div className="grid grid-cols-3 gap-3 bg-white border-2 border-[#17191d]/10 p-4">
               {Object.entries(product.specs).map(([k, v]) => (
-                <div key={k}>
-                  <p className="font-mono text-[9px] uppercase opacity-40 mb-1">
-                    {k}
-                  </p>
-                  <p className="font-display text-xl uppercase leading-tight">
-                    {v}
-                  </p>
+                <div key={k} className="text-center">
+                  <p className="font-mono text-[8px] uppercase opacity-40 mb-1">{k}</p>
+                  <p className="font-display text-lg uppercase leading-tight">{v}</p>
                 </div>
               ))}
             </div>
 
-            {/* Sole upsell notice */}
-            <div className="flex items-center gap-3 bg-amber-50 border border-amber-200 px-4 py-3">
-              <img
-                className="h-6 w-6 object-contain"
-                src="https://res.cloudinary.com/dttnc62hp/image/upload/q_auto/f_auto/v1775581980/SolidLogo-removebg-preview_hw2e30.png"
-                alt="TESSCH Logo"
-              />
-              <p className="font-mono text-[9px] text-amber-700 uppercase tracking-[1px] leading-relaxed">
-                START SMART. DEFINE YOUR FOUNDATION.
-              </p>
+            {/* ── BUILD CHOICE TOGGLE ──────────────────────────────────── */}
+            <div className="space-y-3">
+              <p className="font-mono text-[9px] uppercase tracking-[3px] opacity-40">Choose Your Configuration</p>
+
+              {/* UPPER ONLY */}
+              <button
+                onClick={() => setBuildChoice('upper-only')}
+                className={`w-full flex items-start gap-4 p-4 border-[3px] transition-all text-left ${buildChoice === 'upper-only' ? 'border-[#17191d] bg-white' : 'border-[#17191d]/20 hover:border-[#17191d]/50 bg-white/50'}`}
+              >
+                <div className={`w-5 h-5 rounded-full border-2 mt-0.5 flex items-center justify-center shrink-0 ${buildChoice === 'upper-only' ? 'border-[#17191d]' : 'border-[#17191d]/30'}`}>
+                  {buildChoice === 'upper-only' && <div className="w-2.5 h-2.5 rounded-full bg-[#17191d]" />}
+                </div>
+                <div className="flex-1">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Package size={13} className="text-[#17191d]/60" />
+                      <p className="font-mono text-[10px] font-bold uppercase tracking-[2px]">Upper Only</p>
+                    </div>
+                    <p className="font-display text-xl">₹{UPPER_PRICE.toLocaleString('en-IN')}</p>
+                  </div>
+                  <p className="font-mono text-[9px] opacity-50 uppercase tracking-[1px] mt-1">
+                    The skin only — no sole included
+                  </p>
+                </div>
+              </button>
+
+              {/* FULL BUILD */}
+              <button
+                onClick={() => setBuildChoice('build')}
+                className={`w-full flex items-start gap-4 p-4 border-[3px] transition-all text-left relative ${buildChoice === 'build' ? 'border-[#d4604d] bg-[#d4604d]/5' : 'border-[#17191d]/20 hover:border-[#d4604d]/50 bg-white/50'}`}
+              >
+                {/* Recommended badge */}
+                <div className="absolute top-0 right-0 bg-[#d4604d] text-white font-mono text-[8px] uppercase tracking-[2px] px-3 py-1 font-bold">
+                  Recommended
+                </div>
+
+                <div className={`w-5 h-5 rounded-full border-2 mt-0.5 flex items-center justify-center shrink-0 ${buildChoice === 'build' ? 'border-[#d4604d]' : 'border-[#17191d]/30'}`}>
+                  {buildChoice === 'build' && <div className="w-2.5 h-2.5 rounded-full bg-[#d4604d]" />}
+                </div>
+                <div className="flex-1">
+                  <div className="flex items-center justify-between pr-24 md:pr-28">
+                    <div className="flex items-center gap-2">
+                      <Layers size={13} className="text-[#d4604d]" />
+                      <p className="font-mono text-[10px] font-bold uppercase tracking-[2px] text-[#d4604d]">
+                        Full Build (Upper + Sole)
+                      </p>
+                    </div>
+                  </div>
+                  {/* Price breakdown */}
+                  <div className="flex items-center gap-3 mt-2">
+                    <span className="font-mono text-[9px] opacity-50 uppercase">₹{UPPER_PRICE.toLocaleString('en-IN')} upper</span>
+                    <span className="font-mono text-[9px] opacity-30">+</span>
+                    <span className="font-mono text-[9px] opacity-50 uppercase">₹{SOLE_PRICE.toLocaleString('en-IN')} sole</span>
+                    <span className="font-mono text-[9px] opacity-30">=</span>
+                    <span className="font-display text-xl text-[#d4604d]">₹{BUILD_PRICE.toLocaleString('en-IN')}</span>
+                  </div>
+                  {/* Sole chip */}
+                  <div className="flex items-center gap-2 mt-2 bg-[#17191d]/5 px-3 py-2 w-fit">
+                    <img src={DEFAULT_SOLE.image} alt="Sole" className="w-8 h-8 object-contain mix-blend-multiply" />
+                    <div>
+                      <p className="font-mono text-[8px] uppercase opacity-40">Includes Sole</p>
+                      <p className="font-mono text-[9px] font-bold uppercase">{DEFAULT_SOLE.name}</p>
+                    </div>
+                  </div>
+                </div>
+              </button>
             </div>
 
-            {/* Size picker */}
-            <div className="border-t-2 border-[#17191d] pt-5">
-              <p className="font-mono text-[9px] uppercase tracking-[3px] opacity-40 mb-3">
-                Select Size
-              </p>
+            {/* ── CONTEXT MESSAGES ─────────────────────────────────────── */}
+            <AnimatePresence mode="wait">
+              {buildChoice === 'upper-only' ? (
+                <motion.div
+                  key="upper-warning"
+                  initial={{ opacity: 0, y: -8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -8 }}
+                  className="flex items-start gap-3 border-2 border-amber-300 bg-amber-50 px-4 py-3"
+                >
+                  <AlertTriangle size={14} className="text-amber-500 shrink-0 mt-0.5" />
+                  <div>
+                    <p className="font-mono text-[9px] font-bold uppercase tracking-[2px] text-amber-700 mb-1">
+                      Upper Only — Sole Not Included
+                    </p>
+                    <p className="font-mono text-[9px] text-amber-700/80 uppercase tracking-[1px] leading-relaxed">
+                      If you&apos;re buying Tessch for the first time, buying a sole is a must. You can add a sole and complete your sneaker from the cart at any time.
+                    </p>
+                  </div>
+                </motion.div>
+              ) : (
+                <motion.div
+                  key="build-confirm"
+                  initial={{ opacity: 0, y: -8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -8 }}
+                  className="flex items-start gap-3 border-2 border-[#17191d]/20 bg-[#17191d]/5 px-4 py-3"
+                >
+                  <ShieldCheck size={14} className="text-[#17191d] shrink-0 mt-0.5" />
+                  <div>
+                    <p className="font-mono text-[9px] font-bold uppercase tracking-[2px] text-[#17191d] mb-1">
+                      Secure Your Tessch
+                    </p>
+                    <p className="font-mono text-[9px] text-[#17191d]/60 uppercase tracking-[1px] leading-relaxed">
+                      Full build includes the Cloud Runner sole — the foundation of your modular pair. Swap uppers anytime, keep the sole forever.
+                    </p>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* ── SIZE PICKER ──────────────────────────────────────────── */}
+            <div>
+              <p className="font-mono text-[9px] uppercase tracking-[3px] opacity-40 mb-3">Select Size</p>
               <div className="flex flex-wrap gap-2">
-                {SIZES.map((s) => (
+                {SIZES.map(s => (
                   <button
                     key={s}
                     onClick={() => setSize(s)}
-                    className={`font-mono text-[10px] font-bold px-4 py-2 border-2 transition-all ${
-                      size === s
-                        ? "bg-[#17191d] text-white border-[#17191d]"
-                        : "border-[#17191d]/30 hover:border-[#17191d]"
-                    }`}
+                    className={`font-mono text-[10px] font-bold px-4 py-2 border-2 transition-all ${size === s ? 'bg-[#17191d] text-white border-[#17191d]' : 'border-[#17191d]/30 hover:border-[#17191d]'}`}
                   >
                     {s}
                   </button>
@@ -505,30 +467,54 @@ function ProductDetail({
             </div>
           </div>
 
-          {/* Footer: price + CTA */}
-          <div className="pt-6 border-t-2 border-[#17191d] mt-4 space-y-3">
-            <div className="flex items-center justify-between">
+          {/* ── STICKY FOOTER CTA ───────────────────────────────────────── */}
+          <div className="shrink-0 p-6 md:p-8 border-t-4 border-[#17191d] bg-[#e5f1ee]">
+            <div className="flex items-center justify-between mb-4">
               <div>
-                <p className="font-mono text-[9px] uppercase opacity-40">
-                  Unit Price
+                <p className="font-mono text-[8px] uppercase opacity-40 tracking-[2px]">
+                  {buildChoice === 'build' ? 'Full Build Price' : 'Upper Price'}
                 </p>
-                <p className="font-display text-4xl">{product.price}</p>
+                <div className="flex items-baseline gap-2">
+                  <p className="font-display text-4xl">{displayPrice}</p>
+                  {buildChoice === 'build' && (
+                    <span className="font-mono text-[9px] opacity-40 uppercase">incl. sole</span>
+                  )}
+                </div>
               </div>
-
-              <button
-                onClick={handleAddToCart}
-                disabled={cartState === "loading"}
-                className={`text-white font-mono text-[11px] font-bold uppercase tracking-[3px] px-8 py-4 transition-colors flex items-center gap-2 ${cartBg[cartState]}`}
-              >
-                {cartState === "loading" && (
-                  <span className="w-3 h-3 border-2 border-white/40 border-t-white rounded-full animate-spin" />
-                )}
-                {cartLabel[cartState]}
-              </button>
+              {/* Size reminder */}
+              <div className="text-right">
+                <p className="font-mono text-[8px] uppercase opacity-40">Selected Size</p>
+                <p className="font-display text-2xl">{size}</p>
+              </div>
             </div>
+
+            <button
+              onClick={handleAddToCart}
+              disabled={cartState === 'loading'}
+              className={`w-full font-mono text-[11px] font-bold uppercase tracking-[3px] py-5 transition-all flex items-center justify-center gap-3 ${
+                cartState === 'success'
+                  ? 'bg-emerald-600 text-white'
+                  : cartState === 'loading'
+                  ? 'bg-[#17191d]/60 text-white cursor-wait'
+                  : buildChoice === 'build'
+                  ? 'bg-[#d4604d] text-white hover:bg-[#17191d]'
+                  : 'bg-[#17191d] text-white hover:bg-[#d4604d]'
+              }`}
+            >
+              {cartState === 'loading' && (
+                <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+              )}
+              {cartLabel[cartState]}
+            </button>
+
+            {cartState === 'idle' && buildChoice === 'upper-only' && (
+              <p className="font-mono text-[8px] uppercase tracking-[1px] text-center opacity-30 mt-2">
+                You can upgrade to a full build from the cart
+              </p>
+            )}
           </div>
         </div>
       </motion.div>
     </>
-  );
+  )
 }

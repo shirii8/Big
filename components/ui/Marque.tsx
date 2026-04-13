@@ -2,7 +2,7 @@
 
 import { motion } from 'framer-motion'
 
-const MARQUEE_TEXT = "EXPLORE THE TESSCH ARCHIVE // MODULAR ADAPTATION // BUILD YOUR CONFIGURATION // "
+const MARQUEE_TEXT = "EARLY BIRD - 30% OFF*  //  PRE-ORDERS LIVE NOW  //  INDIA’S FIRST MODULAR SNEAKERS // "
 
 export default function RangeMarquee() {
   return (

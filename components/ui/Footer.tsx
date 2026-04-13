@@ -1,4 +1,5 @@
 'use client'
+import PolicyModal from './PolicyModal'
 
 import Link from 'next/link'
 
@@ -49,27 +50,55 @@ export default function Footer() {
             </div>
             <div>
               <h4 className="font-mono text-[9px] tracking-[3px] uppercase opacity-40 mb-6">Legal</h4>
-              <ul className="flex flex-col gap-3">
+              <PolicyModal />
+              {/* <ul className="flex flex-col gap-3">
                 {['Privacy', 'Terms', 'Shipment'].map((item) => (
                   <li key={item} className="font-mono text-[11px] uppercase opacity-60 hover:opacity-100 cursor-pointer">{item}</li>
                 ))}
-              </ul>
+              </ul> */}
             </div>
           </div>
 
           {/* ── FOUNDERS / CONTACT ── */}
           <div className="bg-[#17191d] text-[#e5f1ee] p-8 flex flex-col justify-between">
             <div>
-              <h4 className="font-mono text-[9px] tracking-[3px] uppercase opacity-40 mb-6 text-[#e5f1ee]">Co-Founders</h4>
+              <h4 className="font-mono text-[9px] tracking-[3px] uppercase opacity-40 mb-6 text-[#e5f1ee]">Core Team</h4>
               <div className="space-y-4">
-                <div>
-                  <p className="font-display text-xl uppercase tracking-tight">Mihir Mandloi</p>
-                  <p className="font-mono text-[9px] opacity-40 uppercase">Product & Vision</p>
+                <div className='flex flex-row gap-10 justify-between'>
+                  <div>
+                      <p className="font-display text-xl uppercase tracking-tight">Mihir Mandloi</p>
+                      <p className="font-mono text-[9px] opacity-40 uppercase">Co-founder - Strategy, Operations, Supply Chain</p>
+                  </div>
+                  
+                  <img className='h-15 w-15 rounded-full px-2' src="https://res.cloudinary.com/dttnc62hp/image/upload/q_auto/f_auto/v1775941799/virat-kohli_1_mbb9r3.jpg" alt="" />
                 </div>
-                <div>
+                <div className='flex flex-row gap-10 justify-between'>
+                  <div>
                   <p className="font-display text-xl uppercase tracking-tight">Pratham Shah</p>
-                  <p className="font-mono text-[9px] opacity-40 uppercase">Operations & Strategy</p>
+                  <p className="font-mono text-[9px] opacity-40 uppercase">Co-founder - Branding & Positioning</p>
                 </div>
+                  
+                  <img className='h-15 w-15 rounded-full px-2' src="https://res.cloudinary.com/dttnc62hp/image/upload/q_auto/f_auto/v1775941799/virat-kohli_1_mbb9r3.jpg" alt="" />
+                </div>
+                <div className='flex flex-row gap-10 justify-between'>
+                   <div>
+                  <p className="font-display text-xl uppercase tracking-tight">Sarthak Patil</p>
+                  <p className="font-mono text-[9px] opacity-40 uppercase">Founding Member - Growth & Social Media</p>
+                </div>
+                  
+                  <img className='h-15 w-15 rounded-full px-2' src="https://res.cloudinary.com/dttnc62hp/image/upload/q_auto/f_auto/v1775941799/virat-kohli_1_mbb9r3.jpg" alt="" />
+                </div>
+                <div className='flex flex-row gap-10 justify-between'>
+                  <div>
+                  <p className="font-display text-xl uppercase tracking-tight">Daksh Battula</p>
+                  <p className="font-mono text-[9px] opacity-40 uppercase">Founding Member - Sales & Additional Operations</p>
+                </div>
+                  
+                  <img className='h-15 w-15 rounded-full px-2' src="https://res.cloudinary.com/dttnc62hp/image/upload/q_auto/f_auto/v1775941799/virat-kohli_1_mbb9r3.jpg" alt="" />
+                </div>
+                
+               
+                
               </div>
             </div>
             
@@ -89,14 +118,13 @@ export default function Footer() {
                © {new Date().getFullYear()} TESSCH ARCHIVE
              </p>
              <div className="h-3 w-[1px] bg-[#17191d]/20 hidden md:block" />
-             <p className="font-mono text-[9px] font-bold uppercase tracking-[2px]">
+             {/* <p className="font-mono text-[9px] font-bold uppercase tracking-[2px]">
                Created by — Shriya
-             </p>
+             </p> */}
           </div>
           
           <div className="flex gap-6">
-            <span className="font-mono text-[9px] opacity-40 uppercase">Upper</span>
-            <span className="font-mono text-[9px] opacity-40 uppercase">Sole</span>
+            <span className="font-mono text-[9px] opacity-40 uppercase">Break the Norms</span>
           </div>
         </div>
       </div>

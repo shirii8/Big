@@ -70,9 +70,8 @@ export default function CheckoutPage() {
     } catch { /* ignore */ }
   }, [])
 
-  // ── Auth guard: wait for Kinde to finish loading ──────────────────────────
   useEffect(() => {
-    if (isLoading) return // still loading — do nothing
+    if (isLoading) return 
     if (!isAuthenticated) {
       router.push('/api/auth/login')
       return
@@ -114,7 +113,6 @@ export default function CheckoutPage() {
     setError('')
 
     try {
-      // 1 — Create internal order in DB (PENDING)
       const orderRes = await fetch('/api/orders', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -136,7 +134,6 @@ export default function CheckoutPage() {
         return
       }
 
-      // 2 — Create Razorpay order
       const rzpRes = await fetch('/api/payments/create-order', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -147,7 +144,6 @@ export default function CheckoutPage() {
 
       const selectedAddr = savedAddresses.find(a => a.id === selectedAddressId)
 
-      // 3 — Open Razorpay checkout
       const rzp = new window.Razorpay({
         key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
         amount,
@@ -166,7 +162,6 @@ export default function CheckoutPage() {
           razorpay_payment_id: string
           razorpay_signature: string
         }) => {
-          // 4 — Verify payment server-side
           const verifyRes = await fetch('/api/payments/verify', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -201,7 +196,6 @@ export default function CheckoutPage() {
 
   const selectedAddress = savedAddresses.find(a => a.id === selectedAddressId)
 
-  // ── Loading state — wait for auth ─────────────────────────────────────────
   if (isLoading || !authChecked) return (
     <div className="min-h-screen bg-[#e5f1ee] flex items-center justify-center gap-3">
       <Loader2 size={16} className="animate-spin text-[#17191d]" />
@@ -211,7 +205,6 @@ export default function CheckoutPage() {
     </div>
   )
 
-  // ── Empty cart guard ──────────────────────────────────────────────────────
   if (items.length === 0) return (
     <div className="min-h-screen bg-[#e5f1ee] flex items-center justify-center flex-col gap-6 text-[#17191d]">
       <p className="font-mono text-[11px] uppercase tracking-[3px] opacity-50">Your cart is empty</p>
@@ -237,10 +230,15 @@ export default function CheckoutPage() {
             </h1>
           </div>
 
+          {/* Step tabs — clickable unless placing */}
           <div className="flex gap-0 mb-12 border-2 border-[#17191d] overflow-hidden w-fit">
             {(['delivery', 'payment', 'confirm'] as Step[]).map((s, i) => (
-              <button key={s} onClick={() => step !== 'confirm' && setStep(s)}
-                className={`font-mono text-[9px] uppercase tracking-[3px] px-6 py-3 font-bold border-r-2 border-[#17191d] last:border-r-0 transition-colors ${step === s ? 'bg-[#17191d] text-white' : 'hover:bg-[#17191d]/10'}`}>
+              <button
+                key={s}
+                onClick={() => !placing && setStep(s)}
+                className={`font-mono text-[9px] uppercase tracking-[3px] px-6 py-3 font-bold border-r-2 border-[#17191d] last:border-r-0 transition-colors
+                  ${step === s ? 'bg-[#17191d] text-white' : !placing ? 'hover:bg-[#d4604d] hover:text-white cursor-pointer' : 'opacity-30 cursor-not-allowed'}`}
+              >
                 {i + 1}. {s}
               </button>
             ))}
@@ -312,13 +310,8 @@ export default function CheckoutPage() {
                     )}
 
                     <button
-                      onClick={() => {
-                        if (!selectedAddressId) { setError('Select or add an address first'); return }
-                        setError('')
-                        setStep('payment')
-                      }}
-                      className="bg-[#17191d] text-white font-mono text-[11px] font-bold uppercase tracking-[4px] py-5 px-12 w-fit hover:bg-[#d4604d] transition-colors mt-4"
-                    >
+                      onClick={() => { if (!selectedAddressId) { setError('Select or add an address first'); return } setError(''); setStep('payment') }}
+                      className="bg-[#17191d] text-white font-mono text-[11px] font-bold uppercase tracking-[4px] py-5 px-12 w-fit hover:bg-[#d4604d] transition-colors mt-4">
                       Continue to Payment →
                     </button>
                   </motion.div>
@@ -334,10 +327,10 @@ export default function CheckoutPage() {
 
                     <div className="flex flex-col gap-3">
                       {[
-                        { id: 'upi',        label: 'UPI',                 sub: 'GPay, PhonePe, Paytm, BHIM' },
-                        { id: 'card',       label: 'Credit / Debit Card', sub: 'Visa, Mastercard, RuPay' },
-                        { id: 'netbanking', label: 'Net Banking',          sub: 'All major Indian banks' },
-                        { id: 'cod',        label: 'Cash on Delivery',     sub: '+₹49 handling fee' },
+                        { id: 'upi',         label: 'UPI',                 sub: 'GPay, PhonePe, Paytm, BHIM' },
+                        { id: 'card',        label: 'Credit / Debit Card', sub: 'Visa, Mastercard, RuPay' },
+                        { id: 'netbanking', label: 'Net Banking',           sub: 'All major Indian banks' },
+                        { id: 'cod',         label: 'Cash on Delivery',      sub: '+₹49 handling fee' },
                       ].map(opt => (
                         <button key={opt.id} onClick={() => setPayMethod(opt.id as typeof payMethod)}
                           className={`flex items-center gap-4 p-5 border-2 transition-all text-left ${payMethod === opt.id ? 'border-[#17191d] bg-[#17191d] text-white' : 'border-[#17191d]/30 bg-white hover:border-[#17191d]'}`}>
@@ -376,10 +369,20 @@ export default function CheckoutPage() {
                       {couponError && <p className="font-mono text-[9px] text-[#d4604d] mt-2">{couponError}</p>}
                     </div>
 
-                    <button onClick={() => setStep('confirm')}
-                      className="bg-[#17191d] text-white font-mono text-[11px] font-bold uppercase tracking-[4px] py-5 px-12 w-fit hover:bg-[#d4604d] transition-colors mt-4">
-                      Review Order →
-                    </button>
+                    <div className="flex gap-3 mt-4">
+                      <button
+                        onClick={() => setStep('delivery')}
+                        className="font-mono text-[10px] font-bold uppercase tracking-[3px] border-2 border-[#17191d] px-6 py-3 hover:bg-[#17191d] hover:text-white transition-colors"
+                      >
+                        ← Back
+                      </button>
+                      <button
+                        onClick={() => setStep('confirm')}
+                        className="flex-1 bg-[#17191d] text-white font-mono text-[11px] font-bold uppercase tracking-[4px] py-4 hover:bg-[#d4604d] transition-colors"
+                      >
+                        Review Order →
+                      </button>
+                    </div>
                   </motion.div>
                 )}
 
@@ -418,14 +421,26 @@ export default function CheckoutPage() {
                       </div>
                     )}
 
-                    <button onClick={placeOrder} disabled={placing}
-                      className="bg-[#d4604d] text-white font-mono text-[12px] font-bold uppercase tracking-[4px] py-6 text-center hover:bg-[#17191d] transition-colors disabled:opacity-50 flex items-center justify-center gap-3">
-                      {placing && <Loader2 size={16} className="animate-spin" />}
-                      {placing
-                        ? (payMethod === 'cod' ? 'Placing Order...' : 'Opening Payment...')
-                        : `${payMethod === 'cod' ? 'PLACE ORDER' : 'PAY NOW'} — ₹${total.toLocaleString('en-IN')} →`
-                      }
-                    </button>
+                    <div className="flex flex-col gap-3">
+                      <button
+                        onClick={() => !placing && setStep('payment')}
+                        disabled={placing}
+                        className="font-mono text-[10px] font-bold uppercase tracking-[3px] border-2 border-[#17191d] px-6 py-3 w-fit hover:bg-[#17191d] hover:text-white transition-colors disabled:opacity-30"
+                      >
+                        ← Edit Payment
+                      </button>
+                      <button
+                        onClick={placeOrder}
+                        disabled={placing}
+                        className="bg-[#d4604d] text-white font-mono text-[12px] font-bold uppercase tracking-[4px] py-6 text-center hover:bg-[#17191d] transition-colors disabled:opacity-50 flex items-center justify-center gap-3"
+                      >
+                        {placing && <Loader2 size={16} className="animate-spin" />}
+                        {placing
+                          ? (payMethod === 'cod' ? 'Placing Order...' : 'Opening Payment...')
+                          : `${payMethod === 'cod' ? 'PLACE ORDER' : 'PAY NOW'} — ₹${total.toLocaleString('en-IN')} →`
+                        }
+                      </button>
+                    </div>
                   </motion.div>
                 )}
               </AnimatePresence>

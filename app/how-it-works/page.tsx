@@ -5,32 +5,66 @@ import { useState, useRef } from "react";
 import { motion, AnimatePresence, useScroll, useTransform } from "framer-motion";
 import SectionLabel from "@/components/ui/SectionLabel";
 
-const ModularCanvas = dynamic(() => import("@/components/3d/ModularCanvas"), {
-  ssr: false,
-});
+// const ModularCanvas = dynamic(() => import("@/components/3d/ModularCanvas"), {
+//   ssr: false,
+// });
+
+const FAQ_DATA = [
+  {
+    q: "How do I attach or detach an upper?",
+    a: "To detach, simply pull the sole away from the toe region with firm force. To attach, align the upper with the sole and press down firmly with your hands, or simply step into the upper while the sole is on the floor to click the interlocking pins into place."
+  },
+  {
+    q: "How do I clean my TESSCH components?",
+    a: "For the Foundation sole, use a standard cleaning brush with mild detergent. For uppers, we recommend a damp cloth or specialized sneaker wipes. Avoid harsh chemicals or machine washing to preserve the integrity of the modular rails."
+  },
+  {
+    q: "Are future uppers compatible with current soles?",
+    a: "Yes. Every upper in the TESSCH archive is engineered to be compatible with the version 1.0 Foundation sole interface, provided the sizes match. Your collection is built to be future-proof."
+  },
+  {
+    q: "What if my sole wears out prematurely?",
+    a: "While our soles are high-durability, intensive use may lead to wear. We offer a sole replacement program where you can purchase a fresh foundation unit separately without needing to buy a new upper."
+  },
+  {
+    q: "Is there a warranty on the interlocking system?",
+    a: "We provide a 3-month industrial warranty. If your interlocking pins break under normal usage within this period, we will provide a free upper exchange."
+  },
+  {
+    q: "Do you ship internationally?",
+    a: "Currently, TESSCH ships exclusively within India. We are working on expanding our logistics to the global community soon."
+  },
+  {
+    q: "Can I return or exchange for fit issues?",
+    a: "Yes. If the fit isn't perfect, we offer a hassle-free exchange policy to ensure your modular setup feels exactly as intended."
+  }
+];
+
+
 
 const STEPS = [
   {
     num: "01",
     title: "THE FOUNDATION",
-    desc: "Your sole is the investment. High-quality, engineered to last years. The foundation that never changes.",
-    detail: "Full-length EVA midsole + Multi-directional rubber outsole. Built for a 5-year lifecycle.",
+    desc: "Your sole is the investment. High-quality, engineered to last years.",
+    detail: "Full-length soft PU midsole + Multi-directional hard PU outsole. Built for a 3-year lifecycle.",
   },
   {
     num: "02",
     title: "MECHANICAL LOCK",
-    desc: "Just click the new upper into place. 30 seconds. No tools. No waste.",
-    detail: "Interlocking magnetic rail system tested for high-lateral movement and vertical jumps.",
+    desc: "Just get the new upper into place. 20 seconds. No tools. No waste.",
+    detail: "Interlocking lego-like mechanism tested for high-lateral movement and vertical jumps.",
   },
   {
     num: "03",
     title: "CIRCULAR LOGIC",
-    desc: "Better for your wallet. Better for the planet. Swap only what actually wears out.",
-    detail: "Saves ~60% of total spend and eliminates 75% of footwear material waste annually.",
+    desc: "Better for style.Better for your wallet. Better for your wardrobe and Better for the planet. Swap only what actually wears out.",
+    detail: "Saves ~40% of total spend. Eliminates 60 % of footwear material waste annually.",
   },
 ];
 
 export default function HowItWorksPage() {
+  const [faqOpen, setFaqOpen] = useState(false);
   const [activeStep, setActiveStep] = useState(0);
   const containerRef = useRef(null);
   const { scrollYProgress } = useScroll({ target: containerRef });
@@ -42,7 +76,7 @@ export default function HowItWorksPage() {
     <div className="bg-[#e5f1ee] text-[#17191d] overflow-x-hidden" ref={containerRef}>
       
       {/* ══ HERO: ARCHITECTURAL HEADER ════════════════════════ */}
-      <section className="relative pt-44 pb-24 px-6 md:px-12 flex flex-col items-center text-center">
+      <section className="relative pt-16 pb-4 px-6 md:px-12 flex flex-col items-center text-center">
         {/* Background Grid Elements */}
         <div className="absolute inset-0 opacity-[0.03] pointer-events-none" 
              style={{ backgroundImage: `linear-gradient(#17191d 1px, transparent 1px), linear-gradient(90deg, #17191d 1px, transparent 1px)`, size: '40px 40px' }} />
@@ -64,77 +98,68 @@ export default function HowItWorksPage() {
       </section>
 
       {/* ══ INTERACTIVE EXPLODED VIEW ═════════════════════════ */}
-      <section className="px-6 md:px-12 py-12 relative">
-        <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-          
-          {/* Left: Interactive Info Stack */}
-          <div className="lg:col-span-4 sticky top-32 space-y-4 z-20">
-            {STEPS.map((s, i) => (
+    <section className="px-6 md:px-12 py-12 relative bg-[#e5f1ee]"> {/* Reduced from py-24 */}
+  {/* Header Section */}
+  <div className="max-w-7xl mx-auto mb-10 border-l-4 border-[#d4604d] pl-6">
+    <span className="font-mono text-[10px] tracking-[5px] uppercase text-[#d4604d] font-black">
+      System_Architecture // 01
+    </span>
+    <h2 className="font-display text-6xl uppercase tracking-tighter mt-2 text-[#17191d]">
+      The Modular Workflow
+    </h2>
+  </div>
+
+  <div className="max-w-7xl mx-auto">
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-0 border-2 border-[#17191d]">
+      {STEPS.map((s, i) => (
+        <motion.div
+          key={i}
+          onMouseEnter={() => setActiveStep(i)}
+          className={`group p-10 border-r-2 last:border-r-0 border-[#17191d] transition-colors duration-300 flex flex-col h-full min-h-[380px] relative ${
+            activeStep === i 
+            ? "bg-[#17191d] text-[#e5f1ee]" 
+            : "bg-white text-[#17191d] hover:bg-[#17191d]/5"
+          }`}
+        >
+          <div className="flex justify-between items-start mb-12">
+            <span className={`font-mono text-[10px] tracking-[3px] font-bold ${activeStep === i ? "text-[#d4604d]" : "text-[#17191d]/30"}`}>
+              P_{s.num}
+            </span>
+            <span className="font-mono text-[10px] opacity-20">0{i + 1}</span>
+          </div>
+
+          <h3 className="font-display text-4xl uppercase tracking-tighter leading-[0.85] mb-6">
+            {s.title}
+          </h3>
+
+          <div className="flex-grow">
+            <p className={`text-[15px] leading-snug transition-opacity duration-300 ${activeStep === i ? "opacity-80" : "opacity-40"}`}>
+              {s.desc}
+            </p>
+          </div>
+
+          <AnimatePresence>
+            {activeStep === i && (
               <motion.div
-                key={i}
-                onMouseEnter={() => setActiveStep(i)}
-                className={`group p-8 border transition-all duration-500 cursor-none relative overflow-hidden ${
-                  activeStep === i 
-                  ? "bg-[#17191d] border-[#17191d] shadow-2xl" 
-                  : "bg-white/40 border-[#17191d]/10 backdrop-blur-sm"
-                }`}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="mt-8 pt-6 border-t border-[#d4604d]/30"
               >
-                <span className={`font-mono text-[10px] mb-4 block ${activeStep === i ? "text-[#d4604d]" : "text-[#17191d]/40"}`}>
-                  PROTOCOL_{s.num}
+                <span className="font-mono text-[11px] text-[#d4604d] font-black uppercase tracking-[2px]">
+                  {s.detail}
                 </span>
-                <h3 className={`font-display text-2xl mb-3 ${activeStep === i ? "text-[#e5f1ee]" : "text-[#17191d]"}`}>
-                  {s.title}
-                </h3>
-                <AnimatePresence mode="wait">
-                  {activeStep === i && (
-                    <motion.p 
-                      initial={{ opacity: 0, height: 0 }}
-                      animate={{ opacity: 1, height: 'auto' }}
-                      exit={{ opacity: 0, height: 0 }}
-                      className="text-sm leading-relaxed text-[#e5f1ee]/70"
-                    >
-                      {s.desc}
-                      <span className="block mt-4 pt-4 border-t border-white/10 text-[11px] text-[#d4604d] font-bold uppercase tracking-wider">
-                        {s.detail}
-                      </span>
-                    </motion.p>
-                  )}
-                </AnimatePresence>
-
-                {/* Decorative scanning line */}
-                {activeStep === i && (
-                  <motion.div 
-                    layoutId="scan"
-                    className="absolute top-0 left-0 w-full h-[2px] bg-[#d4604d] shadow-[0_0_15px_#d4604d]"
-                    animate={{ top: ['0%', '100%', '0%'] }}
-                    transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
-                  />
-                )}
               </motion.div>
-            ))}
-          </div>
+            )}
+          </AnimatePresence>
 
-          {/* Right: 3D Visual Stage */}
-          <div className="lg:col-span-8 sticky top-24 h-[70vh] lg:h-[85vh] rounded-3xl overflow-hidden bg-white shadow-inner border-4 border-white">
-             {/* Tech Overlay Elements */}
-             <div className="absolute top-8 left-8 z-10 font-mono text-[10px] space-y-1 text-[#17191d]/40">
-                <p>SIM_STATE: ACTIVE</p>
-                <p>INTERFACE_VER: 2.04</p>
-                <p>COORD: 45.23 // 12.89</p>
-             </div>
-             
-             <div className="absolute inset-0 flex items-center justify-center">
-                <ModularCanvas step={activeStep} />
-             </div>
-
-             {/* Dynamic Depth Circles */}
-             <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
-                <div className="w-[300px] h-[300px] border border-[#d4604d]/10 rounded-full animate-ping opacity-20" />
-                <div className="w-[500px] h-[500px] border border-[#d4604d]/5 rounded-full absolute animate-pulse" />
-             </div>
-          </div>
-        </div>
-      </section>
+          {activeStep === i && (
+            <div className="absolute top-0 left-0 w-full h-[6px] bg-[#d4604d]" />
+          )}
+        </motion.div>
+      ))}
+    </div>
+  </div>
+</section>
 
       {/* ══ THE "WHY" SECTION: STATS & LAYERS ═════════════════ */}
       {/* <section className="py-32 px-6 md:px-12 bg-[#17191d] text-[#e5f1ee] relative overflow-hidden"> */}
@@ -174,29 +199,40 @@ export default function HowItWorksPage() {
         </div> */}
       {/* </section> */}
 
-      {/* ══ FAQ: MINIMALIST ACCORDION ════════════════════════ */}
-      <section className="py-24 px-6 md:px-12 max-w-4xl mx-auto">
-        <SectionLabel>Intelligence</SectionLabel>
-        <h2 className="font-display text-5xl mb-16">COMMON QUERIES</h2>
-        
-        <div className="space-y-4">
-          {[
-            { q: "Durability during movement?", a: "The interlocking rail system is designed for high-impact sports. It uses friction-lock technology that tightens as weight is applied." },
-            { q: "Universal compatibility?", a: "Every upper ever dropped by TESSCH is compatible with the version 1.0 sole interface. Your collection never expires." },
-            { q: "Sole replacement program?", a: "When your tread finally goes smooth, send us the sole. We recycle the EVA and send you a fresh foundation at cost price." }
-          ].map((item, i) => (
-            <details key={i} className="group border-b border-[#17191d]/10 pb-6">
-              <summary className="list-none cursor-none flex justify-between items-center font-display text-xl uppercase hover:text-[#d4604d] transition-colors">
-                {item.q}
-                <span className="text-2xl group-open:rotate-45 transition-transform">+</span>
-              </summary>
-              <p className="mt-4 text-[#17191d]/60 leading-relaxed font-medium">
-                {item.a}
-              </p>
-            </details>
-          ))}
-        </div>
-      </section>
+ {/* ══ FAQ: MINIMALIST ACCORDION ════════════════════════ */}
+<section className="py-12 px-6 md:px-12 max-w-4xl mx-auto">
+  <SectionLabel>Intelligence</SectionLabel>
+  
+  {/* ── MAIN TOGGLE ── */}
+  <h2
+    className="font-display text-5xl mb-16 cursor-pointer group flex items-center gap-4 select-none"
+    onClick={() => setFaqOpen(!faqOpen)}
+  >
+    COMMON QUERIES
+    <span className={`text-3xl transition-transform duration-500 ${faqOpen ? 'rotate-45 text-[#d4604d]' : ''}`}>
+      +
+    </span>
+  </h2>
+
+  {/* ── CONDITIONAL RENDER ── */}
+  <div className="space-y-4">
+    {faqOpen && (
+      <div className="animate-in fade-in slide-in-from-top-4 duration-500">
+        {FAQ_DATA.map((item, i) => (
+          <details key={i} className="group border-b border-[#17191d]/10 pb-2">
+            <summary className="list-none cursor-pointer flex justify-between items-center font-display text-xl uppercase hover:text-[#d4604d] transition-colors [&::-webkit-details-marker]:hidden">
+              {item.q}
+              <span className="text-2xl group-open:rotate-45 transition-transform">+</span>
+            </summary>
+            <p className="mt-2 text-[#17191d]/60 leading-relaxed font-medium pl-4 border-l border-[#d4604d]/30">
+              {item.a}
+            </p>
+          </details>
+        ))}
+      </div>
+    )}
+  </div>
+</section>
 
       {/* ══ FINAL CTA ═════════════════════════════════════════ */}
       {/* <section className="pb-32 px-6 text-center">

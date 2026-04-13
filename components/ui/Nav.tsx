@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { motion } from "framer-motion";
+import { motion, useScroll, useSpring } from "framer-motion"; // Added useSpring for smoothness
 import { ShoppingCart, User } from "lucide-react";
 import {
   RegisterLink,
@@ -25,6 +25,14 @@ export default function Nav() {
   const pathname = usePathname();
   const { isAuthenticated, user, isLoading } = useKindeBrowserClient();
   const { totalItems } = useCart();
+
+  // ── PROGRESS BAR LOGIC ───────────────────────────────────────
+  const { scrollYProgress } = useScroll();
+  const scaleX = useSpring(scrollYProgress, {
+    stiffness: 100,
+    damping: 30,
+    restDelta: 0.001
+  });
 
   useEffect(() => {
     const handleScroll = () => {
@@ -49,6 +57,13 @@ export default function Nav() {
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-[500] flex items-center justify-between px-6 md:px-12 py-5 bg-[#d4604d]">
+      
+      {/* ── THE PROGRESS BAR ── */}
+      <motion.div
+        className="absolute top-0 left-0 right-0 h-[3px] bg-[#17191d] origin-left"
+        style={{ scaleX }}
+      />
+
       <Link href="/" className="font-display text-2xl text-[#e5f1ee] font-bold">
         TESSCH.
       </Link>
@@ -82,7 +97,6 @@ export default function Nav() {
           <span className="opacity-50 animate-pulse px-4 py-2">...</span>
         ) : isAuthenticated ? (
           <>
-            {/* Profile */}
             <Link
               href="/profile"
               className="flex items-center gap-1.5 bg-white/20 hover:bg-white/30 rounded-full px-4 py-2 transition-colors whitespace-nowrap"
@@ -91,7 +105,6 @@ export default function Nav() {
               <span>{user?.given_name ?? "Profile"}</span>
             </Link>
 
-            {/* Cart with badge */}
             <Link
               href="/cart"
               className={`relative flex items-center gap-1.5 rounded-full px-4 py-2 transition-all ${
@@ -113,7 +126,6 @@ export default function Nav() {
               )}
             </Link>
 
-            {/* Logout */}
             <LogoutLink postLogoutRedirectURL="/">
               <button className="bg-[#17191d] text-[#e5f1ee] rounded-full px-5 py-2 hover:bg-black transition-all active:scale-95">
                 Logout

@@ -35,6 +35,8 @@ model User {
   password  String?
   firstName String?
   lastName  String?
+  age       Int?
+  gender    String?
   role      Role    @default(USER)
 
   cartItems CartItem[]

@@ -6,10 +6,10 @@ import SectionLabel from '@/components/ui/SectionLabel'
 
 export default function ProductsPortal() {
   return (
-    <div className="bg-[#e5f1ee] min-h-screen flex flex-col lg:flex-row pt-20 overflow-hidden text-[#17191d] ref={containerRef}">
+    <div className="bg-[#e5f1ee] min-h-screen flex flex-col lg:flex-row pt-20 overflow-hidden text-[#17191d]">
       
       {/* ── LEFT: UPPERS PORTAL ── */}
-      <Link href="/products/uppers" className="relative flex-1 group overflow-hidden border-r-2 border-[#17191d]/10">
+      {/* <Link href="/products/uppers" className="relative flex-1 group overflow-hidden border-r-2 border-[#17191d]/10">
         <motion.div 
           initial={{ x: -100, opacity: 0 }} animate={{ x: 0, opacity: 1 }}
           className="absolute inset-0 bg-[#d4604d] translate-y-full group-hover:translate-y-0 transition-transform duration-700 ease-[cubic-bezier(0.23,1,0.32,1)]"
@@ -26,9 +26,9 @@ export default function ProductsPortal() {
             →
           </div>
         </div>
-        {/* Decorative Watermark */}
         <div className="absolute bottom-[-5%] left-[-5%] font-display text-[20vw] opacity-[0.03] pointer-events-none group-hover:opacity-[0.08] transition-opacity">SKIN</div>
-      </Link>
+      </Link> 
+      */}
 
       {/* ── RIGHT: sneaker (build) PORTAL ── */}
       <Link href="/products/sneaker" className="relative flex-1 group overflow-hidden">
@@ -39,7 +39,7 @@ export default function ProductsPortal() {
         <div className="relative z-10 h-full flex flex-col justify-center p-12 lg:p-20">
           <SectionLabel>Step 02</SectionLabel>
           <h2 className="font-display text-7xl lg:text-9xl uppercase tracking-tighter leading-none mb-6 group-hover:text-[#e5f1ee] transition-colors">
-           Starter  <br/> Build
+            Starter  <br/> Build
           </h2>
           <p className="font-mono text-sm max-w-xs uppercase tracking-widest opacity-60 group-hover:text-[#e5f1ee] group-hover:opacity-90 transition-all">
             The foundation. 15 high-performance base units featuring proprietary cushioning and traction logic.
