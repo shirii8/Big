@@ -2,6 +2,13 @@
 // First 2 chars = discount %. Max discount = ₹1000.
 // Logic: code "30XYZZ" = 30% off, capped at ₹1000
 
+export const NAMED_COUPONS: Record<string, { discount: number; label: string; type: 'percent' | 'flat' }> = {
+  TESSCH15:   { discount: 0.15, label: '15% off — Early Adopter',        type: 'percent' },
+  DROP001:    { discount: 0.10, label: '10% off — Drop 001 Launch',      type: 'percent' },
+  FIRSTBUILD: { discount: 200,  label: '₹200 off — First Build',         type: 'flat'    },
+  BUNDLE2:    { discount: 0.10, label: '10% off — 2 Uppers + Sole deal', type: 'percent' },
+}
+
 export const ONE_TIME_CODES: string[] = [
   '732705ZEES','251401EKLV','251109LUXY','250312ARPI','301203GAUR',
   '253005SAKS','691409SAUR','302802SUMI','692506ATHA','691511ROHI',

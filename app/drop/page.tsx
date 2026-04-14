@@ -50,9 +50,9 @@ export default function FinalDropCTA() {
             <span className="text-2xl group-hover:translate-x-3 transition-transform duration-500">→</span>
           </motion.button>
           
-          <p className="mt-6 font-mono text-[10px] text-center lg:text-right uppercase tracking-[2px] text-[#e5f1ee]/40">
+          {/* <p className="mt-6 font-mono text-[10px] text-center lg:text-right uppercase tracking-[2px] text-[#e5f1ee]/40">
             Early Bird Offer Closing on 18th April EOD
-          </p>
+          </p> */}
         </div>
       </div>
     </section>

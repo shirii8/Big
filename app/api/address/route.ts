@@ -1,5 +1,6 @@
+// app/api/address/route.ts
 import { NextResponse } from 'next/server'
-import { prisma } from "@/lib/db"
+import {prisma} from '@/lib/db'
 import { getKindeServerSession } from '@kinde-oss/kinde-auth-nextjs/server'
 
 export async function GET() {
@@ -11,6 +12,7 @@ export async function GET() {
     where: { userId: user.id },
     orderBy: { createdAt: 'desc' },
   })
+
   return NextResponse.json(addresses)
 }
 
@@ -26,9 +28,31 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
     }
 
-    const address = await prisma.address.create({
-      data: { userId: user.id, line1, line2, city, state, postalCode, country, phone },
+    // Ensure user exists in DB (Kinde users may not be auto-synced)
+    await prisma.user.upsert({
+      where: { id: user.id },
+      update: {},
+      create: {
+        id: user.id,
+        email: user.email ?? '',
+        firstName: user.given_name ?? null,
+        lastName: user.family_name ?? null,
+      },
     })
+
+    const address = await prisma.address.create({
+      data: {
+        userId: user.id,
+        line1,
+        line2: line2 || null,
+        city,
+        state,
+        postalCode,
+        country,
+        phone: phone || null,
+      },
+    })
+
     return NextResponse.json(address, { status: 201 })
   } catch (e) {
     console.error('[address POST]', e)

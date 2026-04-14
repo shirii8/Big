@@ -16,6 +16,7 @@
     "@kinde-oss/kinde-auth-nextjs": "^2.11.0",
     "@prisma/adapter-pg": "5.22.0",
     "@prisma/client": "^7.7.0",
+    "@prisma/config": "^7.7.0",
     "@react-three/drei": "^10.7.7",
     "@react-three/fiber": "^9.5.0",
     "@stripe/stripe-js": "^9.0.1",

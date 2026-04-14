@@ -1,6 +1,7 @@
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Syne:wght@400;500;600;700;800&display=swap');
 @import "tailwindcss";
 
-/* 1. Theme Configuration (Tailwind v4 Way) */
+/* 2. Theme Configuration */
 @theme {
   /* Brand Colors */
   --color-cedar: #d4604d;
@@ -34,10 +35,9 @@
   }
 }
 
-/* 2. Base Styles */
+/* 3. Base Styles */
 @layer base {
   body {
-    /* Using your new variables: bgc for background and slate for text */
     @apply bg-bgc text-slate font-body overflow-x-hidden;
     cursor: none; 
   }
@@ -45,15 +45,13 @@
   html { scroll-behavior: smooth; }
 }
 
-/* 3. Utilities & Custom Components */
+/* 4. Utilities */
 @utility stroke-text {
-  /* Updated to use Slate for the outline */
   -webkit-text-stroke: 1px var(--color-slate);
   color: transparent;
 }
 
 @utility stroke-cedar {
-  /* Added a cedar-specific stroke utility */
   -webkit-text-stroke: 1px var(--color-cedar);
   color: transparent;
 }
@@ -67,13 +65,13 @@
   );
 }
 
-/* 4. Custom UI Elements */
+/* 5. Custom UI Elements (Cursor, etc.) */
 #cursor-dot, #cursor-ring {
   position: fixed;
   pointer-events: none;
   z-index: 9999;
   transform: translate(-50%, -50%);
-  mix-blend-mode: multiply; /* Changed from exclusion to multiply for light backgrounds */
+  mix-blend-mode: multiply;
   will-change: left, top;
 }
 
