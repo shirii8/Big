@@ -16,6 +16,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Syne:wght@800&family=Space+Mono:wght@400;700&display=swap"
           rel="stylesheet"
         />
+        
       </head>
       <body suppressHydrationWarning className="antialiased selection:bg-acid selection:text-void">
         <main>{children}</main>
