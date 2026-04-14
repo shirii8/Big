@@ -71,7 +71,8 @@
   pointer-events: none;
   z-index: 9999;
   transform: translate(-50%, -50%);
-  mix-blend-mode: multiply;
+  /* FIXED: Changed from multiply to normal to stop color shifting */
+  mix-blend-mode: normal; 
   will-change: left, top;
 }
 
@@ -91,13 +92,13 @@
   border-radius: 50%;
 }
 
+/* Fixed .brand-card to use standardized cedar color */
 .brand-card {
   @apply border border-transparent transition-all duration-300;
 }
 .brand-card:hover {
   @apply border-cedar -translate-y-1;
-  /* Updated shadow to use cedar color */
-  box-shadow: 0 12px 32px rgba(212, 96, 77, 0.1);
+  box-shadow: 0 12px 32px rgba(212, 96, 77, 0.15);
 }
 
 /* 5. Film Grain Effect Overlay */
@@ -107,7 +108,7 @@ body::after {
   inset: 0;
   pointer-events: none;
   z-index: 9000;
-  opacity: 0.08; /* Lowered opacity for lighter background */
+  opacity: 0.05; 
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.05'/%3E%3C/svg%3E");
 }
 
