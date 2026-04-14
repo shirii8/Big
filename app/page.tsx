@@ -51,6 +51,8 @@ export default function ComingSoonPage() {
           </p>
         </motion.div>
 
+        <a href="https://instagram.com/tesschstore" target="_blank" rel="noreferrer" class="font-mono text-xl md:text-2xl font-bold hover:text-[#d4604d] transition-colors">INSTAGRAM - tesschstore</a>
+
         {/* Subtext */}
         <motion.p 
           initial={{ opacity: 0 }}
