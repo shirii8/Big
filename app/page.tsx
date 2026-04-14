@@ -51,7 +51,19 @@ export default function ComingSoonPage() {
           </p>
         </motion.div>
 
-        <a href="https://instagram.com/tesschstore" target="_blank" rel="noreferrer" class="font-mono text-xl md:text-2xl font-bold hover:text-[#d4604d] transition-colors">INSTAGRAM - tesschstore</a>
+       <a 
+  href="https://instagram.com/tesschstore" 
+  target="_blank" 
+  rel="noreferrer" 
+  className="flex items-center justify-center gap-3 font-mono text-xl md:text-2xl font-bold hover:text-[#d4604d] transition-colors"
+>
+  <img 
+    className="h-8 w-8 md:h-10 md:w-10 object-contain" 
+    src="https://upload.wikimedia.org/wikipedia/commons/9/95/Instagram_logo_2022.svg" 
+    alt="Instagram" 
+  />
+  <span>INSTAGRAM - tesschstore</span>
+</a>
 
         {/* Subtext */}
         <motion.p 
