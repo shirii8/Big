@@ -1,4 +1,4 @@
-import { PrismaClient, Category } from '@prisma/client'
+import { PrismaClient, Category } from '@prisma/client'npx prisma db seed
 
 const prisma = new PrismaClient()
 

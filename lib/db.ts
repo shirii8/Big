@@ -1,13 +1,7 @@
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient } from "../generated/prisma";
 
 const prismaClientSingleton = () => {
-  return new PrismaClient({
-    datasources: {
-      db: {
-        url: process.env.DATABASE_URL,
-      },
-    },
-  });
+  return new PrismaClient();
 };
 
 declare global {
@@ -17,6 +11,7 @@ declare global {
 const db = globalThis.prismaGlobal ?? prismaClientSingleton();
 
 export const prisma = db;
+export default db; // This fixes the Turbopack "Export default" error
 
 if (process.env.NODE_ENV !== "production") {
   globalThis.prismaGlobal = db;

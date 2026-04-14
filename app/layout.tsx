@@ -21,6 +21,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" className={`${syne.variable} ${bebas.variable} ${mono.variable}`}>
       <head>
+        <base href="/" />
         {/* Meta Pixel NoScript Fallback */}
         <noscript>
           <img 
