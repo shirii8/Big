@@ -1,12 +1,15 @@
 import { NextResponse } from 'next/server'
-import prisma from '@/lib/db'
+// Fix: Use named import to match your lib/db.ts export
+import { prisma } from '@/lib/db' 
 import { getKindeServerSession } from '@kinde-oss/kinde-auth-nextjs/server'
 import { sendOwnerAlert } from '@/lib/mailer'
 
 export async function POST(req: Request) {
   const { getUser } = getKindeServerSession()
   const user = await getUser()
-  if (!user?.id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  
+  // Note: Kinde user.id check
+  if (!user || !user.id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   try {
     const { orderId, txnRef }: { orderId: string; txnRef: string } = await req.json()
@@ -29,17 +32,16 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Order not found' }, { status: 404 })
     }
 
-    // Store UTR in dodoPaymentId field (repurposed) and mark as PENDING_VERIFICATION
+    // Store UTR and update status
     await prisma.order.update({
       where: { id: orderId },
       data: {
         dodoPaymentId: `UPI_UTR:${txnRef}`,
         paymentMethod: 'upi',
-        // Keep PENDING — owner verifies and manually marks PAID
       },
     })
 
-    // Alert owner with UTR for verification
+    // Prepare items for email
     const emailItems = order.items.map(i => ({
       name: i.variant.product.name,
       size: i.variant.size,
@@ -48,7 +50,7 @@ export async function POST(req: Request) {
       productType: i.productType,
     }))
 
-    // Send owner alert with UTR details
+    // Send owner alert
     await sendOwnerAlert({
       orderId: order.id,
       customerEmail: order.user.email,
