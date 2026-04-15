@@ -75,10 +75,9 @@ export type OrderStatus = (typeof OrderStatus)[keyof typeof OrderStatus]
 
 
 export const Category: {
-  SNEAKERS: 'SNEAKERS',
-  FORMAL: 'FORMAL',
-  SPORTS: 'SPORTS',
-  CASUAL: 'CASUAL'
+  ARC: 'ARC',
+  CARVE: 'CARVE',
+  TANGENT: 'TANGENT'
 };
 
 export type Category = (typeof Category)[keyof typeof Category]

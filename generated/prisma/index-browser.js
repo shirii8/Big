@@ -220,10 +220,9 @@ exports.Role = exports.$Enums.Role = {
 };
 
 exports.Category = exports.$Enums.Category = {
-  SNEAKERS: 'SNEAKERS',
-  FORMAL: 'FORMAL',
-  SPORTS: 'SPORTS',
-  CASUAL: 'CASUAL'
+  ARC: 'ARC',
+  CARVE: 'CARVE',
+  TANGENT: 'TANGENT'
 };
 
 exports.OrderStatus = exports.$Enums.OrderStatus = {

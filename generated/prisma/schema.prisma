@@ -23,10 +23,9 @@ enum OrderStatus {
 }
 
 enum Category {
-  SNEAKERS
-  FORMAL
-  SPORTS
-  CASUAL
+  ARC
+  CARVE
+  TANGENT
 }
 
 model User {
