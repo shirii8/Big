@@ -35,22 +35,22 @@ export function ProductDetail({ product, onClose }: { product: Upper; onClose: (
   const { addItem } = useCart()
 
   function handleAddToCart() {
-    addItem({
-      id: `${product.id}-${size}-${Date.now()}`,
-      type: itemType,
-      upper: {
-        id: product.id,
+    // Pass arguments separately to match the 2-4 expected arguments
+    addItem(
+      {
+        id: product.id, // Pass the base product ID
         name: product.name,
         price: product.priceNum,
         image: product.image,
         category: product.category,
       },
-      sole: itemType === 'build' ? DEFAULT_SOLE : undefined,
       size,
-      quantity: 1,
-    })
-    setAdded(true)
-    setTimeout(() => setAdded(false), 2000)
+      itemType,
+      itemType === 'build' ? DEFAULT_SOLE : undefined
+    );
+    
+    setAdded(true);
+    setTimeout(() => setAdded(false), 2000);
   }
 
   const totalPrice = itemType === 'build'
