@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import Link from 'next/link'
-import SectionLabel from '@/components/ui/SectionLabel'
+
 
 const SOLES = [
   { id: "s-001", name: "CLOUD RUNNER", type: "Cushion", price: "₹3,200", image: "https://res.cloudinary.com/dttnc62hp/image/upload/v1775151258/WhatsApp_Image_2026-04-01_at_02.28.43_1_fvxhqe.jpg", tag: "Urban Logic", description: "Engineered for high-impact concrete environments. Features a dual-density foam core for vertical compression.", tech: ["Nitrogen Foam", "4mm Drop", "Anti-Abrasion"] },
@@ -21,7 +21,7 @@ export default function SolesPage() {
       {/* ── HEADER (Reduced Padding) ── */}
       <header className="pt-24 pb-4 px-6 md:px-12 flex justify-between items-end shrink-0">
         <div>
-          <SectionLabel>Foundation / Component 02</SectionLabel>
+          <h4>Foundation / Component 02</h4>
           <h1 className="font-display text-[clamp(32px,5vw,60px)] leading-[0.85] tracking-tighter uppercase">
             THE <br/><span className="text-[#d4604d]">BASE-UNIT.</span>
           </h1>
