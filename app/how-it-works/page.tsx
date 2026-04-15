@@ -78,8 +78,15 @@ export default function HowItWorksPage() {
       {/* ══ HERO: ARCHITECTURAL HEADER ════════════════════════ */}
       <section className="relative pt-16 pb-4 px-6 md:px-12 flex flex-col items-center text-center">
         {/* Background Grid Elements */}
-        <div className="absolute inset-0 opacity-[0.03] pointer-events-none" 
-             style={{ backgroundImage: `linear-gradient(#17191d 1px, transparent 1px), linear-gradient(90deg, #17191d 1px, transparent 1px)`, size: '40px 40px' }} />
+        {/* Background Grid Elements */}
+<div 
+  className="absolute inset-0 opacity-[0.03] pointer-events-none" 
+  style={{ 
+    backgroundImage: `linear-gradient(#17191d 1px, transparent 1px), linear-gradient(90deg, #17191d 1px, transparent 1px)`, 
+    backgroundSize: '40px 40px',
+    backgroundRepeat: 'repeat' 
+  }} 
+/>
         
         <motion.div 
           initial={{ opacity: 0, y: 30 }}
