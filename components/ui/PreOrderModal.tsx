@@ -45,52 +45,60 @@ export default function PreOrderModal({ open, onClose, initialProduct }: Props) 
     }, 1800)
   }
 
+  // Safe price conversion to prevent toLocaleString errors
+  const getPrice = (p: any) => Number(p.price || 1499);
+  const getOgPrice = (p: any) => Number(p.og || getPrice(p) + 500);
+
   return (
-    <div className="fixed inset-0 z-[800] flex items-center justify-center bg-void/95 backdrop-blur-2xl"
+    <div className="fixed inset-0 z-[800] flex items-center justify-center bg-black/90 backdrop-blur-2xl"
       onClick={(e) => { if (e.target === e.currentTarget) onClose() }}>
       
-      <div className="relative bg-[#0d0520] border border-acid/20 w-[92vw] max-w-[520px] max-h-[92vh] overflow-y-auto">
-        <button onClick={onClose} className="absolute top-4 right-5 font-mono text-xl text-muted hover:text-acid bg-transparent border-0 cursor-none transition-colors z-10">×</button>
+      <div className="relative bg-[#0d0520] border border-[#d4604d]/20 w-[92vw] max-w-[520px] max-h-[92vh] overflow-y-auto">
+        <button onClick={onClose} className="absolute top-4 right-5 font-mono text-xl text-white/40 hover:text-[#d4604d] transition-colors z-10">×</button>
         
         <div className="p-8 md:p-10">
           {step === 'choose' && (
             <>
-              <p className="font-mono text-[9px] tracking-[3px] uppercase text-muted mb-1">Drop 001 — Pre-Order</p>
-              <h2 className="font-display text-[38px] tracking-wide mb-7">PICK YOUR PAIR</h2>
+              <p className="font-mono text-[9px] tracking-[3px] uppercase text-white/40 mb-1">Drop 001 — Pre-Order</p>
+              <h2 className="font-display text-[38px] tracking-wide mb-7 text-white">PICK YOUR PAIR</h2>
               
               <div className="flex flex-col gap-2 mb-6">
-                {PRODUCTS.map((p) => (
+                {PRODUCTS.map((p: any) => (
                   <button key={p.id} onClick={() => setProduct(p)}
-                    className={`flex items-center gap-4 p-4 border text-left cursor-none transition-all ${product.id === p.id ? 'border-acid bg-acid/5' : 'border-white/[0.06] hover:border-white/20 bg-transparent'}`}>
+                    className={`flex items-center gap-4 p-4 border text-left transition-all ${product.id === p.id ? 'border-[#d4604d] bg-[#d4604d]/5' : 'border-white/[0.06] hover:border-white/20'}`}>
                     
-                    {/* Technical ID replace Emoji */}
-                    <span className="font-mono text-[10px] w-12 flex-shrink-0 text-center opacity-40">
-                       [{p.id.toString().padStart(2, '0')}]
+                    <span className="font-mono text-[10px] w-12 shrink-0 text-center opacity-40 text-white">
+                       [{String(p.id).padStart(2, '0')}]
                     </span>
 
                     <div className="flex-1">
-                      <div className="font-display text-xl tracking-wide">{p.name}</div>
-                      <div className="font-mono text-[9px] tracking-[2px] uppercase text-fire mt-0.5">{p.tag}</div>
+                      <div className="font-display text-xl tracking-wide text-white">{p.name}</div>
+                      {/* Fixed: Use Category if Tag is missing */}
+                      <div className="font-mono text-[9px] tracking-[2px] uppercase text-[#d4604d] mt-0.5">{p.tag || p.category}</div>
                     </div>
-                    <div className="text-right flex-shrink-0">
-                      <div className="font-mono text-base font-bold text-acid">₹{p.price.toLocaleString('en-IN')}</div>
-                      <div className="font-mono text-[10px] text-muted line-through">₹{p.og.toLocaleString('en-IN')}</div>
+                    
+                    <div className="text-right shrink-0">
+                      <div className="font-mono text-base font-bold text-[#d4604d]">₹{getPrice(p).toLocaleString('en-IN')}</div>
+                      <div className="font-mono text-[10px] text-white/20 line-through">₹{getOgPrice(p).toLocaleString('en-IN')}</div>
                     </div>
                   </button>
                 ))}
               </div>
 
               <div className="mb-7">
-                <p className="font-mono text-[9px] tracking-[3px] uppercase text-muted mb-3">Select Size</p>
+                <p className="font-mono text-[9px] tracking-[3px] uppercase text-white/40 mb-3">Select Size</p>
                 <div className="flex flex-wrap gap-2">
                   {SIZES.map((s) => (
-                    <button key={s} onClick={() => setSize(s)} className={`size-chip ${size === s ? 'active' : ''}`}>{s}</button>
+                    <button key={s} onClick={() => setSize(s)} 
+                      className={`font-mono text-[10px] px-3 py-1 border transition-all ${size === s ? 'bg-[#d4604d] border-[#d4604d] text-white' : 'border-white/10 text-white/40'}`}>
+                      {s}
+                    </button>
                   ))}
                 </div>
               </div>
 
               <button onClick={() => setStep('form')}
-                className="clip-btn w-full bg-acid text-void font-mono text-[11px] font-bold tracking-[2px] uppercase py-4 border-0 cursor-none hover:bg-white transition-colors">
+                className="w-full bg-[#d4604d] text-white font-mono text-[11px] font-bold tracking-[2px] uppercase py-4 hover:bg-white hover:text-black transition-colors">
                 Continue — {product.name} / {size}
               </button>
             </>
@@ -99,41 +107,38 @@ export default function PreOrderModal({ open, onClose, initialProduct }: Props) 
           {step === 'form' && (
             <form onSubmit={handlePay}>
               <button type="button" onClick={() => setStep('choose')}
-                className="font-mono text-[9px] tracking-[2px] uppercase text-muted hover:text-acid bg-transparent border-0 cursor-none transition-colors flex items-center gap-2 mb-6">
+                className="font-mono text-[9px] tracking-[2px] uppercase text-white/40 hover:text-[#d4604d] flex items-center gap-2 mb-6">
                 ← Back
               </button>
 
-              {/* Order Summary Box */}
-              <div className="flex items-center gap-6 bg-acid/[0.04] border border-acid/[0.12] p-5 mb-6">
-                <div className="w-12 h-12 flex items-center justify-center border border-acid/20 bg-acid/5">
-                   <span className="font-mono text-[10px] text-acid">[{product.id.toString().padStart(2, '0')}]</span>
+              <div className="flex items-center gap-6 bg-[#d4604d]/5 border border-[#d4604d]/20 p-5 mb-6">
+                <div className="w-12 h-12 flex items-center justify-center border border-[#d4604d]/20">
+                   <span className="font-mono text-[10px] text-[#d4604d]">[{String(product.id).padStart(2, '0')}]</span>
                 </div>
                 <div>
-                  <div className="font-display text-xl tracking-wide uppercase">{product.name}</div>
-                  <div className="font-mono text-[9px] tracking-[2px] uppercase text-muted">Size: {size}</div>
-                  <div className="font-mono text-base font-bold text-acid mt-1">₹{product.price.toLocaleString('en-IN')}</div>
+                  <div className="font-display text-xl tracking-wide uppercase text-white">{product.name}</div>
+                  <div className="font-mono text-[9px] tracking-[2px] uppercase text-white/40">Size: {size}</div>
+                  <div className="font-mono text-base font-bold text-[#d4604d] mt-1">₹{getPrice(product).toLocaleString('en-IN')}</div>
                 </div>
               </div>
 
-              <p className="font-mono text-[9px] tracking-[3px] uppercase text-muted mb-1">Your Details</p>
-              <h2 className="font-display text-[32px] tracking-wider mb-5">CHECKOUT</h2>
+              <p className="font-mono text-[9px] tracking-[3px] uppercase text-white/40 mb-1">Your Details</p>
+              <h2 className="font-display text-[32px] tracking-wider mb-5 text-white">CHECKOUT</h2>
               
               <div className="flex flex-col gap-3 mb-5">
                 {(['name', 'email', 'phone', 'city'] as const).map((key) => {
-                  const labels: any = { name: 'Full Name', email: 'Email', phone: 'Phone', city: 'Delivery City' }
-                  const placeholders: any = { name: 'Arjun Kumar', email: 'arjun@mail.com', phone: '+91 98765 43210', city: 'Mumbai, Maharashtra' }
+                  const labels: Record<string, string> = { name: 'Full Name', email: 'Email', phone: 'Phone', city: 'Delivery City' }
                   return (
                     <div key={key}>
-                      <label className="block font-mono text-[9px] tracking-[2px] uppercase text-muted mb-1.5">
-                        {labels[key]}{key !== 'city' && <span className="text-fire ml-1">*</span>}
+                      <label className="block font-mono text-[9px] tracking-[2px] uppercase text-white/40 mb-1.5">
+                        {labels[key]}{key !== 'city' && <span className="text-[#d4604d] ml-1">*</span>}
                       </label>
                       <input 
-                        type={key === 'email' ? 'email' : key === 'phone' ? 'tel' : 'text'} 
-                        placeholder={placeholders[key]} 
+                        type={key === 'email' ? 'email' : 'text'} 
                         required={key !== 'city'}
                         value={form[key]}
                         onChange={(e) => setForm((prev) => ({ ...prev, [key]: e.target.value }))}
-                        className="w-full bg-white/[0.04] border border-white/[0.10] text-chrome font-mono text-[11px] px-4 py-3 outline-none focus:border-acid transition-colors placeholder:text-muted" 
+                        className="w-full bg-white/[0.04] border border-white/[0.10] text-white font-mono text-[11px] px-4 py-3 outline-none focus:border-[#d4604d] transition-colors" 
                       />
                     </div>
                   )
@@ -141,43 +146,36 @@ export default function PreOrderModal({ open, onClose, initialProduct }: Props) 
               </div>
 
               <button type="submit" disabled={loading}
-                className="clip-btn w-full bg-acid text-void font-mono text-[11px] font-bold tracking-[2px] uppercase py-4 border-0 cursor-none hover:bg-white transition-colors flex items-center justify-center gap-3 disabled:opacity-60">
-                {loading ? (
-                  <><span className="w-3 h-3 border border-void border-t-transparent rounded-full animate-spin" />Processing...</>
-                ) : <>Complete Pre-Order →</>}
+                className="w-full bg-[#d4604d] text-white font-mono text-[11px] font-bold tracking-[2px] uppercase py-4 disabled:opacity-50 transition-all">
+                {loading ? 'Processing...' : `Complete Pre-Order →`}
               </button>
             </form>
           )}
 
           {step === 'success' && (
             <div className="text-center py-4">
-              <div className="w-16 h-16 bg-acid/10 rounded-full flex items-center justify-center mx-auto mb-6">
-                <span className="text-acid text-2xl">✓</span>
+              <div className="w-16 h-16 bg-[#d4604d]/10 rounded-full flex items-center justify-center mx-auto mb-6">
+                <span className="text-[#d4604d] text-2xl">✓</span>
               </div>
-              <p className="font-mono text-[9px] tracking-[3px] uppercase text-acid mb-2">Order Confirmed</p>
-              <h2 className="font-display text-[40px] tracking-wider mb-3 uppercase">YOU&apos;RE IN.</h2>
+              <p className="font-mono text-[9px] tracking-[3px] uppercase text-[#d4604d] mb-2">Order Confirmed</p>
+              <h2 className="font-display text-[40px] tracking-wider mb-3 uppercase text-white">YOU&apos;RE IN.</h2>
               
-              <div className="bg-acid/[0.04] border border-acid/[0.15] p-5 mb-7 text-left">
-                <p className="font-mono text-[9px] tracking-[3px] uppercase text-muted mb-4">Transmission Receipt</p>
+              <div className="bg-[#d4604d]/5 border border-[#d4604d]/15 p-5 mb-7 text-left">
                 {[
-                  { label: 'Order ID', value: '#' + orderId, hi: true },
-                  { label: 'Model',    value: product.name,    hi: false },
-                  { label: 'Size',     value: size,            hi: false },
-                  { label: 'Recipient', value: form.name,       hi: false },
-                ].map(({ label, value, hi }) => (
+                  { label: 'Order ID', value: '#' + orderId },
+                  { label: 'Model',    value: product.name },
+                  { label: 'Size',     value: size },
+                  { label: 'Recipient', value: form.name },
+                ].map(({ label, value }) => (
                   <div key={label} className="flex justify-between font-mono text-[11px] mb-2">
-                    <span className="text-muted">{label}</span>
-                    <span className={hi ? 'text-acid font-bold' : 'text-chrome uppercase'}>{value}</span>
+                    <span className="text-white/40">{label}</span>
+                    <span className="text-white uppercase">{value}</span>
                   </div>
                 ))}
-                <div className="flex justify-between font-mono text-[11px] border-t border-white/[0.06] pt-2 mt-2">
-                  <span className="text-muted">Total Paid</span>
-                  <span className="text-acid font-bold text-sm">₹{product.price.toLocaleString('en-IN')}</span>
-                </div>
               </div>
 
               <button onClick={onClose}
-                className="clip-btn bg-acid text-void font-mono text-[10px] font-bold tracking-[2px] uppercase px-10 py-3 border-0 cursor-none hover:bg-white transition-colors">
+                className="bg-[#d4604d] text-white font-mono text-[10px] font-bold tracking-[2px] uppercase px-10 py-3 hover:bg-white hover:text-black transition-colors">
                 Back to Site
               </button>
             </div>
