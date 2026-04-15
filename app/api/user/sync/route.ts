@@ -11,8 +11,8 @@ export async function POST(request: NextRequest) {
 
     const user = await prisma.user.upsert({
       where: { id },
-      update: { email, FirstName: given_name ?? "", LastName: family_name ?? "" },
-      create: { id, email, FirstName: given_name ?? "", LastName: family_name ?? "" },
+      update: { email, firstName: given_name ?? "", lastName: family_name ?? "" },
+      create: { id, email, firstName: given_name ?? "", lastName: family_name ?? "" },
     });
 
     return NextResponse.json(user);

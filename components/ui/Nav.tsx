@@ -64,8 +64,8 @@ export default function Nav() {
         style={{ scaleX }}
       />
 
-      <Link href="/" className="font-display text-2xl text-[#e5f1ee] font-bold">
-        TESSCH.
+      <Link href="/" className="">
+        <img className="h-8 w-24" src="https://res.cloudinary.com/dttnc62hp/image/upload/q_auto/f_auto/v1776261459/logotext_sa4h8x.svg" alt="" />
       </Link>
 
       <ul className="hidden lg:flex gap-8 list-none m-0 p-0">
