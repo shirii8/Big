@@ -1,4 +1,11 @@
-import type { User, Order, OrderItem, Product, CartItem, Session } from '@prisma/client'
+import type { 
+  User, 
+  Order, 
+  OrderItem, 
+  Product, 
+  CartItem, 
+  Role 
+} from '@prisma/client'
 
 // ─── Auth ────────────────────────────────────────────────────────────────
 export interface AuthUser {
@@ -7,9 +14,9 @@ export interface AuthUser {
   email: string;
   phone?: string | null;
   age?: number | null;
-  teamId? : string;
+  teamId?: string;
   team?: Team;
-  role: Role;
+  role: Role; 
   createdAt: Date;
   updatedAt: Date;
 }
@@ -17,13 +24,13 @@ export interface AuthUser {
 export interface Team {
   id: string;
   name: string;
-  description? : string| null;
+  description?: string | null;
   code: string;
-  members: User[];
+  members?: User[]; // Optional because you might not always fetch members
   email: string;
   phone?: string | null;
   age?: number | null;
-   createdAt: Date;
+  createdAt: Date;
   updatedAt: Date;
 }
 
@@ -64,7 +71,6 @@ export type OrderWithItems = Order & {
 }
 
 export interface CheckoutInput {
-  // Shipping
   name: string
   email: string
   phone: string
