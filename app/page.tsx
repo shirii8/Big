@@ -6,7 +6,6 @@ import Link from "next/link";
 import { useKindeBrowserClient } from "@kinde-oss/kinde-auth-nextjs";
 import { LogoutLink } from "@kinde-oss/kinde-auth-nextjs/components";
 
-import SectionLabel from "@/components/ui/SectionLabel";
 import PreOrderModal from "@/components/ui/PreOrderModal";
 import HowItWorksPage from "./how-it-works/page";
 import FinalDropCTA from "./drop/page";
@@ -184,7 +183,7 @@ export default function HomePage() {
         id="about"
         className="px-6 md:px-12 py-20 bg-[#17191d] text-[#e5f1ee]"
       >
-        <SectionLabel>Our Story</SectionLabel>
+        <h4>Our Story</h4>
         <StoryPage />
       </section>
 

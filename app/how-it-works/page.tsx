@@ -3,7 +3,7 @@
 import dynamic from "next/dynamic";
 import { useState, useRef } from "react";
 import { motion, AnimatePresence, useScroll, useTransform } from "framer-motion";
-import SectionLabel from "@/components/ui/SectionLabel";
+
 
 // const ModularCanvas = dynamic(() => import("@/components/3d/ModularCanvas"), {
 //   ssr: false,
@@ -93,7 +93,7 @@ export default function HowItWorksPage() {
           animate={{ opacity: 1, y: 0 }}
           className="relative z-10"
         >
-          <SectionLabel>Technical Blueprint</SectionLabel>
+          <h4>Technical Blueprint</h4>
           <h1 className="font-display leading-[0.85] mt-6 tracking-tighter" style={{ fontSize: "clamp(60px, 12vw, 140px)" }}>
             ONE SOLE.<br />
             <span className="text-[#d4604d] italic">INFINITE</span> <span className="stroke-text" style={{ WebkitTextStroke: '2px #17191d', color: 'transparent' }}>UPPERS.</span>
@@ -208,7 +208,7 @@ export default function HowItWorksPage() {
 
  {/* ══ FAQ: MINIMALIST ACCORDION ════════════════════════ */}
 <section className="py-12 px-6 md:px-12 max-w-4xl mx-auto">
-  <SectionLabel>Intelligence</SectionLabel>
+  <h4>Intelligence</h4>
   
   {/* ── MAIN TOGGLE ── */}
   <h2

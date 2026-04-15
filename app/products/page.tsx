@@ -2,7 +2,7 @@
 
 import { motion } from 'framer-motion'
 import Link from 'next/link'
-import SectionLabel from '@/components/ui/SectionLabel'
+
 
 export default function ProductsPortal() {
   return (
@@ -15,7 +15,7 @@ export default function ProductsPortal() {
           className="absolute inset-0 bg-[#d4604d] translate-y-full group-hover:translate-y-0 transition-transform duration-700 ease-[cubic-bezier(0.23,1,0.32,1)]"
         />
         <div className="relative z-10 h-full flex flex-col justify-center p-12 lg:p-20">
-          <SectionLabel>Step 01</SectionLabel>
+          <h4>Step 01</h4>
           <h2 className="font-display text-7xl lg:text-9xl uppercase tracking-tighter leading-none mb-6 group-hover:text-white transition-colors">
             THE <br/>UPPERS
           </h2>
@@ -37,7 +37,7 @@ export default function ProductsPortal() {
           className="absolute inset-0 bg-[#17191d] translate-y-full group-hover:translate-y-0 transition-transform duration-700 ease-[cubic-bezier(0.23,1,0.32,1)]"
         />
         <div className="relative z-10 h-full flex flex-col justify-center p-12 lg:p-20">
-          <SectionLabel>Step 02</SectionLabel>
+          <h4>Step 02</h4>
           <h2 className="font-display text-7xl lg:text-9xl uppercase tracking-tighter leading-none mb-6 group-hover:text-[#e5f1ee] transition-colors">
             Starter  <br/> Build
           </h2>

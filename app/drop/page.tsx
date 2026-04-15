@@ -1,7 +1,6 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import SectionLabel from '@/components/ui/SectionLabel'
 import { type Product } from '@/lib/data' // Import the Product type
 
 // 1. Define the interface for the props
@@ -17,7 +16,7 @@ export default function FinalDropCTA({ openModal }: FinalDropCTAProps) {
       <div className="max-w-7xl mx-auto flex flex-col lg:flex-row items-center justify-between gap-16">
         
         <div className="flex-1 text-[#e5f1ee]">
-          <SectionLabel>Final Construction Phase</SectionLabel>
+          <h1>Final Construction Phase</h1>
           <h2 className="font-display uppercase tracking-tighter mt-6 mb-8" style={{ fontSize: 'clamp(44px, 7vw, 110px)', lineHeight: 0.85 }}>
             ORDER YOUR <br />
             <span className="text-[#d4604d]">DROP 001.</span>

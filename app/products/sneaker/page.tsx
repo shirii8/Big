@@ -3,7 +3,6 @@
 import { useState, useMemo, useEffect, memo, useCallback, useRef } from "react";
 import { AnimatePresence, motion, useAnimationControls } from "framer-motion";
 import { useRouter } from "next/navigation";
-import SectionLabel from "@/components/ui/SectionLabel";
 import { useCart } from "@/context/CartContext";
 import { useKindeBrowserClient } from "@kinde-oss/kinde-auth-nextjs";
 import { PRODUCTS, type Product } from "@/lib/data";
@@ -49,7 +48,7 @@ export default function UppersPage() {
   return (
     <div className="bg-[#e5f1ee] min-h-screen w-full flex flex-col text-[#17191d]">
       <header className="pt-32 pb-12 px-6 md:px-12 shrink-0">
-        <SectionLabel>Drop 01 / Modular Archive</SectionLabel>
+        <h4>Drop 01 / Modular Archive</h4>
         <div className="flex justify-between items-end mt-4 border-b-2 border-[#17191d]/10 pb-6">
           <h1 className="font-display text-[clamp(36px,6vw,80px)] leading-[0.85] tracking-tighter uppercase">
             SELECT YOUR <br />
