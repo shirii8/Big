@@ -33,7 +33,7 @@ model User {
   id        String  @id
   email     String  @unique
   password  String?
-  firstName String?
+  FirstName String?
   lastName  String?
   age       Int?
   gender    String?

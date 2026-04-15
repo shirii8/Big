@@ -9,7 +9,7 @@ import { useRouter } from 'next/navigation'
 import { useKindeBrowserClient } from '@kinde-oss/kinde-auth-nextjs'
 import { Tag, MapPin, Loader2 } from 'lucide-react'
 import UPIPayment from '@/components/UPIPayment'
-import { NAMED_COUPONS } from '@/lib/coupon-data'
+import { NAMED_COUPONS,ONE_TIME_CODES } from '@/lib/coupon-data'
 
 interface Address {
   id: string; line1: string; line2?: string; city: string
