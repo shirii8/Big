@@ -35,12 +35,13 @@ function validateCoupon(
   code: string, subtotal: number
 ): { discountAmt: number; label: string; isOneTime: boolean } | { error: string } {
   const upper = code.toUpperCase().trim()
-  const cap   = getMRPCap(subtotal)
+  const cap = getMRPCap(subtotal)
 
   const named = NAMED_COUPONS[upper]
   if (named) {
     const raw = named.type === 'flat' ? named.discount : Math.round(subtotal * named.discount)
-    return { discountAmt: Math.min(raw, cap), label: named.label, isOneTime: false }
+    const label = named.label.replace('{cap}', cap.toLocaleString('en-IN'))
+    return { discountAmt: Math.min(raw, cap), label, isOneTime: false }
   }
 
   const found = ONE_TIME_CODES.find(c => c.toUpperCase() === upper)
@@ -56,31 +57,31 @@ function validateCoupon(
 
 export default function CheckoutPage() {
   const { items, subtotal, clearCart } = useCart()
-  const { isAuthenticated, isLoading }  = useKindeBrowserClient()
+  const { isAuthenticated, isLoading } = useKindeBrowserClient()
   const router = useRouter()
 
-  const [authChecked, setAuthChecked]             = useState(false)
-  const [step, setStep]                           = useState<Step>('delivery')
-  const [savedAddresses, setSavedAddresses]       = useState<Address[]>([])
+  const [authChecked, setAuthChecked] = useState(false)
+  const [step, setStep] = useState<Step>('delivery')
+  const [savedAddresses, setSavedAddresses] = useState<Address[]>([])
   const [selectedAddressId, setSelectedAddressId] = useState('')
-  const [showNewForm, setShowNewForm]             = useState(false)
-  const [savingAddr, setSavingAddr]               = useState(false)
-  const [newAddr, setNewAddr]                     = useState({
+  const [showNewForm, setShowNewForm] = useState(false)
+  const [savingAddr, setSavingAddr] = useState(false)
+  const [newAddr, setNewAddr] = useState({
     line1: '', line2: '', city: '', state: '',
     postalCode: '', country: 'India', phone: '',
   })
-  const [coupon, setCoupon]         = useState('')
+  const [coupon, setCoupon] = useState('')
   const [appliedCoupon, setAppliedCoupon] = useState<{
     code: string; discountAmt: number; label: string; isOneTime: boolean
   } | null>(null)
   const [couponError, setCouponError] = useState('')
-  const [placing, setPlacing]         = useState(false)
-  const [error, setError]             = useState('')
+  const [placing, setPlacing] = useState(false)
+  const [error, setError] = useState('')
   const [createdOrderId, setCreatedOrderId] = useState('')
 
-  const SHIPPING    = 170
+  const SHIPPING = 170
   const discountAmt = appliedCoupon?.discountAmt ?? 0
-  const total       = Math.max(0, subtotal + SHIPPING - discountAmt)
+  const total = Math.max(0, subtotal + SHIPPING - discountAmt)
 
   const loadAddresses = useCallback(async () => {
     try {
@@ -129,7 +130,7 @@ export default function CheckoutPage() {
 
   async function placeOrder() {
     if (!selectedAddressId) { setError('Please select a delivery address.'); return }
-    if (items.length === 0)  { setError('Your cart is empty.'); return }
+    if (items.length === 0) { setError('Your cart is empty.'); return }
     setPlacing(true); setError('')
 
     try {
@@ -191,7 +192,7 @@ export default function CheckoutPage() {
         <UPIPayment
           amount={total}
           orderId={createdOrderId}
-          onConfirmed={() => { clearCart(); router.push('/checkout/success') }}
+          onConfirmed={() => { clearCart(); router.push('/') }}
           onCancel={() => { setStep('confirm'); setError('Payment cancelled. You can retry.') }}
         />
       </div>

@@ -3,6 +3,7 @@
 // Logic: code "30XYZZ" = 30% off, capped at ₹1000
 
 export const NAMED_COUPONS: Record<string, { discount: number; label: string; type: 'percent' | 'flat' }> = {
+  TESSCH30:   { discount: 0.30, label: '30% off — Up to ₹{cap}',         type: 'percent' },
   TESSCH15:   { discount: 0.15, label: '15% off — Early Adopter',        type: 'percent' },
   DROP001:    { discount: 0.10, label: '10% off — Drop 001 Launch',      type: 'percent' },
   FIRSTBUILD: { discount: 200,  label: '₹200 off — First Build',         type: 'flat'    },
