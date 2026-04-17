@@ -43,51 +43,27 @@ export default function HomePage() {
       />
 
       {/* ══ HERO SECTION ══ */}
+      <div className="pt-24 md:pt-32 sm:pt-10">
+        <RangeMarquee />
+      </div>
       <section
         ref={containerRef}
         id="home"
-        className="relative min-h-screen flex flex-col pt-20 md:pt-32"
+        className="relative flex flex-col pt-8 md:pt-16 pb-12 md:pb-24 sm:pt-10"
       >
-        {/* 1. CINEMATIC VIDEO */}
-        <div className="w-full px-4 md:px-12 relative z-10">
-          <motion.div
-            style={{ scale: videoScale }}
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="relative w-full aspect-[16/9] md:aspect-[2.35/1] overflow-hidden rounded-2xl bg-white shadow-[0_40px_80px_rgba(0,0,0,0.12)] border-[8px] md:border-[16px] border-white group"
-          >
-            <video
-              autoPlay
-              loop
-              muted
-              playsInline
-              className="w-full h-full object-cover grayscale-[20%] group-hover:grayscale-0 transition-all duration-1000"
-            >
-              <source
-                src="https://res.cloudinary.com/dttnc62hp/video/upload/v1775913652/Stop_motion_tessch_shoe_iciz5a.mov"
-                type="video/mp4"
-              />
-            </video>
-            <div className="absolute top-6 left-6 md:top-10 md:left-10 z-20">
-              <div className="bg-[#17191d] text-white font-mono text-[9px] md:text-[11px] px-3 py-1.5 uppercase tracking-[4px] skew-x-[-12deg]">
-                System_Live_Feed // 001
-              </div>
-            </div>
-          </motion.div>
-        </div>
-
-        {/* 2. TYPOGRAPHY HEADLINE */}
+        {/* TYPOGRAPHY HEADLINE */}
         <motion.div
           style={{ y: textY }}
-          className="w-full pt-4 px-6 md:px-12 py-16 flex flex-col items-center text-center z-20"
+          // FIX 3: Changed `py-16` to `pb-8 md:pb-16` to tighten mobile gaps
+          className="w-full px-6 md:px-12 pb-8 md:pb-16 flex flex-col items-center text-center z-20"
         >
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="flex items-center gap-4 mt-24"
+            className="flex items-center gap-4 mt-2"
           >
             <span className="w-12 h-px bg-[#d4604d]" />
-            <span className="font-mono text-[11px] tracking-[6px] uppercase text-[#d4604d] font-black">
+            <span className="font-mono text-[11px] tracking-[6px] uppercase text-[#d4604d] font-black text-center">
               {isAuthenticated
                 ? `Welcome Back, ${user?.given_name}`
                 : "INDIA'S FIRST MODULAR SNEAKER"}
@@ -95,7 +71,7 @@ export default function HomePage() {
             <span className="w-12 h-px bg-[#d4604d]" />
           </motion.div>
 
-          <h1 className="font-display leading-[0.75] uppercase select-none tracking-[-0.07em] mt-8">
+          <h1 className="font-display leading-[0.75] uppercase select-none tracking-[-0.07em] mt-8 md:mt-12">
             <span className="block text-[clamp(65px,18vw,160px)] text-[#17191d]">
               Stay YOU
             </span>
@@ -122,7 +98,36 @@ export default function HomePage() {
             </span>
           </h1>
         </motion.div>
+
+        {/* 1. CINEMATIC VIDEO (Now inside the section) */}
+        <div className="w-full px-4 md:px-12 relative z-10">
+          <motion.div
+            style={{ scale: videoScale }}
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="relative w-full aspect-[16/9] md:aspect-[2.35/1] overflow-hidden rounded-2xl bg-white shadow-[0_40px_80px_rgba(0,0,0,0.12)] border-[8px] md:border-[16px] border-white group"
+          >
+            <video
+              autoPlay
+              loop
+              muted
+              playsInline
+              className="w-full h-full object-cover grayscale-[20%] group-hover:grayscale-0 transition-all duration-1000"
+            >
+              <source
+                src="https://res.cloudinary.com/dttnc62hp/video/upload/v1775913652/Stop_motion_tessch_shoe_iciz5a.mov"
+                type="video/mp4"
+              />
+            </video>
+            <div className="absolute top-2 left-4 md:top-10 md:left-10 z-20">
+              <div className="bg-[#17191d] text-white font-mono text-[9px] md:text-[11px] px-3 py-1.5 uppercase tracking-[4px] skew-x-[-12deg]">
+                System_Live_Feed // 001
+              </div>
+            </div>
+          </motion.div>
+        </div>
       </section>
+
 
       {/* ── MANIFESTO & ACTION ROW ── */}
       <section className="w-full max-w-7xl mx-auto px-6 md:px-12 py-8 md:py-12 border-t border-[#17191d]/10">
@@ -159,7 +164,7 @@ export default function HomePage() {
                 </span>
               </div>
               <span className="font-mono text-[9px] font-black uppercase tracking-[4px] text-[#17191d] opacity-70 group-hover:opacity-100 transition-opacity">
-               VIEW RANGE
+                VIEW RANGE
               </span>
             </Link>
           </div>
@@ -176,7 +181,6 @@ export default function HomePage() {
         <HowItWorksPage />
       </section>
 
-      <RangeMarquee />
       <ProductsPage />
 
       <section
@@ -190,8 +194,8 @@ export default function HomePage() {
       <FinalDropCTA openModal={openModal} />
 
       {/* ══ FOOTER ══ */}
-      
-        {/* <div className="flex gap-8 items-center font-mono text-[10px] tracking-widest uppercase">
+
+      {/* <div className="flex gap-8 items-center font-mono text-[10px] tracking-widest uppercase">
           {isAuthenticated && (
             <LogoutLink>
               <button className="text-[#d4604d] hover:line-through transition-all">
@@ -200,7 +204,7 @@ export default function HomePage() {
             </LogoutLink>
           )}
         </div> */}
-      
+
     </div>
   );
 }

@@ -3,7 +3,9 @@ import { defineConfig, env } from '@prisma/config';
 
 export default defineConfig({
   datasource: {
-    url: env('DATABASE_URL'),
+    // Use the direct (non-pooled) URL for CLI commands (migrate, db push)
+    // PgBouncer on port 6543 doesn't support DDL needed for migrations
+    url: env('DIRECT_URL'),
   },
   migrations: {
     // Switch from ts-node to tsx

@@ -13,12 +13,9 @@ type BuildChoice = "upper-only" | "build";
 
 const SIZES = ["UK 5", "UK 6", "UK 7", "UK 8", "UK 9", "UK 10", "UK 11"];
 
-// const UPPER_PRICE = 1499;
-// const SOLE_PRICE = 1299;
-// const BUILD_PRICE = UPPER_PRICE + SOLE_PRICE; // 2798
-const UPPER_PRICE = 2;       // ← change this
-const SOLE_PRICE = 2;        // ← and this if needed
-const BUILD_PRICE = UPPER_PRICE + SOLE_PRICE; // auto-updates to 4
+const UPPER_PRICE = 1499;
+const SOLE_PRICE = 1299;
+const BUILD_PRICE = UPPER_PRICE + SOLE_PRICE;
 
 const DEFAULT_SOLE = {
   id: "sole-default",
@@ -68,7 +65,7 @@ export default function UppersPage() {
         </div>
       </header>
 
-      <main className="flex flex-col gap-2 py-2 overflow-hidden mb-24">
+      <main className="flex flex-col gap-6 md:gap-8 py-2 overflow-hidden mb-24">
         {ROWS.map((row, idx) => (
           <ArchiveRow
             key={idx}
@@ -104,10 +101,22 @@ function ArchiveRow({
   const [isPaused, setIsPaused] = useState(false);
   const controls = useAnimationControls();
   const tripled = useMemo(() => [...items, ...items, ...items], [items]);
-  const scrollDistance = items.length * 560;
+  
+  // Calculate dynamically to support responsive card sizes
+  const [scrollDistance, setScrollDistance] = useState(items.length * 480);
 
   useEffect(() => {
-    if (!isPaused) {
+    const handleResize = () => {
+      const cardWidth = window.innerWidth < 768 ? 280 : window.innerWidth < 1024 ? 380 : 440;
+      setScrollDistance(items.length * (cardWidth + 40)); // 40px is gap-10
+    };
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [items.length]);
+
+  useEffect(() => {
+    if (!isPaused && scrollDistance > 0) {
       controls.start({
         x: reverse ? [0, -scrollDistance] : [-scrollDistance, 0],
         transition: { duration: 40, repeat: Infinity, ease: "linear" },
@@ -119,7 +128,7 @@ function ArchiveRow({
 
   return (
     <div
-      className="relative flex overflow-hidden h-[300px]"
+      className="relative flex overflow-hidden h-[160px] md:h-[200px] lg:h-[240px]"
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
     >
@@ -128,7 +137,7 @@ function ArchiveRow({
         animate={controls}
         dragConstraints={{ left: -scrollDistance * 2, right: 0 }}
         dragElastic={0.05}
-        className="flex gap-10 px-12 h-full items-center cursor-grab active:cursor-grabbing"
+        className="flex gap-10 px-6 md:px-12 h-full items-center cursor-grab active:cursor-grabbing"
         style={{ width: "max-content", touchAction: "none" }}
       >
         {tripled.map((product, i) => (
@@ -154,30 +163,30 @@ const ProductCard = memo(
   }) => (
     <div
       onClick={() => onSelect(product.id)}
-      className="w-[480px] md:w-[520px] h-[240px] bg-white border-[3px] border-[#17191d] group flex flex-row overflow-hidden hover:shadow-[12px_12px_0px_#d4604d] transition-shadow duration-300 cursor-pointer shrink-0"
+      className="w-[280px] md:w-[380px] lg:w-[440px] h-[140px] md:h-[180px] lg:h-[220px] bg-white border-[3px] border-[#17191d] group flex flex-row overflow-hidden hover:shadow-[8px_8px_0px_#d4604d] transition-shadow duration-300 cursor-pointer shrink-0"
     >
-      <div className="flex-1 h-full bg-[#f8fcfb] relative overflow-hidden border-r-[3px] border-[#17191d]">
+      <div className="flex-1 h-full bg-[#f8fcfb] relative overflow-hidden border-r-[3px] border-[#17191d] p-3 md:p-6 flex items-center justify-center">
         <img
           src={product.image}
-          className="w-full h-full object-contain mix-blend-multiply scale-105 group-hover:scale-110 transition-transform duration-500 ease-out"
+          className="w-full h-full object-contain mix-blend-multiply group-hover:scale-110 transition-transform duration-500 ease-out"
           alt={product.name}
         />
       </div>
-      <div className="w-[180px] shrink-0 h-full p-5 flex flex-col justify-between bg-white group-hover:bg-[#d4604d]/5 transition-colors">
+      <div className="w-[120px] md:w-[140px] lg:w-[160px] shrink-0 h-full p-3 md:p-5 flex flex-col justify-between bg-white group-hover:bg-[#d4604d]/5 transition-colors">
         <div>
-          <p className="font-mono text-[9px] text-[#d4604d] font-bold uppercase tracking-[2px] mb-2">
+          <p className="font-mono text-[7px] md:text-[9px] text-[#d4604d] font-bold uppercase tracking-[2px] mb-1">
             {product.category}
           </p>
-          <h3 className="font-display text-2xl md:text-3xl uppercase leading-[0.88] tracking-tighter">
+          <h3 className="font-display text-lg md:text-2xl lg:text-3xl uppercase leading-[0.85] tracking-tighter line-clamp-2 md:line-clamp-none">
             {product.name}
           </h3>
         </div>
-        <div className="flex flex-col gap-1">
-          <p className="font-mono text-[8px] uppercase opacity-40">From</p>
-          <p className="font-display text-2xl">
+        <div className="flex flex-col gap-0.5 md:gap-1">
+          <p className="font-mono text-[7px] md:text-[8px] uppercase opacity-40">From</p>
+          <p className="font-display text-lg md:text-2xl lg:text-3xl leading-none mb-1 md:mb-2">
             ₹{UPPER_PRICE.toLocaleString("en-IN")}
           </p>
-          <span className="font-mono text-[10px] font-bold text-[#d4604d] border-b border-[#d4604d] pb-0.5 w-fit">
+          <span className="font-mono text-[8px] md:text-[10px] font-bold text-[#d4604d] border-b border-[#d4604d] pb-0.5 w-fit transition-colors group-hover:text-[#17191d] group-hover:border-[#17191d]">
             VIEW DETAIL
           </span>
         </div>

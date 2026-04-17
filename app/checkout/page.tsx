@@ -880,7 +880,7 @@ async function saveAddress() {
 
 //                     <div className="flex flex-col gap-3">
 //                       {items.map(item => {
-//                         const unitPrice = item.type === 'build' ? item.upper.price + (item.sole?.price ?? 3200) : item.upper.price
+//                         const unitPrice = item.type === 'build' ? item.upper.price + (item.sole?.price ?? 1299) : item.upper.price
 //                         return (
 //                           <div key={item.id} className="flex items-center gap-4 bg-white border-2 border-[#17191d] p-4">
 //                             <img src={item.upper.image} alt="" className="w-14 h-14 object-contain mix-blend-multiply" />

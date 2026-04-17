@@ -8,15 +8,12 @@ const globalForPrisma = global as unknown as {
 
 const createPrismaClient = () => {
   const pool = new pg.Pool({
-    connectionString: process.env.DATABASE_URL || process.env.DIRECT_URL,
+    connectionString: process.env.DIRECT_URL,
   });
 
-  // THE FIX: Cast to 'any' to bypass the internal type-mismatch
-  const adapter = new PrismaPg(pool) as any;
+  const adapter = new PrismaPg(pool);
 
-  return new PrismaClient({
-    adapter,
-  });
+  return new PrismaClient({ adapter });
 };
 
 const prisma = globalForPrisma.prisma ?? createPrismaClient();

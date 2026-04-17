@@ -1,5 +1,4 @@
 'use client'
-
 import { useState, useEffect, useCallback } from 'react'
 import { useCart } from '@/context/CartContext'
 import { motion, AnimatePresence } from 'framer-motion'

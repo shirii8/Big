@@ -48,7 +48,7 @@ export async function POST(req: NextRequest) {
         })
         const unitPrice =
           item.type === 'build'
-            ? item.upper.price + (item.sole?.price ?? 3200)
+            ? item.upper.price + (item.sole?.price ?? 1299)
             : item.upper.price
         const productType = item.type === 'build' ? 'build' : 'upper'
         return { variant, quantity: item.quantity, price: unitPrice, productType }

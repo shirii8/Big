@@ -4,6 +4,7 @@ import {
   createContext, useContext, useEffect,
   useState, useCallback, ReactNode
 } from 'react'
+import { PRODUCTS } from '@/lib/data'
 
 export type ItemType = 'build' | 'upper-only'
 
@@ -50,7 +51,7 @@ const STORAGE_KEY = 'tessch_cart_v2'
 const DEFAULT_SOLE: SoleItem = {
   id: 'sole-default',
   name: 'CLOUD RUNNER',
-  price: 3200,
+  price: 1299,
   image: 'https://res.cloudinary.com/dttnc62hp/image/upload/q_auto/f_auto/v1775151261/WhatsApp_Image_2026-04-01_at_02.28.39_1_bqptrs.jpg',
 }
 
@@ -62,7 +63,21 @@ export function CartProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     try {
       const raw = localStorage.getItem(STORAGE_KEY)
-      if (raw) setItems(JSON.parse(raw))
+      if (raw) {
+        const parsed = JSON.parse(raw)
+        // Refresh prices from PRODUCTS
+        const refreshed = parsed.map((item: CartItem) => {
+          const freshUpper = PRODUCTS.find(p => p.id === item.upper.id)
+          if (freshUpper) {
+            item.upper.price = freshUpper.priceNum
+          }
+          if (item.sole && item.sole.id === 'sole-default') {
+            item.sole.price = DEFAULT_SOLE.price
+          }
+          return item
+        })
+        setItems(refreshed)
+      }
     } catch { /* ignore */ }
     setLoading(false)
   }, [])

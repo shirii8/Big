@@ -26,7 +26,12 @@ export async function PATCH(
 
     const updated = await prisma.cartItem.update({
       // 2. Use the awaited itemId
-      where: { id: itemId, userId: user.id },
+      where: { 
+        userId_variantId: {
+          userId: user.id,
+          variantId: itemId,
+        }
+      },
       data: {
         ...(quantity !== undefined && { quantity }),
         ...(productType !== undefined && { productType }),
@@ -56,7 +61,12 @@ export async function DELETE(
   try {
     await prisma.cartItem.delete({
       // 4. Use the awaited itemId
-      where: { id: itemId, userId: user.id },
+      where: { 
+        userId_variantId: {
+          userId: user.id,
+          variantId: itemId,
+        }
+      },
     })
     return NextResponse.json({ success: true })
   } catch (error) {

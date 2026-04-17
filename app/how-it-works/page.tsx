@@ -72,31 +72,47 @@ export default function HowItWorksPage() {
 
       {/* ══ HERO SECTION ════════════════════════ */}
       <section className="relative min-h-[80vh] flex flex-col justify-center px-6 md:px-12 overflow-hidden">
-        <div className="absolute top-20 right-[5%] opacity-10 pointer-events-none">
-            <h1 className="text-[4vw] font-display leading-none">Founded <br /> by Young <br /> Frustrated IITIANS</h1>
-        </div>
         
-        <motion.div 
-          initial={{ opacity: 0, x: -50 }}
-          animate={{ opacity: 1, x: 0 }}
-          className="relative z-10"
-        >
-          <div className="flex items-center gap-4 mb-8">
-            <div className="h-[2px] w-12 bg-[#d4604d]" />
-            <span className="font-mono text-xs tracking-widest uppercase">Technical Blueprint</span>
-          </div>
+        <div className="relative z-10 max-w-7xl mx-auto w-full flex flex-col md:flex-row items-start md:items-end justify-between gap-12">
+          
+          <motion.div 
+            initial={{ opacity: 0, x: -50 }}
+            animate={{ opacity: 1, x: 0 }}
+            className="flex-1"
+          >
+            <div className="flex items-center gap-4 mb-8">
+              <div className="h-[2px] w-12 bg-[#d4604d]" />
+              <span className="font-mono text-xs tracking-widest uppercase font-bold">Technical Blueprint</span>
+            </div>
 
-          <h1 className="font-display leading-[0.85] tracking-tighter" style={{ fontSize: "clamp(60px, 15vw, 180px)" }}>
-            ONE SOLE.<br />
-            <span className="text-[#d4604d] italic">INFINITE</span> <br />
-            <span className="stroke-text" style={{ WebkitTextStroke: '2px #17191d', color: 'transparent' }}>UPPERS.</span>
-          </h1>
-        </motion.div>
+            <h1 className="font-display leading-[0.85] tracking-tighter" style={{ fontSize: "clamp(50px, 12vw, 150px)" }}>
+              ONE SOLE.<br />
+              <span className="text-[#d4604d] italic">INFINITE</span> <br />
+              <span className="stroke-text" style={{ WebkitTextStroke: '2px #17191d', color: 'transparent' }}>UPPERS.</span>
+            </h1>
+          </motion.div>
 
-       
+          <motion.div 
+            initial={{ opacity: 0, x: 50 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.2 }}
+            className="mb-8 md:mb-12 md:max-w-xs border-l-4 border-[#d4604d] pl-6 py-2"
+          >
+            <h2 className="font-display text-4xl lg:text-5xl uppercase leading-[0.9] tracking-tighter mb-4">
+              Founded by <br />
+              <span className="text-[#d4604d]">Young</span> & <br />
+              <span className="text-[#d4604d]">Frustrated</span> <br />
+              IITIANS.
+            </h2>
+            <p className="font-mono text-[10px] uppercase tracking-[2px] opacity-60 leading-relaxed font-bold">
+              We engineered a system to stop you from buying the exact same sole repeatedly.
+            </p>
+          </motion.div>
+
+        </div>
       </section>
 
-      {/* ══ KINETIC MARQUEE (Kills negative space) ══════════════ */}
+      {/* ══ KINETIC MARQUEE (Kills negative space) ══════════════
       <div className="bg-[#17191d] py-4 overflow-hidden whitespace-nowrap border-y border-[#d4604d]">
         <motion.div style={{ x: xLeft }} className="flex gap-20">
           {[1, 2, 3, 4].map((_) => (
@@ -105,50 +121,62 @@ export default function HowItWorksPage() {
             </span>
           ))}
         </motion.div>
-      </div>
+      </div> */}
 
-      {/* ══ THE WORKFLOW (Card Style for Mobile) ═══════════════ */}
-      <section className="px-6 md:px-12 py-24 relative overflow-hidden">
-        <div className="max-w-7xl mx-auto mb-8">
-          <h2 className="font-display text-7xl md:text-9xl uppercase tracking-tighter leading-none">
-            THE <span className="text-[#d4604d]">LOGIC</span>
-          </h2>
+      {/* ══ THE WORKFLOW (Mechanical Grid) ═══════════════ */}
+<section className="px-6 md:px-12 py-24 relative overflow-hidden bg-[#e5f1ee]">
+  {/* Background Blueprint Grid (Only visible on the mint bg) */}
+  <div className="absolute inset-0 opacity-[0.05] pointer-events-none bg-[linear-gradient(#17191d_1px,transparent_1px),linear-gradient(90deg,#17191d_1px,transparent_1px)] bg-[size:40px_40px]" />
+
+  <div className="max-w-7xl mx-auto mb-12 relative z-10">
+    <h2 className="font-display text-7xl md:text-9xl uppercase tracking-tighter leading-[0.8]">
+      THE<span className="text-[#d4604d]">LOGIC</span>
+    </h2>
+  </div>
+
+  <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-6 relative z-10">
+    {STEPS.map((s, i) => (
+      <motion.div
+        key={i}
+        whileHover={{ y: -10 }}
+        className="relative group bg-[#17191d] text-[#e5f1ee] p-8 md:p-12 min-h-[420px] flex flex-col border-b-4 border-r-4 border-[#d4604d] shadow-[12px_12px_0px_0px_rgba(23,25,29,0.1)]"
+      >
+        {/* Scan-line Texture (Kills the flat empty feel) */}
+        <div className="absolute inset-0 opacity-[0.03] pointer-events-none bg-[repeating-linear-gradient(0deg,transparent,transparent_2px,#e5f1ee_3px)]" />
+
+        <div className="flex justify-between items-start mb-16">
+          <span className="font-mono text-5xl font-black text-[#d4604d] opacity-50">{s.num}</span>
+          <div className="font-mono text-[10px] tracking-[4px] uppercase opacity-40">
+            .{s.num}
+          </div>
         </div>
 
-        <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-6">
-          {STEPS.map((s, i) => (
-            <motion.div
-              key={i}
-              whileHover={{ y: -10 }}
-              className="relative group bg-white border-2 border-[#17191d] p-8 md:p-12 min-h-[400px] flex flex-col shadow-[8px_8px_0px_0px_#17191d]"
-            >
-              <div className="flex justify-between items-start mb-16">
-                <span className="font-mono text-4xl font-black text-[#d4604d]">{s.num}</span>
-                <div className="w-10 h-10 border border-[#17191d] rounded-full flex items-center justify-center font-mono text-[10px]">
-                    {s.num}
-                </div>
-              </div>
+        <h3 className="font-display text-5xl uppercase tracking-tighter leading-none mb-6 text-white">
+          {s.title}
+        </h3>
+        
+        <p className="text-[#e5f1ee]/80 font-medium leading-snug mb-8 max-w-[280px]">
+          {s.desc}
+        </p>
 
-              <h3 className="font-display text-5xl uppercase tracking-tighter leading-none mb-6">
-                {s.title}
-              </h3>
-              
-              <p className="text-[#17191d] font-medium leading-tight mb-8">
-                {s.desc}
-              </p>
-
-              <div className="mt-auto bg-[#e5f1ee] p-4 border border-dashed border-[#17191d]/30">
-                <p className="font-mono text-[11px] uppercase leading-tight opacity-70">
-                    <span className="text-[#d4604d] font-bold">TECH_SPEC:</span> {s.detail}
-                </p>
-              </div>
-
-              {/* Decorative Corner */}
-              <div className="absolute top-0 right-0 w-8 h-8 bg-[#17191d] clip-path-triangle md:group-hover:bg-[#d4604d] transition-colors" />
-            </motion.div>
-          ))}
+        {/* Technical Footer (Mint box inside Dark card) */}
+        <div className="mt-auto bg-[#e5f1ee]/10 p-5 border-l-2 border-[#d4604d]">
+          <p className="font-mono text-[10px] uppercase leading-tight tracking-widest text-[#d4604d] font-bold mb-1">
+            TECH_SPEC:
+          </p>
+          <p className="font-mono text-[11px] leading-tight text-[#e5f1ee]">
+            {s.detail}
+          </p>
         </div>
-      </section>
+
+        {/* Branding Corner */}
+        <div className="absolute top-0 right-0 w-12 h-12 bg-[#d4604d] flex items-center justify-center" style={{ clipPath: 'polygon(100% 0, 0 0, 100% 100%)' }}>
+            <span className="text-[#17191d] font-mono text-[10px] font-bold -translate-y-2 translate-x-1">BEST</span>
+        </div>
+      </motion.div>
+    ))}
+  </div>
+</section>
 
       {/* ══ FAQ SECTION ════════════════════════ */}
       <section className="py-24 px-6 md:px-12 bg-[#17191d] text-[#e5f1ee]">

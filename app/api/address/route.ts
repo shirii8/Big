@@ -28,6 +28,8 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
     }
 
+    
+
     // Upsert user so Kinde users always exist in DB before address creation
     await prisma.user.upsert({
       where: { id: user.id },

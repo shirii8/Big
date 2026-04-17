@@ -15,15 +15,15 @@ export type Product = {
 
 // ─── Bundle Pricing ───────────────────────────────────────────────────────────
 export const BUNDLE_PRICE = 3799        // 2 uppers + 1 sole
-export const SOLE_PRICE   = 3200        // standalone sole add-on
+export const SOLE_PRICE = 1299        // temporarily 0 for testing payment
 export const FOUNDATION_STOCK = 40      // launch stock count
 
 // ─── Coupons (single source of truth used by checkout + cart) ─────────────────
 export const COUPONS: Record<string, { discount: number; label: string; type: 'percent' | 'flat' }> = {
-  TESSCH15:   { discount: 0.15, label: '15% off — Early Adopter',   type: 'percent' },
-  DROP001:    { discount: 0.10, label: '10% off — Drop 001 Launch', type: 'percent' },
-  FIRSTBUILD: { discount: 200,  label: '₹200 off — First Build',    type: 'flat'    },
-  BUNDLE2:    { discount: 0.10, label: '10% off — 2 Uppers + Sole Bundle', type: 'percent' },
+  TESSCH15: { discount: 0.15, label: '15% off — Early Adopter', type: 'percent' },
+  DROP001: { discount: 0.10, label: '10% off — Drop 001 Launch', type: 'percent' },
+  FIRSTBUILD: { discount: 200, label: '₹200 off — First Build', type: 'flat' },
+  BUNDLE2: { discount: 0.10, label: '10% off — 2 Uppers + Sole Bundle', type: 'percent' },
 }
 
 // ─── Reviews ──────────────────────────────────────────────────────────────────
@@ -121,7 +121,7 @@ export const TIMELINE = [
 ]
 
 // ─── Sizes ────────────────────────────────────────────────────────────────────
-export const SIZES = ['UK 5','UK 6', 'UK 7', 'UK 8', 'UK 9', 'UK 10', 'UK 11']
+export const SIZES = ['UK 5', 'UK 6', 'UK 7', 'UK 8', 'UK 9', 'UK 10', 'UK 11']
 
 // ─── Best for Cta (all 15 uppers) ─────────────────────────────────────────────────
 
@@ -133,22 +133,22 @@ export const Best: Product[] = [
 
 // ─── Products (all 15 uppers) ─────────────────────────────────────────────────
 export const PRODUCTS: Product[] = [
-  { id: "u-001", name: "TANGELO", category: "Arc", price: "₹2798", priceNum: 2798, image: "https://res.cloudinary.com/dttnc62hp/image/upload/q_auto/f_auto/v1775707204/TANGELO_kz90o7.jpg", specs: { Material: "PU Leather, Suede", Range: "UK 6–11" } },
-  { id: "u-002", name: "SAKURA", category: "Arc", price: "₹2798", priceNum: 2798, image: "https://res.cloudinary.com/dttnc62hp/image/upload/q_auto/f_auto/v1775707204/SAKURA_fbjawt.jpg", specs: { Material: "PU Leather, Suede", Range: "UK 6–11" } },
-  { id: "u-003", name: "OMNITRIX", category: "Arc", price: "₹2798", priceNum: 2798, image: "https://res.cloudinary.com/dttnc62hp/image/upload/v1775707205/OMNITRIX_k953ys.jpg", specs: { Material: "PU Leather, Suede", Range: "UK 6–11" } },
-  { id: "u-004", name: "SAHARA", category: "Arc", price: "₹2798", priceNum: 2798, image: "https://res.cloudinary.com/dttnc62hp/image/upload/q_auto/f_auto/v1775707204/SAHARA_dptugl.jpg", specs: { Material: "PU Leather, Suede", Range: "UK 6–11" } },
-  { id: "u-005", name: "IKKA", category: "Arc", price: "₹2798", priceNum: 2798, image: "https://res.cloudinary.com/dttnc62hp/image/upload/q_auto/f_auto/v1775707205/IKKA_pyj8fg.jpg", specs: { Material: "PU Leather, Suede", Range: "UK 6–11" } },
-  { id: "u-006", name: "EUPHORIA", category: "Carve", price: "₹2798", priceNum: 2798, image: "https://res.cloudinary.com/dttnc62hp/image/upload/q_auto/f_auto/v1775707205/EUPHORIA_f5msvc.jpg", specs: { Material: "PU Leather, Suede", Range: "UK 6–11" } },
-  { id: "u-007", name: "BRENJAM", category: "Carve", price: "₹2798", priceNum: 2798, image: "https://res.cloudinary.com/dttnc62hp/image/upload/q_auto/f_auto/v1775707205/BRENJAM_gqdppm.jpg", specs: { Material: "PU Leather, Suede", Range: "UK 6–11" } },
-  { id: "u-008", name: "BISKOFF", category: "Carve", price: "₹2798", priceNum: 2798, image: "https://res.cloudinary.com/dttnc62hp/image/upload/q_auto/f_auto/v1775707205/BISKOFF_snz1bk.jpg", specs: { Material: "PU Leather, Suede", Range: "UK 6–11" } },
-  { id: "u-015", name: "WASABI", category: "Carve", price: "₹2798", priceNum: 2798, image: "https://res.cloudinary.com/dttnc62hp/image/upload/q_auto/f_auto/v1775707204/WASABI_cnfms9.jpg", specs: { Material: "PU Leather, Suede", Range: "UK 6–11" } },
-  { id: "u-013", name: "VOLCANO", category: "Carve", price: "₹2798", priceNum: 2798, image: "https://res.cloudinary.com/dttnc62hp/image/upload/q_auto/f_auto/v1775707204/VOLCANO_hmavs4.jpg", specs: { Material: "PU Leather, Suede", Range: "UK 6–11" } },
-  { id: "u-009", name: "GLACIER", category: "Tangent", price: "₹2798", priceNum: 2798, image: "https://res.cloudinary.com/dttnc62hp/image/upload/q_auto/f_auto/v1775707205/GLACIER_xwrp5m.jpg", specs: { Material: "PU Leather, Suede", Range: "UK 6–11" } },
-  { id: "u-010", name: "HAYFIELD", category: "Tangent", price: "₹2798", priceNum: 2798, image: "https://res.cloudinary.com/dttnc62hp/image/upload/q_auto/f_auto/v1775707204/HAYFIELD_wvwwgk.jpg", specs: { Material: "PU Leather, Suede", Range: "UK 6–11" } },
-  { id: "u-011", name: "JADE", category: "Tangent", price: "₹2798", priceNum: 2798, image: "https://res.cloudinary.com/dttnc62hp/image/upload/q_auto/f_auto/v1775707205/JADE_fwkjt9.jpg", specs: { Material: "PU Leather, Suede", Range: "UK 6–11" } },
-  { id: "u-012", name: "RASPUTEEN", category: "Tangent", price: "₹2798", priceNum: 2798, image: "https://res.cloudinary.com/dttnc62hp/image/upload/q_auto/f_auto/v1775707204/RASPUTEEN_qdxrcd.jpg", specs: { Material: "PU Leather, Suede", Range: "UK 6–11" } },
-  { id: "u-014", name: "PECADO", category: "Tangent", price: "₹2798", priceNum: 2798, image: "https://res.cloudinary.com/dttnc62hp/image/upload/q_auto/f_auto/v1775707205/PECADO_bsnwke.jpg", specs: { Material: "PU Leather, Suede", Range: "UK 6–11" } },
-  
+  { id: "u-001", name: "TANGELO", category: "Arc", price: "₹1499", priceNum: 1499, image: "https://res.cloudinary.com/dttnc62hp/image/upload/q_auto/f_auto/v1775707204/TANGELO_kz90o7.jpg", specs: { Material: "PU Leather, Suede", Range: "UK 6–11" } },
+  { id: "u-002", name: "SAKURA", category: "Arc", price: "₹1499", priceNum: 1499, image: "https://res.cloudinary.com/dttnc62hp/image/upload/q_auto/f_auto/v1775707204/SAKURA_fbjawt.jpg", specs: { Material: "PU Leather, Suede", Range: "UK 6–11" } },
+  { id: "u-003", name: "OMNITRIX", category: "Arc", price: "₹1499", priceNum: 1499, image: "https://res.cloudinary.com/dttnc62hp/image/upload/v1775707205/OMNITRIX_k953ys.jpg", specs: { Material: "PU Leather, Suede", Range: "UK 6–11" } },
+  { id: "u-004", name: "SAHARA", category: "Arc", price: "₹1499", priceNum: 1499, image: "https://res.cloudinary.com/dttnc62hp/image/upload/q_auto/f_auto/v1775707204/SAHARA_dptugl.jpg", specs: { Material: "PU Leather, Suede", Range: "UK 6–11" } },
+  { id: "u-005", name: "IKKA", category: "Arc", price: "₹1499", priceNum: 1499, image: "https://res.cloudinary.com/dttnc62hp/image/upload/q_auto/f_auto/v1775707205/IKKA_pyj8fg.jpg", specs: { Material: "PU Leather, Suede", Range: "UK 6–11" } },
+  { id: "u-006", name: "EUPHORIA", category: "Carve", price: "₹1499", priceNum: 1499, image: "https://res.cloudinary.com/dttnc62hp/image/upload/q_auto/f_auto/v1775707205/EUPHORIA_f5msvc.jpg", specs: { Material: "PU Leather, Suede", Range: "UK 6–11" } },
+  { id: "u-007", name: "BRENJAM", category: "Carve", price: "₹1499", priceNum: 1499, image: "https://res.cloudinary.com/dttnc62hp/image/upload/q_auto/f_auto/v1775707205/BRENJAM_gqdppm.jpg", specs: { Material: "PU Leather, Suede", Range: "UK 6–11" } },
+  { id: "u-008", name: "BISKOFF", category: "Carve", price: "₹1499", priceNum: 1499, image: "https://res.cloudinary.com/dttnc62hp/image/upload/q_auto/f_auto/v1775707205/BISKOFF_snz1bk.jpg", specs: { Material: "PU Leather, Suede", Range: "UK 6–11" } },
+  { id: "u-015", name: "WASABI", category: "Carve", price: "₹1499", priceNum: 1499, image: "https://res.cloudinary.com/dttnc62hp/image/upload/q_auto/f_auto/v1775707204/WASABI_cnfms9.jpg", specs: { Material: "PU Leather, Suede", Range: "UK 6–11" } },
+  { id: "u-013", name: "VOLCANO", category: "Carve", price: "₹1499", priceNum: 1499, image: "https://res.cloudinary.com/dttnc62hp/image/upload/q_auto/f_auto/v1775707204/VOLCANO_hmavs4.jpg", specs: { Material: "PU Leather, Suede", Range: "UK 6–11" } },
+  { id: "u-009", name: "GLACIER", category: "Tangent", price: "₹1499", priceNum: 1499, image: "https://res.cloudinary.com/dttnc62hp/image/upload/q_auto/f_auto/v1775707205/GLACIER_xwrp5m.jpg", specs: { Material: "PU Leather, Suede", Range: "UK 6–11" } },
+  { id: "u-010", name: "HAYFIELD", category: "Tangent", price: "₹1499", priceNum: 1499, image: "https://res.cloudinary.com/dttnc62hp/image/upload/q_auto/f_auto/v1775707204/HAYFIELD_wvwwgk.jpg", specs: { Material: "PU Leather, Suede", Range: "UK 6–11" } },
+  { id: "u-011", name: "JADE", category: "Tangent", price: "₹1499", priceNum: 1499, image: "https://res.cloudinary.com/dttnc62hp/image/upload/q_auto/f_auto/v1775707205/JADE_fwkjt9.jpg", specs: { Material: "PU Leather, Suede", Range: "UK 6–11" } },
+  { id: "u-012", name: "RASPUTEEN", category: "Tangent", price: "₹1499", priceNum: 1499, image: "https://res.cloudinary.com/dttnc62hp/image/upload/q_auto/f_auto/v1775707204/RASPUTEEN_qdxrcd.jpg", specs: { Material: "PU Leather, Suede", Range: "UK 6–11" } },
+  { id: "u-014", name: "PECADO", category: "Tangent", price: "₹1499", priceNum: 1499, image: "https://res.cloudinary.com/dttnc62hp/image/upload/q_auto/f_auto/v1775707205/PECADO_bsnwke.jpg", specs: { Material: "PU Leather, Suede", Range: "UK 6–11" } },
+
 ];
 
 export const UPPERS: Product[] = [
@@ -160,12 +160,12 @@ export const UPPERS: Product[] = [
   { id: "u-006", name: "EUPHORIA", category: "Carve", price: "₹1499", priceNum: 1499, image: "https://res.cloudinary.com/dttnc62hp/image/upload/q_auto/f_auto/v1775707205/EUPHORIA_f5msvc.jpg", specs: { Material: "PU Leather, Suede", Range: "UK 6–11" } },
   { id: "u-007", name: "BRENJAM", category: "Carve", price: "₹1499", priceNum: 1499, image: "https://res.cloudinary.com/dttnc62hp/image/upload/q_auto/f_auto/v1775707205/BRENJAM_gqdppm.jpg", specs: { Material: "PU Leather, Suede", Range: "UK 6–11" } },
   { id: "u-008", name: "BISKOFF", category: "Carve", price: "₹1499", priceNum: 1499, image: "https://res.cloudinary.com/dttnc62hp/image/upload/q_auto/f_auto/v1775707205/BISKOFF_snz1bk.jpg", specs: { Material: "PU Leather, Suede", Range: "UK 6–11" } },
-   { id: "u-015", name: "WASABI", category: "Carve", price: "₹1499", priceNum: 1499, image: "https://res.cloudinary.com/dttnc62hp/image/upload/q_auto/f_auto/v1775707204/WASABI_cnfms9.jpg", specs: { Material: "PU Leather, Suede", Range: "UK 6–11" } },
-    { id: "u-013", name: "VOLCANO", category: "Carve", price: "₹1499", priceNum: 1499, image: "https://res.cloudinary.com/dttnc62hp/image/upload/q_auto/f_auto/v1775707204/VOLCANO_hmavs4.jpg", specs: { Material: "PU Leather, Suede", Range: "UK 6–11" } },
+  { id: "u-015", name: "WASABI", category: "Carve", price: "₹1499", priceNum: 1499, image: "https://res.cloudinary.com/dttnc62hp/image/upload/q_auto/f_auto/v1775707204/WASABI_cnfms9.jpg", specs: { Material: "PU Leather, Suede", Range: "UK 6–11" } },
+  { id: "u-013", name: "VOLCANO", category: "Carve", price: "₹1499", priceNum: 1499, image: "https://res.cloudinary.com/dttnc62hp/image/upload/q_auto/f_auto/v1775707204/VOLCANO_hmavs4.jpg", specs: { Material: "PU Leather, Suede", Range: "UK 6–11" } },
   { id: "u-009", name: "GLACIER", category: "Tangent", price: "₹1499", priceNum: 1499, image: "https://res.cloudinary.com/dttnc62hp/image/upload/q_auto/f_auto/v1775707205/GLACIER_xwrp5m.jpg", specs: { Material: "PU Leather, Suede", Range: "UK 6–11" } },
   { id: "u-010", name: "HAYFIELD", category: "Tangent", price: "₹1499", priceNum: 1499, image: "https://res.cloudinary.com/dttnc62hp/image/upload/q_auto/f_auto/v1775707204/HAYFIELD_wvwwgk.jpg", specs: { Material: "PU Leather, Suede", Range: "UK 6–11" } },
   { id: "u-011", name: "JADE", category: "Tangent", price: "₹1499", priceNum: 1499, image: "https://res.cloudinary.com/dttnc62hp/image/upload/q_auto/f_auto/v1775707205/JADE_fwkjt9.jpg", specs: { Material: "PU Leather, Suede", Range: "UK 6–11" } },
   { id: "u-012", name: "RASPUTEEN", category: "Tangent", price: "₹1499", priceNum: 1499, image: "https://res.cloudinary.com/dttnc62hp/image/upload/q_auto/f_auto/v1775707204/RASPUTEEN_qdxrcd.jpg", specs: { Material: "PU Leather, Suede", Range: "UK 6–11" } },
   { id: "u-014", name: "PECADO", category: "Tangent", price: "₹1499", priceNum: 1499, image: "https://res.cloudinary.com/dttnc62hp/image/upload/q_auto/f_auto/v1775707205/PECADO_bsnwke.jpg", specs: { Material: "PU Leather, Suede", Range: "UK 6–11" } },
- 
+
 ];

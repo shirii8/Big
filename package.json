@@ -14,7 +14,7 @@
   "dependencies": {
     "@auth/prisma-adapter": "^2.11.1",
     "@kinde-oss/kinde-auth-nextjs": "^2.11.0",
-    "@prisma/adapter-pg": "5.22.0",
+    "@prisma/adapter-pg": "^7.7.0",
     "@prisma/client": "^7.7.0",
     "@prisma/config": "^7.7.0",
     "@react-three/drei": "^10.7.7",

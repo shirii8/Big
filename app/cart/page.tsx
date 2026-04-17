@@ -8,7 +8,7 @@ import { Trash2, Package, Layers } from 'lucide-react'
 export default function CartPage() {
   const { items, removeItem, updateItemType, updateQuantity, subtotal, totalItems } = useCart()
 
-  const shipping = subtotal > 10000 ? 0 : 299
+  const shipping = subtotal > 10000 ? 0 : 170
   const total    = subtotal + shipping
 
   // ── Cart composition counts ──────────────────────────────────────────────

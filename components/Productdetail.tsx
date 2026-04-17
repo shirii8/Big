@@ -12,7 +12,7 @@ const SIZES = ['UK 6', 'UK 7', 'UK 8', 'UK 9', 'UK 10', 'UK 11']
 const DEFAULT_SOLE = {
   id: 's-001',
   name: 'CLOUD RUNNER',
-  price: 3200,
+  price: 1299,
   image: 'https://res.cloudinary.com/dttnc62hp/image/upload/v1775151258/WhatsApp_Image_2026-04-01_at_02.28.43_1_fvxhqe.jpg',
   type: 'Cushion',
 }
