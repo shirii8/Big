@@ -169,3 +169,4 @@ export const UPPERS: Product[] = [
   { id: "u-014", name: "PECADO", category: "Tangent", price: "₹1499", priceNum: 1499, image: "https://res.cloudinary.com/dttnc62hp/image/upload/q_auto/f_auto/v1775707205/PECADO_bsnwke.jpg", specs: { Material: "PU Leather, Suede", Range: "UK 6–11" } },
  
 ];
+

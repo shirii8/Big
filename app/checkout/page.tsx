@@ -1,191 +1,210 @@
-
-// app/checkout/page.tsx
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect } from 'react'
 import { useCart } from '@/context/CartContext'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useRouter } from 'next/navigation'
 import { useKindeBrowserClient } from '@kinde-oss/kinde-auth-nextjs'
-import { Tag, MapPin, Loader2 } from 'lucide-react'
-import UPIPayment from '@/components/UPIPayment'
-import { NAMED_COUPONS,ONE_TIME_CODES } from '@/lib/coupon-data'
+import { CheckCircle2, Copy, Loader2, ExternalLink, ShieldCheck } from 'lucide-react'
 
-interface Address {
-  id: string; line1: string; line2?: string; city: string
-  state: string; postalCode: string; country: string; phone?: string
+// ─── CONFIG — fill these in ────────────────────────────────────────────────────
+const UPI_ID   = process.env.NEXT_PUBLIC_UPI_ID   ?? '8459799219@axl'
+const UPI_NAME = process.env.NEXT_PUBLIC_UPI_NAME ?? 'TESSCH'
+
+// Your Google Form URL — we pre-fill fields via URL params
+// HOW TO SET UP:
+// 1. Go to forms.google.com → create a new form
+// 2. Add these questions (exact names matter for pre-fill):
+//    - "Name" (short answer)
+//    - "Email" (short answer)
+//    - "Phone" (short answer)
+//    - "Delivery Address" (paragraph)
+//    - "Order Summary" (paragraph)
+//    - "Total Amount" (short answer)
+//    - "UPI Transaction ID / UTR" (short answer)
+// 3. Click ⋮ → Get pre-filled link → fill dummy data → copy URL
+// 4. Replace dummy values with {entry.XXXXXXX} placeholders below
+// 5. Replace GOOGLE_FORM_ID with your actual form ID
+
+const GOOGLE_FORM_BASE = process.env.NEXT_PUBLIC_GOOGLE_FORM_URL ?? 
+  'https://docs.google.com/forms/d/e/YOUR_FORM_ID/viewform'
+
+// Entry IDs from your Google Form pre-fill URL (replace with real ones)
+// Example: entry.123456789
+const FORM_FIELDS = {
+  name:         'entry.NAME_ENTRY_ID',
+  email:        'entry.EMAIL_ENTRY_ID', 
+  phone:        'entry.PHONE_ENTRY_ID',
+  address:      'entry.ADDRESS_ENTRY_ID',
+  orderSummary: 'entry.ORDER_ENTRY_ID',
+  amount:       'entry.AMOUNT_ENTRY_ID',
+  utrNumber:    'entry.UTR_ENTRY_ID',
 }
 
-type Step = 'delivery' | 'payment' | 'confirm' | 'upi'
+// ─── Coupon logic ─────────────────────────────────────────────────────────────
+const NAMED_COUPONS: Record<string, { discount: number; label: string; type: 'percent' | 'flat' }> = {
+  TESSCH15:   { discount: 0.15, label: '15% off — Early Adopter',   type: 'percent' },
+  DROP001:    { discount: 0.10, label: '10% off — Drop 001 Launch', type: 'percent' },
+  FIRSTBUILD: { discount: 200,  label: '₹200 off — First Build',    type: 'flat' },
+  BUNDLE2:    { discount: 0.10, label: '10% off — 2 Uppers + Sole', type: 'percent' },
+}
 
+const ONE_TIME_CODES = [
+  '732705ZEES','251401EKLV','251109LUXY','250312ARPI','301203GAUR','253005SAKS',
+  '691409SAUR','302802SUMI','692506ATHA','691511ROHI','692604ATHA','352712UJJA',
+  '400711GUNJ','691809PARI','402405SHRU','401505YASH','401705UTK1','252812KRIS',
+  '251109TARU','301601KAND','350210RITI','300712NITI','303105HARS','302510RAVI',
+  '301007NICK','252403VIDI','302608HEMA','300707PRAS','300303ADIT','301006shry',
+  '400307SPAN','252109SHAU','252111ANKU','352207hari','902006JANA','301107RAVI',
+  '300312ANKI','301808KULD','692309DEVT','302208RISH','302112AASH','251301ANJA',
+  '711406RIJO','71290IMELV','691311KART','250011alfr','350301KINS','692603KUSH',
+  '400602RAJV','151511KART','401708NISH','402412SATY','400609RAVI','402201RISH',
+  '401305TUSH','400401SWAT','403008TUSH','302309ATIN','300507SHIV','300604ARNA',
+  '252305MANY','400509AMAN','401405RISH','401712TEJU','402806HIRU','301012ASHi','301105ARUL',
+]
 
-function getMRPCap(mrp: number): number {
+function getMRPCap(mrp: number) {
   if (mrp >= 7500) return 2000
   if (mrp >= 5000) return 1500
   return 1000
 }
 
-const USED_KEY = 'tessch_used_codes_v2'
-function getUsedCodes(): string[] {
-  if (typeof window === 'undefined') return []
-  try { return JSON.parse(localStorage.getItem(USED_KEY) ?? '[]') } catch { return [] }
-}
-function markCodeUsed(code: string) {
-  const used = getUsedCodes()
-  localStorage.setItem(USED_KEY, JSON.stringify([...new Set([...used, code.toUpperCase()])]))
-}
-
-function validateCoupon(
-  code: string, subtotal: number
-): { discountAmt: number; label: string; isOneTime: boolean } | { error: string } {
+function validateCoupon(code: string, subtotal: number) {
   const upper = code.toUpperCase().trim()
   const cap   = getMRPCap(subtotal)
-
   const named = NAMED_COUPONS[upper]
   if (named) {
     const raw = named.type === 'flat' ? named.discount : Math.round(subtotal * named.discount)
-    return { discountAmt: Math.min(raw, cap), label: named.label, isOneTime: false }
+    return { discountAmt: Math.min(raw, cap), label: named.label }
   }
-
   const found = ONE_TIME_CODES.find(c => c.toUpperCase() === upper)
-  if (!found) return { error: 'Invalid coupon code.' }
-  if (getUsedCodes().includes(upper)) return { error: 'This code has already been used.' }
-
+  if (!found) return null
+  const usedRaw = typeof window !== 'undefined' ? localStorage.getItem('tessch_used_v2') ?? '[]' : '[]'
+  const used: string[] = JSON.parse(usedRaw)
+  if (used.includes(upper)) return { discountAmt: 0, label: 'Already used' }
   const pct = parseInt(found.slice(0, 2), 10)
-  if (isNaN(pct) || pct <= 0) return { error: 'Invalid code format.' }
-
-  const raw = Math.round(subtotal * (pct / 100))
-  return { discountAmt: Math.min(raw, cap), label: `${pct}% off — capped at ₹${cap}`, isOneTime: true }
+  if (isNaN(pct)) return null
+  return { discountAmt: Math.min(Math.round(subtotal * pct / 100), cap), label: `${pct}% off` }
 }
+
+type Step = 'details' | 'pay' | 'form' | 'done'
 
 export default function CheckoutPage() {
   const { items, subtotal, clearCart } = useCart()
-  const { isAuthenticated, isLoading }  = useKindeBrowserClient()
+  const { user, isAuthenticated, isLoading } = useKindeBrowserClient()
   const router = useRouter()
 
-  const [authChecked, setAuthChecked]             = useState(false)
-  const [step, setStep]                           = useState<Step>('delivery')
-  const [savedAddresses, setSavedAddresses]       = useState<Address[]>([])
-  const [selectedAddressId, setSelectedAddressId] = useState('')
-  const [showNewForm, setShowNewForm]             = useState(false)
-  const [savingAddr, setSavingAddr]               = useState(false)
-  const [newAddr, setNewAddr]                     = useState({
-    line1: '', line2: '', city: '', state: '',
-    postalCode: '', country: 'India', phone: '',
+  const [step, setStep]   = useState<Step>('details')
+  const [form, setForm]   = useState({
+    name: '', phone: '', line1: '', line2: '',
+    city: '', state: '', postalCode: '', country: 'India',
   })
-  const [coupon, setCoupon]         = useState('')
-  const [appliedCoupon, setAppliedCoupon] = useState<{
-    code: string; discountAmt: number; label: string; isOneTime: boolean
-  } | null>(null)
-  const [couponError, setCouponError] = useState('')
-  const [placing, setPlacing]         = useState(false)
-  const [error, setError]             = useState('')
-  const [createdOrderId, setCreatedOrderId] = useState('')
+  const [coupon, setCoupon]               = useState('')
+  const [appliedCoupon, setAppliedCoupon] = useState<{ code: string; discountAmt: number; label: string } | null>(null)
+  const [couponError, setCouponError]     = useState('')
+  const [utrRef, setUtrRef]               = useState('')
+  const [utrCopied, setUtrCopied]         = useState(false)
+  const [upiIdCopied, setUpiIdCopied]     = useState(false)
+  const [timer, setTimer]                 = useState(600)
+  const [formUrl, setFormUrl]             = useState('')
 
   const SHIPPING    = 170
   const discountAmt = appliedCoupon?.discountAmt ?? 0
   const total       = Math.max(0, subtotal + SHIPPING - discountAmt)
 
-  const loadAddresses = useCallback(async () => {
-    try {
-      const res = await fetch('/api/address')
-      if (res.ok) {
-        const data: Address[] = await res.json()
-        setSavedAddresses(data)
-        if (data.length > 0) setSelectedAddressId(data[0].id)
-        else setShowNewForm(true)
-      }
-    } catch { /* ignore */ }
-  }, [])
-
+  // Auth guard
   useEffect(() => {
-    if (isLoading) return
-    if (!isAuthenticated) { router.push('/api/auth/login'); return }
-    setAuthChecked(true)
-    loadAddresses()
-  }, [isLoading, isAuthenticated, router, loadAddresses])
+    if (!isLoading && !isAuthenticated) router.push('/api/auth/login')
+  }, [isLoading, isAuthenticated, router])
+
+  // Pre-fill name from Kinde
+  useEffect(() => {
+    if (user?.given_name) {
+      setForm(prev => ({ ...prev, name: `${user.given_name ?? ''} ${user.family_name ?? ''}`.trim() }))
+    }
+  }, [user])
+
+  // Timer countdown on pay step
+  useEffect(() => {
+    if (step !== 'pay') return
+    if (timer <= 0) return
+    const t = setInterval(() => setTimer(s => s - 1), 1000)
+    return () => clearInterval(t)
+  }, [step, timer])
+
+  // Build Google Form URL with pre-filled data
+  function buildFormUrl(utr: string) {
+    const orderLines = items.map(i => {
+      const price = i.type === 'build' ? i.upper.price + (i.sole?.price ?? 1299) : i.upper.price
+      return `${i.upper.name} (${i.type === 'build' ? 'Full Build' : 'Upper Only'}) x${i.quantity} Size:${i.size} = ₹${(price * i.quantity).toLocaleString('en-IN')}`
+    }).join(' | ')
+
+    const address = `${form.line1}${form.line2 ? ', ' + form.line2 : ''}, ${form.city}, ${form.state} - ${form.postalCode}, ${form.country}`
+
+    const params = new URLSearchParams({
+      [FORM_FIELDS.name]:         form.name,
+      [FORM_FIELDS.email]:        user?.email ?? '',
+      [FORM_FIELDS.phone]:        form.phone,
+      [FORM_FIELDS.address]:      address,
+      [FORM_FIELDS.orderSummary]: orderLines,
+      [FORM_FIELDS.amount]:       `₹${total.toLocaleString('en-IN')}${appliedCoupon ? ` (after ${appliedCoupon.code})` : ''}`,
+      [FORM_FIELDS.utrNumber]:    utr,
+      'usp': 'pp_url',
+    })
+
+    return `${GOOGLE_FORM_BASE}?${params.toString()}`
+  }
 
   function applyCouponCode() {
     const result = validateCoupon(coupon, subtotal)
-    if ('error' in result) { setCouponError(result.error); return }
-    setAppliedCoupon({ code: coupon.toUpperCase().trim(), ...result })
+    if (!result) { setCouponError('Invalid coupon code'); return }
+    if (result.discountAmt === 0 && result.label === 'Already used') {
+      setCouponError('This code has already been used')
+      return
+    }
+    setAppliedCoupon({ code: coupon.toUpperCase(), ...result })
     setCouponError('')
   }
 
-async function saveAddress() {
-  if (!newAddr.line1 || !newAddr.city || !newAddr.state || !newAddr.postalCode) {
-    setError('Please fill all required address fields.')
-    return
+  function validateDetails() {
+    return form.name && form.phone && form.line1 && form.city && form.state && form.postalCode
   }
-  setSavingAddr(true)
-  try {
-    const res = await fetch('/api/address', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(newAddr),
-    })
 
-    if (!res.ok) {
-      const data = await res.json()
-      setError(data.error ?? 'Failed to save address')
-      return
+  async function copyToClipboard(text: string, which: 'upi' | 'utr') {
+    await navigator.clipboard.writeText(text)
+    if (which === 'upi') { setUpiIdCopied(true); setTimeout(() => setUpiIdCopied(false), 2000) }
+    else { setUtrCopied(true); setTimeout(() => setUtrCopied(false), 2000) }
+  }
+
+  function proceedToForm() {
+    if (!utrRef.trim()) return
+    // Mark one-time code as used
+    if (appliedCoupon) {
+      const usedRaw = localStorage.getItem('tessch_used_v2') ?? '[]'
+      const used: string[] = JSON.parse(usedRaw)
+      if (!used.includes(appliedCoupon.code)) {
+        localStorage.setItem('tessch_used_v2', JSON.stringify([...used, appliedCoupon.code]))
+      }
     }
-
-    const saved: Address = await res.json()
-    setSavedAddresses(prev => [saved, ...prev])
-    setSelectedAddressId(saved.id)   // ← select it immediately
-    setShowNewForm(false)
-    setError('')                      // ← clear any previous errors
-    setNewAddr({ line1: '', line2: '', city: '', state: '', postalCode: '', country: 'India', phone: '' })
-  } catch {
-    setError('Network error. Could not save address.')
-  } finally {
-    setSavingAddr(false)
-  }
-}
-
-  async function placeOrder() {
-    if (!selectedAddressId) { setError('Please select a delivery address.'); return }
-    if (items.length === 0)  { setError('Your cart is empty.'); return }
-    setPlacing(true); setError('')
-
-    try {
-      const res = await fetch('/api/payments/create-session', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          addressId: selectedAddressId, items, totalAmount: total,
-          couponCode: appliedCoupon?.code ?? null,
-          discountAmount: discountAmt, paymentMethod: 'upi',
-        }),
-      })
-      if (!res.ok) throw new Error((await res.json()).error ?? 'Order creation failed')
-      const { orderId } = await res.json()
-
-      if (appliedCoupon?.isOneTime) markCodeUsed(appliedCoupon.code)
-
-      setCreatedOrderId(orderId)
-      setStep('upi')
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Something went wrong')
-    } finally {
-      setPlacing(false)
-    }
+    const url = buildFormUrl(utrRef.trim())
+    setFormUrl(url)
+    setStep('form')
   }
 
-  const selectedAddress = savedAddresses.find(a => a.id === selectedAddressId)
+  const upiLink = `upi://pay?pa=${UPI_ID}&pn=${encodeURIComponent(UPI_NAME)}&am=${total}&cu=INR&tn=${encodeURIComponent('TESSCH Order')}`
+  const qrUrl   = `https://api.qrserver.com/v1/create-qr-code/?size=260x260&data=${encodeURIComponent(upiLink)}&bgcolor=ffffff&color=17191d&margin=16&format=png`
+  const mins    = String(Math.floor(timer / 60)).padStart(2, '0')
+  const secs    = String(Math.max(0, timer % 60)).padStart(2, '0')
 
-  // ── Guards ────────────────────────────────────────────────────────────────
-  if (isLoading || !authChecked) return (
-    <div className="min-h-screen bg-[#e5f1ee] flex items-center justify-center gap-3">
-      <Loader2 size={16} className="animate-spin text-[#17191d]" />
-      <p className="font-mono text-[11px] uppercase tracking-[3px] text-[#17191d]">Verifying session...</p>
+  if (isLoading) return (
+    <div className="min-h-screen bg-[#e5f1ee] flex items-center justify-center">
+      <Loader2 size={24} className="animate-spin text-[#17191d]" />
     </div>
   )
 
-  if (items.length === 0 && step !== 'upi') return (
-    <div className="min-h-screen bg-[#e5f1ee] flex items-center justify-center flex-col gap-6 text-[#17191d]">
-      <p className="font-mono text-[11px] uppercase tracking-[3px] opacity-50">Your cart is empty</p>
+  if (items.length === 0 && step !== 'done') return (
+    <div className="min-h-screen bg-[#e5f1ee] flex flex-col items-center justify-center gap-6 text-[#17191d]">
+      <p className="font-mono text-[11px] uppercase tracking-[3px] opacity-50">Cart is empty</p>
       <button onClick={() => router.push('/products')}
         className="bg-[#17191d] text-white font-mono text-[10px] font-bold uppercase tracking-[3px] px-8 py-4 hover:bg-[#d4604d] transition-colors">
         Browse Products →
@@ -193,290 +212,342 @@ async function saveAddress() {
     </div>
   )
 
-  // ── UPI screen ────────────────────────────────────────────────────────────
-  if (step === 'upi') return (
-    <div className="min-h-screen bg-[#e5f1ee] text-[#17191d] pt-28 pb-20 px-6 md:px-12">
-      <div className="max-w-lg mx-auto">
-        <div className="mb-8 border-b-2 border-[#17191d]/10 pb-6">
-          <p className="font-mono text-[10px] uppercase tracking-[4px] text-[#d4604d] font-bold mb-2">
-            Step 3 — Complete Payment
-          </p>
-          <h1 className="font-display text-[clamp(36px,6vw,72px)] leading-none uppercase tracking-tighter">
-            PAY VIA<br /><span className="text-[#d4604d]">UPI.</span>
-          </h1>
+  // ── DONE ──────────────────────────────────────────────────────────────────
+  if (step === 'done') return (
+    <div className="min-h-screen bg-[#17191d] flex items-center justify-center px-6">
+      <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}
+        className="text-center max-w-lg text-[#e5f1ee]">
+        <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }}
+          transition={{ type: 'spring', damping: 14, delay: 0.2 }}
+          className="w-20 h-20 bg-emerald-500 rounded-full flex items-center justify-center mx-auto mb-8">
+          <CheckCircle2 size={40} className="text-white" />
+        </motion.div>
+        <p className="font-mono text-[10px] uppercase tracking-[4px] text-[#d4604d] mb-4">Order Submitted</p>
+        <h1 className="font-display text-[clamp(48px,8vw,100px)] leading-none uppercase tracking-tighter mb-6">
+          BUILD<br />LOCKED.
+        </h1>
+        <p className="font-mono text-[11px] opacity-50 uppercase tracking-[2px] mb-10 leading-relaxed">
+          We&apos;ve received your order + payment details.<br />
+          We&apos;ll verify your UPI payment and confirm via email within 30 min.
+        </p>
+        <div className="flex flex-col gap-3">
+          <button onClick={() => { clearCart(); router.push('/') }}
+            className="bg-[#d4604d] text-white font-mono text-[10px] font-bold uppercase tracking-[4px] px-12 py-5 hover:bg-white hover:text-[#17191d] transition-colors">
+            Back to Home →
+          </button>
+          <button onClick={() => { clearCart(); router.push('/orders') }}
+            className="font-mono text-[9px] uppercase opacity-40 hover:opacity-70 transition-opacity">
+            View My Orders
+          </button>
         </div>
-        <UPIPayment
-          amount={total}
-          orderId={createdOrderId}
-          onConfirmed={() => { clearCart(); router.push('/checkout/success') }}
-          onCancel={() => { setStep('confirm'); setError('Payment cancelled. You can retry.') }}
-        />
-      </div>
+      </motion.div>
     </div>
   )
 
-  // ── Main checkout ─────────────────────────────────────────────────────────
   return (
     <div className="min-h-screen bg-[#e5f1ee] text-[#17191d] pt-28 pb-20 px-6 md:px-12">
       <div className="max-w-6xl mx-auto">
 
+        {/* Header */}
         <div className="mb-10 border-b-2 border-[#17191d] pb-6">
           <p className="font-mono text-[10px] uppercase tracking-[4px] text-[#d4604d] font-bold mb-2">
-            Secure Checkout — UPI Payment
+            Secure Checkout
           </p>
           <h1 className="font-display text-[clamp(36px,6vw,80px)] leading-none uppercase tracking-tighter">
             FINALISE<br /><span className="text-[#d4604d]">YOUR ORDER.</span>
           </h1>
         </div>
 
-        {/* Step tabs */}
-        <div className="flex gap-0 mb-12 border-2 border-[#17191d] overflow-hidden w-fit">
-          {(['delivery', 'payment', 'confirm'] as Step[]).map((s, i) => (
-            <button key={s} onClick={() => !placing && setStep(s)}
-              className={`font-mono text-[9px] uppercase tracking-[3px] px-6 py-3 font-bold border-r-2 border-[#17191d] last:border-r-0 transition-colors
-                ${step === s ? 'bg-[#17191d] text-white' : !placing ? 'hover:bg-[#d4604d] hover:text-white cursor-pointer' : 'opacity-30 cursor-not-allowed'}`}>
-              {i + 1}. {s}
-            </button>
+        {/* Progress */}
+        <div className="flex items-center gap-0 mb-12 border-2 border-[#17191d] overflow-hidden w-fit">
+          {[
+            { key: 'details', label: '1. Details' },
+            { key: 'pay',     label: '2. Pay' },
+            { key: 'form',    label: '3. Confirm' },
+          ].map(s => (
+            <div key={s.key}
+              className={`font-mono text-[9px] uppercase tracking-[3px] px-6 py-3 font-bold border-r-2 border-[#17191d] last:border-r-0 transition-colors ${step === s.key ? 'bg-[#17191d] text-white' : 'opacity-30'}`}>
+              {s.label}
+            </div>
           ))}
         </div>
 
-        {error && (
-          <div className="mb-6 border-2 border-red-400 bg-red-50 px-4 py-3 font-mono text-[11px] text-red-700 uppercase tracking-[1px]">
-            ⚠ {error}
-          </div>
-        )}
-
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-12">
-          <div>
-            <AnimatePresence mode="wait">
+          <AnimatePresence mode="wait">
 
-              {/* DELIVERY */}
-              {step === 'delivery' && (
-                <motion.div key="delivery" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="flex flex-col gap-6">
-                  <div className="flex items-center gap-3">
-                    <MapPin size={16} className="text-[#d4604d]" />
-                    <h2 className="font-display text-2xl uppercase">Delivery Address</h2>
-                  </div>
+            {/* ── STEP 1: DETAILS ──────────────────────────────────────────── */}
+            {step === 'details' && (
+              <motion.div key="details" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}
+                className="flex flex-col gap-6">
+                <h2 className="font-display text-2xl uppercase">Your Details & Address</h2>
 
-                  {savedAddresses.map(addr => (
-                    <label key={addr.id}
-                      className={`flex items-start gap-4 p-5 border-[3px] cursor-pointer transition-all ${selectedAddressId === addr.id ? 'border-[#17191d] bg-white' : 'border-[#17191d]/20 hover:border-[#17191d]/50'}`}>
-                      <input type="radio" name="address" checked={selectedAddressId === addr.id}
-                        onChange={() => { setSelectedAddressId(addr.id); setShowNewForm(false) }} className="mt-1" />
-                      <div className="font-mono text-[10px] uppercase leading-relaxed">
-                        <p className="font-bold">{addr.line1}{addr.line2 ? `, ${addr.line2}` : ''}</p>
-                        <p className="opacity-60">{addr.city}, {addr.state} — {addr.postalCode}</p>
-                        <p className="opacity-60">{addr.country}{addr.phone ? ` · ${addr.phone}` : ''}</p>
-                      </div>
-                    </label>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {[
+                    { key: 'name',       label: 'Full Name *',          span: true,  placeholder: 'As on payment app' },
+                    { key: 'phone',      label: 'Phone *',              span: false, placeholder: '+91 XXXXX XXXXX' },
+                    { key: 'line1',      label: 'Address Line 1 *',     span: true,  placeholder: 'Building, Street' },
+                    { key: 'line2',      label: 'Line 2 (optional)',     span: true,  placeholder: 'Area, Landmark' },
+                    { key: 'city',       label: 'City *',               span: false, placeholder: 'City' },
+                    { key: 'state',      label: 'State *',              span: false, placeholder: 'State' },
+                    { key: 'postalCode', label: 'Pincode *',            span: false, placeholder: '6-digit PIN' },
+                    { key: 'country',    label: 'Country *',            span: false, placeholder: 'India' },
+                  ].map(({ key, label, span, placeholder }) => (
+                    <div key={key} className={span ? 'md:col-span-2' : ''}>
+                      <label className="font-mono text-[9px] uppercase tracking-[2px] opacity-50 block mb-1">{label}</label>
+                      <input
+                        value={form[key as keyof typeof form]}
+                        onChange={e => setForm(prev => ({ ...prev, [key]: e.target.value }))}
+                        placeholder={placeholder}
+                        className="w-full bg-white border-2 border-[#17191d]/20 font-mono text-[11px] px-3 py-3 focus:border-[#17191d] outline-none transition-colors"
+                      />
+                    </div>
                   ))}
+                </div>
 
-                  <button onClick={() => setShowNewForm(v => !v)}
-                    className="font-mono text-[10px] uppercase tracking-[3px] font-bold text-[#d4604d] border-b border-[#d4604d] w-fit pb-0.5">
-                    {showNewForm ? '− Cancel' : '+ Add New Address'}
-                  </button>
-
-                  {showNewForm && (
-                    <div className="border-[3px] border-[#17191d]/20 p-6 space-y-4">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {[
-                          { key: 'line1', label: 'Address Line 1 *', span: true },
-                          { key: 'line2', label: 'Line 2 (optional)', span: true },
-                          { key: 'city', label: 'City *', span: false },
-                          { key: 'state', label: 'State *', span: false },
-                          { key: 'postalCode', label: 'Pincode *', span: false },
-                          { key: 'country', label: 'Country *', span: false },
-                          { key: 'phone', label: 'Phone', span: false },
-                        ].map(({ key, label, span }) => (
-                          <div key={key} className={span ? 'md:col-span-2' : ''}>
-                            <label className="font-mono text-[9px] uppercase tracking-[2px] opacity-50 block mb-1">{label}</label>
-                            <input value={newAddr[key as keyof typeof newAddr]}
-                              onChange={e => setNewAddr(prev => ({ ...prev, [key]: e.target.value }))}
-                              className="w-full bg-white border-2 border-[#17191d]/20 font-mono text-[11px] px-3 py-2 focus:border-[#17191d] outline-none transition-colors" />
-                          </div>
-                        ))}
+                {/* Coupon */}
+                <div className="border-t-2 border-[#17191d]/10 pt-6">
+                  <p className="font-mono text-[9px] uppercase tracking-[3px] font-bold mb-3">
+                    Coupon Code <span className="opacity-40">(optional)</span>
+                  </p>
+                  <div className="bg-emerald-50 border border-emerald-200 px-4 py-2 mb-3">
+                    <p className="font-mono text-[8px] text-emerald-700 uppercase tracking-[1px]">
+                      Up to ₹{getMRPCap(subtotal).toLocaleString('en-IN')} discount available
+                    </p>
+                  </div>
+                  {appliedCoupon ? (
+                    <div className="flex items-center justify-between bg-emerald-50 border-2 border-emerald-400 px-4 py-3">
+                      <div>
+                        <p className="font-mono text-[10px] font-bold text-emerald-700 uppercase">{appliedCoupon.code}</p>
+                        <p className="font-mono text-[9px] text-emerald-600">{appliedCoupon.label} — saving ₹{appliedCoupon.discountAmt.toLocaleString('en-IN')}</p>
                       </div>
-                      <button onClick={saveAddress} disabled={savingAddr}
-                        className="font-mono text-[10px] font-bold uppercase tracking-[3px] border-2 border-[#17191d] px-6 py-2 hover:bg-[#17191d] hover:text-white transition-colors disabled:opacity-50 flex items-center gap-2">
-                        {savingAddr && <Loader2 size={12} className="animate-spin" />}
-                        {savingAddr ? 'Saving...' : 'Save Address'}
+                      <button onClick={() => setAppliedCoupon(null)} className="font-mono text-[9px] opacity-50 hover:text-red-500">✕</button>
+                    </div>
+                  ) : (
+                    <div className="flex gap-3">
+                      <input value={coupon} onChange={e => { setCoupon(e.target.value); setCouponError('') }}
+                        placeholder="e.g. TESSCH15"
+                        className="flex-1 bg-white border-2 border-[#17191d] font-mono text-[11px] px-4 py-3 focus:outline-none focus:border-[#d4604d] transition-colors placeholder:opacity-30 uppercase" />
+                      <button onClick={applyCouponCode}
+                        className="bg-[#17191d] text-white font-mono text-[10px] font-bold uppercase tracking-[2px] px-6 hover:bg-[#d4604d] transition-colors">
+                        Apply
                       </button>
                     </div>
                   )}
-
-                  <button onClick={() => { if (!selectedAddressId) { setError('Select or add an address first'); return } setError(''); setStep('payment') }}
-                    className="bg-[#17191d] text-white font-mono text-[11px] font-bold uppercase tracking-[4px] py-5 px-12 w-fit hover:bg-[#d4604d] transition-colors mt-4">
-                    Continue →
-                  </button>
-                </motion.div>
-              )}
-
-              {/* PAYMENT / COUPON */}
-              {step === 'payment' && (
-                <motion.div key="payment" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="flex flex-col gap-6">
-                  <h2 className="font-display text-2xl uppercase">Coupon Code</h2>
-
-                  <div className="flex items-center gap-4 p-5 border-[3px] border-[#17191d] bg-[#17191d] text-white">
-                    <div className="w-5 h-5 rounded-full border-2 border-white flex items-center justify-center shrink-0">
-                      <div className="w-2.5 h-2.5 rounded-full bg-[#d4604d]" />
-                    </div>
-                    <div>
-                      <p className="font-mono text-[11px] font-bold uppercase tracking-[2px]">UPI Payment</p>
-                      <p className="font-mono text-[9px] mt-0.5 opacity-60">GPay · PhonePe · Paytm · BHIM — QR code at next step</p>
-                    </div>
-                  </div>
-
-                  <div className="bg-emerald-50 border border-emerald-200 px-4 py-3">
-                    <p className="font-mono text-[9px] text-emerald-700 uppercase tracking-[1px] font-bold">
-                      🎉 Up to ₹{getMRPCap(subtotal).toLocaleString('en-IN')} discount available on your order
-                    </p>
-                  </div>
-
-                  <div>
-                    <div className="flex items-center gap-2 mb-3">
-                      <Tag size={14} className="text-[#d4604d]" />
-                      <p className="font-mono text-[10px] uppercase tracking-[3px] font-bold">Apply Coupon</p>
-                    </div>
-
-                    {appliedCoupon ? (
-                      <div className="flex items-center justify-between bg-emerald-50 border-2 border-emerald-400 px-4 py-3">
-                        <div>
-                          <p className="font-mono text-[10px] font-bold text-emerald-700 uppercase">{appliedCoupon.code}</p>
-                          <p className="font-mono text-[9px] text-emerald-600">{appliedCoupon.label} — saving ₹{appliedCoupon.discountAmt.toLocaleString('en-IN')}</p>
-                        </div>
-                        <button onClick={() => setAppliedCoupon(null)} className="font-mono text-[9px] text-[#17191d]/50 hover:text-red-500 transition-colors">Remove ✕</button>
-                      </div>
-                    ) : (
-                      <div className="flex gap-3">
-                        <input value={coupon}
-                          onChange={e => { setCoupon(e.target.value); setCouponError('') }}
-                          placeholder="Enter code (e.g. TESSCH15)"
-                          className="flex-1 bg-white border-2 border-[#17191d] font-mono text-[11px] px-4 py-3 focus:outline-none focus:border-[#d4604d] transition-colors placeholder:opacity-30 uppercase" />
-                        <button onClick={applyCouponCode}
-                          className="bg-[#17191d] text-white font-mono text-[10px] font-bold uppercase tracking-[2px] px-6 hover:bg-[#d4604d] transition-colors">
-                          Apply
-                        </button>
-                      </div>
-                    )}
-                    {couponError && <p className="font-mono text-[9px] text-red-500 mt-2 uppercase">{couponError}</p>}
-                  </div>
-
-                  <div className="flex gap-3 mt-2">
-                    <button onClick={() => setStep('delivery')}
-                      className="font-mono text-[10px] font-bold uppercase tracking-[3px] border-2 border-[#17191d] px-6 py-3 hover:bg-[#17191d] hover:text-white transition-colors">
-                      ← Back
-                    </button>
-                    <button onClick={() => setStep('confirm')}
-                      className="flex-1 bg-[#17191d] text-white font-mono text-[11px] font-bold uppercase tracking-[4px] py-4 hover:bg-[#d4604d] transition-colors">
-                      Review Order →
-                    </button>
-                  </div>
-                </motion.div>
-              )}
-
-              {/* CONFIRM */}
-              {step === 'confirm' && (
-                <motion.div key="confirm" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="flex flex-col gap-6">
-                  <h2 className="font-display text-2xl uppercase mb-2">Review & Confirm</h2>
-
-                  <div className="flex flex-col gap-3">
-                    {items.map(item => {
-                      const unitPrice = item.type === 'build'
-                        ? item.upper.price + (item.sole?.price ?? 1299)
-                        : item.upper.price
-                      return (
-                        <div key={item.id} className="flex items-center gap-4 bg-white border-2 border-[#17191d] p-4">
-                          <img src={item.upper.image} alt="" className="w-14 h-14 object-contain mix-blend-multiply" />
-                          <div className="flex-1">
-                            <p className="font-display text-lg uppercase leading-tight">{item.upper.name}</p>
-                            <p className="font-mono text-[9px] uppercase tracking-[2px] opacity-40">
-                              {item.type === 'build' ? `Full Build + ${item.sole?.name ?? 'Sole'}` : 'Upper Only'} · {item.size} · Qty {item.quantity}
-                            </p>
-                          </div>
-                          <p className="font-display text-xl">₹{(unitPrice * item.quantity).toLocaleString('en-IN')}</p>
-                        </div>
-                      )
-                    })}
-                  </div>
-
-                  {selectedAddress && (
-                    <div className="bg-white border-2 border-[#17191d] p-5 space-y-1">
-                      <p className="font-mono text-[9px] uppercase tracking-[3px] opacity-40 mb-2">Delivering To</p>
-                      <p className="font-mono text-[11px] font-bold">
-                        {selectedAddress.line1}{selectedAddress.line2 ? `, ${selectedAddress.line2}` : ''}
-                      </p>
-                      <p className="font-mono text-[10px] opacity-60">
-                        {selectedAddress.city}, {selectedAddress.state} — {selectedAddress.postalCode}
-                      </p>
-                      <p className="font-mono text-[10px] opacity-60">
-                        {selectedAddress.country}{selectedAddress.phone ? ` · ${selectedAddress.phone}` : ''}
-                      </p>
-                      <p className="font-mono text-[10px] opacity-50 mt-2 uppercase">Payment: UPI</p>
-                    </div>
-                  )}
-
-                  {appliedCoupon && (
-                    <div className="bg-emerald-50 border-2 border-emerald-300 px-5 py-3">
-                      <p className="font-mono text-[9px] text-emerald-700 uppercase font-bold">
-                        Coupon {appliedCoupon.code} — saving ₹{appliedCoupon.discountAmt.toLocaleString('en-IN')}
-                      </p>
-                    </div>
-                  )}
-
-                  <div className="flex flex-col gap-3">
-                    <button onClick={() => !placing && setStep('payment')} disabled={placing}
-                      className="font-mono text-[10px] font-bold uppercase tracking-[3px] border-2 border-[#17191d] px-6 py-3 w-fit hover:bg-[#17191d] hover:text-white transition-colors disabled:opacity-30">
-                      ← Edit
-                    </button>
-                    <button onClick={placeOrder} disabled={placing}
-                      className="bg-[#d4604d] text-white font-mono text-[12px] font-bold uppercase tracking-[4px] py-6 text-center hover:bg-[#17191d] transition-colors disabled:opacity-50 flex items-center justify-center gap-3">
-                      {placing && <Loader2 size={16} className="animate-spin" />}
-                      {placing ? 'Creating Order...' : `PROCEED TO PAY — ₹${total.toLocaleString('en-IN')} →`}
-                    </button>
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
-
-          {/* Price Summary */}
-          <div className="lg:sticky lg:top-28 h-fit">
-            <div className="bg-[#17191d] text-[#e5f1ee] p-8 flex flex-col gap-5">
-              <p className="font-mono text-[9px] uppercase tracking-[4px] text-[#d4604d] font-bold">Price Breakdown</p>
-              <div className="flex flex-col gap-3 text-[10px] font-mono uppercase">
-                <div className="flex justify-between">
-                  <span className="opacity-60">Subtotal ({items.reduce((s, i) => s + i.quantity, 0)} items)</span>
-                  <span>₹{subtotal.toLocaleString('en-IN')}</span>
+                  {couponError && <p className="font-mono text-[9px] text-red-500 mt-2 uppercase">{couponError}</p>}
                 </div>
+
+                <button
+                  onClick={() => { if (validateDetails()) { setStep('pay'); setTimer(600) } else { alert('Please fill all required fields') } }}
+                  className="bg-[#17191d] text-white font-mono text-[11px] font-bold uppercase tracking-[4px] py-5 px-12 w-fit hover:bg-[#d4604d] transition-colors mt-2">
+                  Continue to Payment →
+                </button>
+              </motion.div>
+            )}
+
+            {/* ── STEP 2: PAY VIA UPI ──────────────────────────────────────── */}
+            {step === 'pay' && (
+              <motion.div key="pay" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}
+                className="flex flex-col gap-5">
+                <h2 className="font-display text-2xl uppercase">Pay via UPI</h2>
+
+                {/* Timer */}
+                <div className="flex items-center justify-between border-b-2 border-[#17191d]/10 pb-4">
+                  <p className="font-mono text-[9px] uppercase tracking-[3px] opacity-50">Session expires in</p>
+                  <span className={`font-display text-2xl tabular-nums ${timer < 60 ? 'text-red-500' : ''}`}>
+                    {mins}:{secs}
+                  </span>
+                </div>
+
+                {/* QR */}
+                <div className="border-4 border-[#17191d] bg-white flex flex-col items-center gap-4 p-6">
+                  <div className="text-center">
+                    <p className="font-mono text-[9px] uppercase tracking-[3px] opacity-40 mb-1">Pay Exactly</p>
+                    <p className="font-display text-5xl text-[#d4604d] leading-none">₹{total.toLocaleString('en-IN')}</p>
+                  </div>
+
+                  <div className="bg-[#e5f1ee] p-3 border-2 border-[#17191d]/10">
+                    <img src={qrUrl} alt="UPI QR Code" width={220} height={220} className="block" />
+                  </div>
+
+                  <p className="font-mono text-[9px] uppercase tracking-[3px] opacity-40">Scan with any UPI app</p>
+
+                  {/* UPI ID */}
+                  <div className="flex items-center justify-between w-full bg-[#f8fcfb] border-2 border-[#17191d]/10 px-4 py-3">
+                    <div>
+                      <p className="font-mono text-[8px] uppercase opacity-40 mb-0.5">UPI ID</p>
+                      <p className="font-mono text-[12px] font-bold">{UPI_ID}</p>
+                    </div>
+                    <button onClick={() => copyToClipboard(UPI_ID, 'upi')}
+                      className={`flex items-center gap-1.5 font-mono text-[9px] font-bold uppercase tracking-[1px] px-3 py-2 border-2 transition-all ${upiIdCopied ? 'bg-emerald-500 border-emerald-500 text-white' : 'border-[#17191d] hover:bg-[#17191d] hover:text-white'}`}>
+                      {upiIdCopied ? <><CheckCircle2 size={10} /> Copied!</> : <><Copy size={10} /> Copy</>}
+                    </button>
+                  </div>
+                </div>
+
+                {/* App buttons */}
+                <div className="grid grid-cols-4 gap-2">
+                  {[
+                    { name: 'GPay',    href: `tez://upi/pay?pa=${UPI_ID}&pn=${UPI_NAME}&am=${total}&cu=INR` },
+                    { name: 'PhonePe', href: `phonepe://pay?pa=${UPI_ID}&pn=${UPI_NAME}&am=${total}&cu=INR` },
+                    { name: 'Paytm',   href: `paytmmp://upi/pay?pa=${UPI_ID}&pn=${UPI_NAME}&am=${total}&cu=INR` },
+                    { name: 'BHIM',    href: upiLink },
+                  ].map(app => (
+                    <a key={app.name} href={app.href}
+                      className="font-mono text-[9px] font-bold uppercase tracking-[1px] border-2 border-[#17191d] py-2.5 text-center hover:bg-[#17191d] hover:text-white transition-colors">
+                      {app.name}
+                    </a>
+                  ))}
+                </div>
+
+                {/* Steps */}
+                <div className="bg-[#17191d]/5 border-l-4 border-[#d4604d] pl-4 py-3 space-y-2">
+                  {[
+                    `Scan QR or tap an app above`,
+                    `Pay exactly ₹${total.toLocaleString('en-IN')} — do not change amount`,
+                    `After paying, copy the UTR / Ref No. from your UPI app`,
+                    `Paste it below and click Continue`,
+                  ].map((s, i) => (
+                    <div key={i} className="flex items-start gap-2">
+                      <span className="font-display text-[#d4604d] text-sm leading-none mt-0.5 shrink-0">{i + 1}</span>
+                      <p className="font-mono text-[9px] uppercase tracking-[1px] opacity-60 leading-relaxed">{s}</p>
+                    </div>
+                  ))}
+                </div>
+
+                {/* UTR input */}
+                <div>
+                  <label className="font-mono text-[9px] uppercase tracking-[3px] opacity-50 block mb-2">
+                    UTR / Transaction Reference Number *
+                  </label>
+                  <input
+                    value={utrRef}
+                    onChange={e => setUtrRef(e.target.value)}
+                    placeholder="12-digit UTR e.g. 408124567890"
+                    className="w-full bg-white border-2 border-[#17191d] font-mono text-[12px] px-4 py-3.5 focus:border-[#d4604d] outline-none transition-colors placeholder:opacity-20"
+                  />
+                </div>
+
+                <div className="flex gap-3">
+                  <button onClick={() => setStep('details')}
+                    className="font-mono text-[9px] font-bold uppercase tracking-[2px] border-2 border-[#17191d]/30 px-6 py-3 hover:border-[#17191d] transition-colors">
+                    ← Back
+                  </button>
+                  <button onClick={proceedToForm} disabled={!utrRef.trim()}
+                    className="flex-1 bg-[#d4604d] text-white font-mono text-[10px] font-bold uppercase tracking-[3px] py-4 hover:bg-[#17191d] transition-colors disabled:opacity-40">
+                    I&apos;ve Paid — Fill Order Form →
+                  </button>
+                </div>
+
+                <p className="font-mono text-[8px] uppercase tracking-[1px] opacity-25 text-center">
+                  The next step will open our order form — takes 30 seconds to complete.
+                </p>
+              </motion.div>
+            )}
+
+            {/* ── STEP 3: GOOGLE FORM ──────────────────────────────────────── */}
+            {step === 'form' && (
+              <motion.div key="form" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}
+                className="flex flex-col gap-6">
+                <h2 className="font-display text-2xl uppercase">Submit Order Form</h2>
+
+                <div className="bg-[#17191d] text-[#e5f1ee] p-6 space-y-3">
+                  <div className="flex items-center gap-2">
+                    <ShieldCheck size={16} className="text-[#d4604d]" />
+                    <p className="font-mono text-[10px] uppercase tracking-[2px] font-bold">Almost Done!</p>
+                  </div>
+                  <p className="font-mono text-[10px] opacity-60 leading-relaxed uppercase tracking-[1px]">
+                    Click the button below to open our Google Form. Your details and UTR number are pre-filled — just review and submit.
+                  </p>
+                  <p className="font-mono text-[9px] text-[#d4604d] uppercase tracking-[1px]">
+                    Your UTR: <strong>{utrRef}</strong>
+                  </p>
+                </div>
+
+                <a
+                  href={formUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-center gap-3 bg-[#d4604d] text-white font-mono text-[11px] font-bold uppercase tracking-[4px] py-6 hover:bg-[#17191d] transition-colors"
+                >
+                  <ExternalLink size={16} />
+                  Open & Submit Order Form →
+                </a>
+
+                <div className="border-2 border-[#17191d]/10 p-5 space-y-2">
+                  <p className="font-mono text-[9px] uppercase tracking-[2px] font-bold mb-3">Form not opening? Copy this link:</p>
+                  <div className="bg-[#f8fcfb] p-3 border border-[#17191d]/10 break-all">
+                    <p className="font-mono text-[8px] opacity-60">{formUrl}</p>
+                  </div>
+                  <button onClick={() => copyToClipboard(formUrl, 'utr')}
+                    className="font-mono text-[9px] font-bold uppercase tracking-[2px] border-2 border-[#17191d] px-4 py-2 hover:bg-[#17191d] hover:text-white transition-colors flex items-center gap-2">
+                    <Copy size={11} /> Copy Link
+                  </button>
+                </div>
+
+                <div className="border-t-2 border-[#17191d]/10 pt-6">
+                  <p className="font-mono text-[9px] uppercase opacity-50 mb-4">
+                    Once you&apos;ve submitted the Google Form:
+                  </p>
+                  <button
+                    onClick={() => { clearCart(); setStep('done') }}
+                    className="w-full bg-[#17191d] text-white font-mono text-[10px] font-bold uppercase tracking-[4px] py-4 hover:bg-[#d4604d] transition-colors"
+                  >
+                    I&apos;ve Submitted the Form — Done ✓
+                  </button>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Price Summary — always visible */}
+          <div className="lg:sticky lg:top-28 h-fit space-y-4">
+            {/* Order items */}
+            <div className="bg-white border-2 border-[#17191d]">
+              <div className="px-6 py-4 border-b-2 border-[#17191d]/10">
+                <p className="font-mono text-[9px] uppercase tracking-[3px] font-bold opacity-50">Your Order</p>
+              </div>
+              {items.map(item => {
+                const price = item.type === 'build' ? item.upper.price + (item.sole?.price ?? 1299) : item.upper.price
+                return (
+                  <div key={item.id} className="flex items-center gap-3 px-6 py-4 border-b border-[#17191d]/5 last:border-b-0">
+                    <img src={item.upper.image} alt="" className="w-10 h-10 object-contain mix-blend-multiply shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <p className="font-display text-sm uppercase truncate">{item.upper.name}</p>
+                      <p className="font-mono text-[8px] opacity-40 uppercase">{item.type === 'build' ? 'Full Build' : 'Upper Only'} · {item.size} · x{item.quantity}</p>
+                    </div>
+                    <p className="font-display text-sm shrink-0">₹{(price * item.quantity).toLocaleString('en-IN')}</p>
+                  </div>
+                )
+              })}
+            </div>
+
+            {/* Price breakdown */}
+            <div className="bg-[#17191d] text-[#e5f1ee] p-6 flex flex-col gap-4">
+              <p className="font-mono text-[9px] uppercase tracking-[4px] text-[#d4604d] font-bold">Price Breakdown</p>
+              <div className="flex flex-col gap-2 text-[10px] font-mono uppercase">
+                <div className="flex justify-between opacity-60"><span>Subtotal</span><span>₹{subtotal.toLocaleString('en-IN')}</span></div>
                 {appliedCoupon && (
                   <div className="flex justify-between text-emerald-400">
-                    <span>{appliedCoupon.code}</span>
-                    <span>−₹{appliedCoupon.discountAmt.toLocaleString('en-IN')}</span>
+                    <span>{appliedCoupon.code}</span><span>−₹{appliedCoupon.discountAmt.toLocaleString('en-IN')}</span>
                   </div>
                 )}
-                <div className="flex justify-between">
-                  <span className="opacity-60">Shipping</span>
-                  <span>₹{SHIPPING}</span>
-                </div>
+                <div className="flex justify-between opacity-60"><span>Shipping</span><span>₹{SHIPPING}</span></div>
               </div>
-              <div className="border-t border-[#e5f1ee]/10 pt-5 flex justify-between items-end">
-                <p className="font-mono text-[9px] uppercase opacity-60">You Pay</p>
-                <p className="font-display text-4xl">₹{total.toLocaleString('en-IN')}</p>
+              <div className="border-t border-[#e5f1ee]/10 pt-4 flex justify-between items-end">
+                <p className="font-mono text-[9px] uppercase opacity-50">Total</p>
+                <p className="font-display text-4xl text-[#d4604d]">₹{total.toLocaleString('en-IN')}</p>
               </div>
               {appliedCoupon && (
-                <div className="bg-emerald-500/20 border border-emerald-400 px-4 py-3">
-                  <p className="font-mono text-[9px] text-emerald-400 font-bold uppercase">
+                <div className="bg-emerald-500/20 border border-emerald-400 px-4 py-2">
+                  <p className="font-mono text-[8px] text-emerald-400 uppercase font-bold">
                     Saving ₹{appliedCoupon.discountAmt.toLocaleString('en-IN')}
                   </p>
                 </div>
               )}
-              <div className="border-t border-[#e5f1ee]/10 pt-4">
-                <div className="flex items-center gap-2 mb-1">
-                  <div className="w-1.5 h-1.5 rounded-full bg-[#d4604d]" />
-                  <p className="font-mono text-[8px] uppercase opacity-40 tracking-[2px]">Payment Method</p>
-                </div>
-                <p className="font-mono text-[10px] font-bold uppercase">UPI (GPay / PhonePe / Paytm)</p>
-                <p className="font-mono text-[8px] opacity-30 uppercase tracking-[1px] mt-1">QR code shown at next step</p>
+              <div className="border-t border-[#e5f1ee]/10 pt-3">
+                <p className="font-mono text-[8px] uppercase opacity-30 tracking-[1px]">
+                  Payment via UPI ·
+                </p>
               </div>
             </div>
           </div>
@@ -485,6 +556,1073 @@ async function saveAddress() {
     </div>
   )
 }
+
+// 'use client'
+
+// import { useState, useEffect, useCallback } from 'react'
+// import { useCart } from '@/context/CartContext'
+// import { motion, AnimatePresence } from 'framer-motion'
+// import { useRouter } from 'next/navigation'
+// import { useKindeBrowserClient } from '@kinde-oss/kinde-auth-nextjs'
+// import { Tag, MapPin, Loader2 } from 'lucide-react'
+// import UPIPayment from '@/components/UPIPayment'
+// import { NAMED_COUPONS, ONE_TIME_CODES } from '@/lib/coupon-data'
+
+// interface Address {
+//   id: string; line1: string; line2?: string; city: string
+//   state: string; postalCode: string; country: string; phone?: string
+//   synced?: boolean // true = saved in DB, false = localStorage only
+// }
+
+// type Step = 'delivery' | 'payment' | 'confirm' | 'upi'
+
+// // ── localStorage helpers ──────────────────────────────────────────────────────
+// const ADDR_KEY = 'tessch_addresses_v1'
+// const SELECTED_KEY = 'tessch_selected_addr_v1'
+
+// function getLocalAddresses(): Address[] {
+//   if (typeof window === 'undefined') return []
+//   try { return JSON.parse(localStorage.getItem(ADDR_KEY) ?? '[]') } catch { return [] }
+// }
+// function saveLocalAddresses(addrs: Address[]) {
+//   localStorage.setItem(ADDR_KEY, JSON.stringify(addrs))
+// }
+// function getLocalSelectedId(): string {
+//   if (typeof window === 'undefined') return ''
+//   return localStorage.getItem(SELECTED_KEY) ?? ''
+// }
+// function saveLocalSelectedId(id: string) {
+//   localStorage.setItem(SELECTED_KEY, id)
+// }
+
+// // ── Coupon helpers ────────────────────────────────────────────────────────────
+// function getMRPCap(mrp: number): number {
+//   if (mrp >= 7500) return 2000
+//   if (mrp >= 5000) return 1500
+//   return 1000
+// }
+// const USED_KEY = 'tessch_used_codes_v2'
+// function getUsedCodes(): string[] {
+//   if (typeof window === 'undefined') return []
+//   try { return JSON.parse(localStorage.getItem(USED_KEY) ?? '[]') } catch { return [] }
+// }
+// function markCodeUsed(code: string) {
+//   const used = getUsedCodes()
+//   localStorage.setItem(USED_KEY, JSON.stringify([...new Set([...used, code.toUpperCase()])]))
+// }
+// function validateCoupon(code: string, subtotal: number): { discountAmt: number; label: string; isOneTime: boolean } | { error: string } {
+//   const upper = code.toUpperCase().trim()
+//   const cap = getMRPCap(subtotal)
+//   const named = NAMED_COUPONS[upper]
+//   if (named) {
+//     const raw = named.type === 'flat' ? named.discount : Math.round(subtotal * named.discount)
+//     return { discountAmt: Math.min(raw, cap), label: named.label, isOneTime: false }
+//   }
+//   const found = ONE_TIME_CODES.find(c => c.toUpperCase() === upper)
+//   if (!found) return { error: 'Invalid coupon code.' }
+//   if (getUsedCodes().includes(upper)) return { error: 'This code has already been used.' }
+//   const pct = parseInt(found.slice(0, 2), 10)
+//   if (isNaN(pct) || pct <= 0) return { error: 'Invalid code format.' }
+//   const raw = Math.round(subtotal * (pct / 100))
+//   return { discountAmt: Math.min(raw, cap), label: `${pct}% off — capped at ₹${cap}`, isOneTime: true }
+// }
+
+// export default function CheckoutPage() {
+//   const { items, subtotal, clearCart } = useCart()
+//   const { isAuthenticated, isLoading, user } = useKindeBrowserClient()
+//   const router = useRouter()
+
+//   const [authChecked, setAuthChecked] = useState(false)
+//   const [step, setStep] = useState<Step>('delivery')
+//   const [savedAddresses, setSavedAddresses] = useState<Address[]>([])
+//   const [selectedAddressId, setSelectedAddressId] = useState('')
+//   const [showNewForm, setShowNewForm] = useState(false)
+//   const [savingAddr, setSavingAddr] = useState(false)
+//   const [newAddr, setNewAddr] = useState({
+//     line1: '', line2: '', city: '', state: '',
+//     postalCode: '', country: 'India', phone: '',
+//   })
+//   const [coupon, setCoupon] = useState('')
+//   const [appliedCoupon, setAppliedCoupon] = useState<{
+//     code: string; discountAmt: number; label: string; isOneTime: boolean
+//   } | null>(null)
+//   const [couponError, setCouponError] = useState('')
+//   const [placing, setPlacing] = useState(false)
+//   const [error, setError] = useState('')
+//   const [createdOrderId, setCreatedOrderId] = useState('')
+
+//   const SHIPPING = 170
+//   const discountAmt = appliedCoupon?.discountAmt ?? 0
+//   const total = Math.max(0, subtotal + SHIPPING - discountAmt)
+
+//   // ── Load addresses: localStorage first, then merge DB ────────────────────
+//   const loadAddresses = useCallback(async () => {
+//     // 1. Immediately load from localStorage (instant, no flicker)
+//     const local = getLocalAddresses()
+//     const localSelectedId = getLocalSelectedId()
+
+//     if (local.length > 0) {
+//       setSavedAddresses(local)
+//       setSelectedAddressId(localSelectedId || local[0].id)
+//     } else {
+//       setShowNewForm(true)
+//     }
+
+//     // 2. Try to fetch from DB and merge in background
+//     try {
+//       const res = await fetch('/api/address')
+//       if (res.ok) {
+//         const dbAddrs: Address[] = await res.json()
+//         if (dbAddrs.length > 0) {
+//           // Merge: DB addresses marked as synced, local-only ones kept
+//           const localOnlyAddrs = local.filter(l => !l.synced)
+//           const merged = [
+//             ...dbAddrs.map(a => ({ ...a, synced: true })),
+//             ...localOnlyAddrs,
+//           ]
+//           // Deduplicate by line1+city combo
+//           const seen = new Set<string>()
+//           const deduped = merged.filter(a => {
+//             const key = `${a.line1}|${a.city}|${a.postalCode}`
+//             if (seen.has(key)) return false
+//             seen.add(key)
+//             return true
+//           })
+//           setSavedAddresses(deduped)
+//           saveLocalAddresses(deduped)
+//           // Keep selected if it exists in merged, else pick first
+//           const stillValid = deduped.find(a => a.id === (localSelectedId || selectedAddressId))
+//           const newSelected = stillValid?.id ?? deduped[0]?.id ?? ''
+//           setSelectedAddressId(newSelected)
+//           saveLocalSelectedId(newSelected)
+//         }
+//       }
+//     } catch {
+//       // DB unavailable — localStorage already loaded, that's fine
+//     }
+//   }, [])
+
+//   useEffect(() => {
+//     if (isLoading) return
+//     if (!isAuthenticated) { router.push('/api/auth/login'); return }
+//     setAuthChecked(true)
+//     loadAddresses()
+//   }, [isLoading, isAuthenticated, router, loadAddresses])
+
+//   // ── Save address ──────────────────────────────────────────────────────────
+//   async function saveAddress() {
+//     if (!newAddr.line1 || !newAddr.city || !newAddr.state || !newAddr.postalCode) {
+//       setError('Please fill all required fields (Line 1, City, State, Pincode).')
+//       return
+//     }
+//     setSavingAddr(true)
+//     setError('')
+
+//     // 1. Save to localStorage immediately with a temp ID
+//     const tempId = `local_${Date.now()}`
+//     const newAddress: Address = {
+//       id: tempId,
+//       ...newAddr,
+//       synced: false,
+//     }
+//     const updated = [newAddress, ...savedAddresses]
+//     setSavedAddresses(updated)
+//     setSelectedAddressId(tempId)
+//     saveLocalAddresses(updated)
+//     saveLocalSelectedId(tempId)
+//     setShowNewForm(false)
+//     setNewAddr({ line1: '', line2: '', city: '', state: '', postalCode: '', country: 'India', phone: '' })
+
+//     // 2. Try to sync to DB in background
+//     try {
+//       const res = await fetch('/api/address', {
+//         method: 'POST',
+//         headers: { 'Content-Type': 'application/json' },
+//         body: JSON.stringify({ ...newAddr, localId: tempId }),
+//       })
+
+//       if (res.ok) {
+//         const saved = await res.json()
+//         if (!saved.error) {
+//           // Replace temp address with real DB address
+//           setSavedAddresses(prev => {
+//             const replaced = prev.map(a =>
+//               a.id === tempId ? { ...saved, synced: true } : a
+//             )
+//             saveLocalAddresses(replaced)
+//             return replaced
+//           })
+//           setSelectedAddressId(saved.id)
+//           saveLocalSelectedId(saved.id)
+//         }
+//         // If saved.error === 'db_failed', keep the localStorage version — still works for checkout
+//       }
+//     } catch {
+//       // DB sync failed silently — localStorage version is still usable
+//     } finally {
+//       setSavingAddr(false)
+//     }
+//   }
+
+//   function handleSelectAddress(id: string) {
+//     setSelectedAddressId(id)
+//     saveLocalSelectedId(id)
+//     setShowNewForm(false)
+//   }
+
+//   // ── Place order ───────────────────────────────────────────────────────────
+//   async function placeOrder() {
+//     if (!selectedAddressId) { setError('Please select a delivery address.'); return }
+//     if (items.length === 0) { setError('Your cart is empty.'); return }
+
+//     const selectedAddress = savedAddresses.find(a => a.id === selectedAddressId)
+//     if (!selectedAddress) { setError('Address not found. Please re-select.'); return }
+
+//     setPlacing(true); setError('')
+
+//     try {
+//       // If address isn't synced to DB yet, try syncing it now before placing order
+//       let addressIdForOrder = selectedAddressId
+//       if (!selectedAddress.synced) {
+//         try {
+//           const syncRes = await fetch('/api/address', {
+//             method: 'POST',
+//             headers: { 'Content-Type': 'application/json' },
+//             body: JSON.stringify({ ...selectedAddress, localId: selectedAddress.id }),
+//           })
+//           if (syncRes.ok) {
+//             const synced = await syncRes.json()
+//             if (!synced.error) {
+//               addressIdForOrder = synced.id
+//               setSavedAddresses(prev => {
+//                 const replaced = prev.map(a =>
+//                   a.id === selectedAddressId ? { ...synced, synced: true } : a
+//                 )
+//                 saveLocalAddresses(replaced)
+//                 return replaced
+//               })
+//               setSelectedAddressId(synced.id)
+//               saveLocalSelectedId(synced.id)
+//             }
+//           }
+//         } catch { /* proceed with local id, API will handle */ }
+//       }
+
+//       const res = await fetch('/api/payments/create-session', {
+//         method: 'POST',
+//         headers: { 'Content-Type': 'application/json' },
+//         body: JSON.stringify({
+//           addressId: addressIdForOrder,
+//           // Pass full address as fallback in case DB lookup fails
+//           addressFallback: selectedAddress,
+//           items,
+//           totalAmount: total,
+//           couponCode: appliedCoupon?.code ?? null,
+//           discountAmount: discountAmt,
+//           paymentMethod: 'upi',
+//         }),
+//       })
+//       if (!res.ok) throw new Error((await res.json()).error ?? 'Order creation failed')
+//       const { orderId } = await res.json()
+
+//       if (appliedCoupon?.isOneTime) markCodeUsed(appliedCoupon.code)
+//       setCreatedOrderId(orderId)
+//       setStep('upi')
+//     } catch (e) {
+//       setError(e instanceof Error ? e.message : 'Something went wrong')
+//     } finally {
+//       setPlacing(false)
+//     }
+//   }
+
+//   function applyCouponCode() {
+//     const result = validateCoupon(coupon, subtotal)
+//     if ('error' in result) { setCouponError(result.error); return }
+//     setAppliedCoupon({ code: coupon.toUpperCase().trim(), ...result })
+//     setCouponError('')
+//   }
+
+//   const selectedAddress = savedAddresses.find(a => a.id === selectedAddressId)
+
+//   if (isLoading || !authChecked) return (
+//     <div className="min-h-screen bg-[#e5f1ee] flex items-center justify-center gap-3">
+//       <Loader2 size={16} className="animate-spin text-[#17191d]" />
+//       <p className="font-mono text-[11px] uppercase tracking-[3px] text-[#17191d]">Verifying session...</p>
+//     </div>
+//   )
+
+//   if (items.length === 0 && step !== 'upi') return (
+//     <div className="min-h-screen bg-[#e5f1ee] flex items-center justify-center flex-col gap-6 text-[#17191d]">
+//       <p className="font-mono text-[11px] uppercase tracking-[3px] opacity-50">Your cart is empty</p>
+//       <button onClick={() => router.push('/products')}
+//         className="bg-[#17191d] text-white font-mono text-[10px] font-bold uppercase tracking-[3px] px-8 py-4 hover:bg-[#d4604d] transition-colors">
+//         Browse Products →
+//       </button>
+//     </div>
+//   )
+
+//   if (step === 'upi') return (
+//     <div className="min-h-screen bg-[#e5f1ee] text-[#17191d] pt-28 pb-20 px-6 md:px-12">
+//       <div className="max-w-lg mx-auto">
+//         <div className="mb-8 border-b-2 border-[#17191d]/10 pb-6">
+//           <p className="font-mono text-[10px] uppercase tracking-[4px] text-[#d4604d] font-bold mb-2">Step 3 — Complete Payment</p>
+//           <h1 className="font-display text-[clamp(36px,6vw,72px)] leading-none uppercase tracking-tighter">
+//             PAY VIA<br /><span className="text-[#d4604d]">UPI.</span>
+//           </h1>
+//         </div>
+//         <UPIPayment
+//           amount={total}
+//           orderId={createdOrderId}
+//           onConfirmed={() => { clearCart(); router.push('/checkout/success') }}
+//           onCancel={() => { setStep('confirm'); setError('Payment cancelled. You can retry.') }}
+//         />
+//       </div>
+//     </div>
+//   )
+
+//   return (
+//     <div className="min-h-screen bg-[#e5f1ee] text-[#17191d] pt-28 pb-20 px-6 md:px-12">
+//       <div className="max-w-6xl mx-auto">
+
+//         <div className="mb-10 border-b-2 border-[#17191d] pb-6">
+//           <p className="font-mono text-[10px] uppercase tracking-[4px] text-[#d4604d] font-bold mb-2">Secure Checkout — UPI Payment</p>
+//           <h1 className="font-display text-[clamp(36px,6vw,80px)] leading-none uppercase tracking-tighter">
+//             FINALISE<br /><span className="text-[#d4604d]">YOUR ORDER.</span>
+//           </h1>
+//         </div>
+
+//         <div className="flex gap-0 mb-12 border-2 border-[#17191d] overflow-hidden w-fit">
+//           {(['delivery', 'payment', 'confirm'] as Step[]).map((s, i) => (
+//             <button key={s} onClick={() => !placing && setStep(s)}
+//               className={`font-mono text-[9px] uppercase tracking-[3px] px-6 py-3 font-bold border-r-2 border-[#17191d] last:border-r-0 transition-colors
+//                 ${step === s ? 'bg-[#17191d] text-white' : !placing ? 'hover:bg-[#d4604d] hover:text-white cursor-pointer' : 'opacity-30 cursor-not-allowed'}`}>
+//               {i + 1}. {s}
+//             </button>
+//           ))}
+//         </div>
+
+//         {error && (
+//           <div className="mb-6 border-2 border-red-400 bg-red-50 px-4 py-3 font-mono text-[11px] text-red-700 uppercase tracking-[1px]">
+//             ⚠ {error}
+//           </div>
+//         )}
+
+//         <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-12">
+//           <div>
+//             <AnimatePresence mode="wait">
+
+//               {step === 'delivery' && (
+//                 <motion.div key="delivery" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="flex flex-col gap-6">
+//                   <div className="flex items-center gap-3">
+//                     <MapPin size={16} className="text-[#d4604d]" />
+//                     <h2 className="font-display text-2xl uppercase">Delivery Address</h2>
+//                   </div>
+
+//                   {savedAddresses.map(addr => (
+//                     <label key={addr.id}
+//                       className={`flex items-start gap-4 p-5 border-[3px] cursor-pointer transition-all ${selectedAddressId === addr.id ? 'border-[#17191d] bg-white' : 'border-[#17191d]/20 hover:border-[#17191d]/50'}`}>
+//                       <input type="radio" name="address" checked={selectedAddressId === addr.id}
+//                         onChange={() => handleSelectAddress(addr.id)} className="mt-1" />
+//                       <div className="font-mono text-[10px] uppercase leading-relaxed flex-1">
+//                         <p className="font-bold">{addr.line1}{addr.line2 ? `, ${addr.line2}` : ''}</p>
+//                         <p className="opacity-60">{addr.city}, {addr.state} — {addr.postalCode}</p>
+//                         <p className="opacity-60">{addr.country}{addr.phone ? ` · ${addr.phone}` : ''}</p>
+//                         {!addr.synced && (
+//                           <p className="text-amber-500 text-[8px] mt-1">● Saved locally</p>
+//                         )}
+//                       </div>
+//                     </label>
+//                   ))}
+
+//                   <button onClick={() => setShowNewForm(v => !v)}
+//                     className="font-mono text-[10px] uppercase tracking-[3px] font-bold text-[#d4604d] border-b border-[#d4604d] w-fit pb-0.5">
+//                     {showNewForm ? '− Cancel' : '+ Add New Address'}
+//                   </button>
+
+//                   {showNewForm && (
+//                     <div className="border-[3px] border-[#17191d]/20 p-6 space-y-4">
+//                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+//                         {[
+//                           { key: 'line1', label: 'Address Line 1 *', span: true },
+//                           { key: 'line2', label: 'Line 2 (optional)', span: true },
+//                           { key: 'city', label: 'City *', span: false },
+//                           { key: 'state', label: 'State *', span: false },
+//                           { key: 'postalCode', label: 'Pincode *', span: false },
+//                           { key: 'country', label: 'Country *', span: false },
+//                           { key: 'phone', label: 'Phone', span: false },
+//                         ].map(({ key, label, span }) => (
+//                           <div key={key} className={span ? 'md:col-span-2' : ''}>
+//                             <label className="font-mono text-[9px] uppercase tracking-[2px] opacity-50 block mb-1">{label}</label>
+//                             <input
+//                               value={newAddr[key as keyof typeof newAddr]}
+//                               onChange={e => setNewAddr(prev => ({ ...prev, [key]: e.target.value }))}
+//                               className="w-full bg-white border-2 border-[#17191d]/20 font-mono text-[11px] px-3 py-2 focus:border-[#17191d] outline-none transition-colors"
+//                             />
+//                           </div>
+//                         ))}
+//                       </div>
+//                       <button onClick={saveAddress} disabled={savingAddr}
+//                         className="font-mono text-[10px] font-bold uppercase tracking-[3px] border-2 border-[#17191d] px-6 py-2 hover:bg-[#17191d] hover:text-white transition-colors disabled:opacity-50 flex items-center gap-2">
+//                         {savingAddr && <Loader2 size={12} className="animate-spin" />}
+//                         {savingAddr ? 'Saving...' : 'Save Address'}
+//                       </button>
+//                     </div>
+//                   )}
+
+//                   <button
+//                     onClick={() => {
+//                       if (!selectedAddressId) { setError('Select or add an address first'); return }
+//                       setError(''); setStep('payment')
+//                     }}
+//                     className="bg-[#17191d] text-white font-mono text-[11px] font-bold uppercase tracking-[4px] py-5 px-12 w-fit hover:bg-[#d4604d] transition-colors mt-4">
+//                     Continue →
+//                   </button>
+//                 </motion.div>
+//               )}
+
+//               {step === 'payment' && (
+//                 <motion.div key="payment" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="flex flex-col gap-6">
+//                   <h2 className="font-display text-2xl uppercase">Coupon Code</h2>
+//                   <div className="flex items-center gap-4 p-5 border-[3px] border-[#17191d] bg-[#17191d] text-white">
+//                     <div className="w-5 h-5 rounded-full border-2 border-white flex items-center justify-center shrink-0">
+//                       <div className="w-2.5 h-2.5 rounded-full bg-[#d4604d]" />
+//                     </div>
+//                     <div>
+//                       <p className="font-mono text-[11px] font-bold uppercase tracking-[2px]">UPI Payment</p>
+//                       <p className="font-mono text-[9px] mt-0.5 opacity-60">GPay · PhonePe · Paytm · BHIM — QR code at next step</p>
+//                     </div>
+//                   </div>
+//                   <div className="bg-emerald-50 border border-emerald-200 px-4 py-3">
+//                     <p className="font-mono text-[9px] text-emerald-700 uppercase tracking-[1px] font-bold">
+//                       🎉 Up to ₹{getMRPCap(subtotal).toLocaleString('en-IN')} discount available on your order
+//                     </p>
+//                   </div>
+//                   <div>
+//                     <div className="flex items-center gap-2 mb-3">
+//                       <Tag size={14} className="text-[#d4604d]" />
+//                       <p className="font-mono text-[10px] uppercase tracking-[3px] font-bold">Apply Coupon</p>
+//                     </div>
+//                     {appliedCoupon ? (
+//                       <div className="flex items-center justify-between bg-emerald-50 border-2 border-emerald-400 px-4 py-3">
+//                         <div>
+//                           <p className="font-mono text-[10px] font-bold text-emerald-700 uppercase">{appliedCoupon.code}</p>
+//                           <p className="font-mono text-[9px] text-emerald-600">{appliedCoupon.label} — saving ₹{appliedCoupon.discountAmt.toLocaleString('en-IN')}</p>
+//                         </div>
+//                         <button onClick={() => setAppliedCoupon(null)} className="font-mono text-[9px] text-[#17191d]/50 hover:text-red-500 transition-colors">Remove ✕</button>
+//                       </div>
+//                     ) : (
+//                       <div className="flex gap-3">
+//                         <input value={coupon}
+//                           onChange={e => { setCoupon(e.target.value); setCouponError('') }}
+//                           placeholder="Enter code (e.g. TESSCH15)"
+//                           className="flex-1 bg-white border-2 border-[#17191d] font-mono text-[11px] px-4 py-3 focus:outline-none focus:border-[#d4604d] transition-colors placeholder:opacity-30 uppercase" />
+//                         <button onClick={applyCouponCode}
+//                           className="bg-[#17191d] text-white font-mono text-[10px] font-bold uppercase tracking-[2px] px-6 hover:bg-[#d4604d] transition-colors">
+//                           Apply
+//                         </button>
+//                       </div>
+//                     )}
+//                     {couponError && <p className="font-mono text-[9px] text-red-500 mt-2 uppercase">{couponError}</p>}
+//                   </div>
+//                   <div className="flex gap-3 mt-2">
+//                     <button onClick={() => setStep('delivery')}
+//                       className="font-mono text-[10px] font-bold uppercase tracking-[3px] border-2 border-[#17191d] px-6 py-3 hover:bg-[#17191d] hover:text-white transition-colors">
+//                       ← Back
+//                     </button>
+//                     <button onClick={() => setStep('confirm')}
+//                       className="flex-1 bg-[#17191d] text-white font-mono text-[11px] font-bold uppercase tracking-[4px] py-4 hover:bg-[#d4604d] transition-colors">
+//                       Review Order →
+//                     </button>
+//                   </div>
+//                 </motion.div>
+//               )}
+
+//               {step === 'confirm' && (
+//                 <motion.div key="confirm" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="flex flex-col gap-6">
+//                   <h2 className="font-display text-2xl uppercase mb-2">Review & Confirm</h2>
+//                   <div className="flex flex-col gap-3">
+//                     {items.map(item => {
+//                       const unitPrice = item.type === 'build'
+//                         ? item.upper.price + (item.sole?.price ?? 1299)
+//                         : item.upper.price
+//                       return (
+//                         <div key={item.id} className="flex items-center gap-4 bg-white border-2 border-[#17191d] p-4">
+//                           <img src={item.upper.image} alt="" className="w-14 h-14 object-contain mix-blend-multiply" />
+//                           <div className="flex-1">
+//                             <p className="font-display text-lg uppercase leading-tight">{item.upper.name}</p>
+//                             <p className="font-mono text-[9px] uppercase tracking-[2px] opacity-40">
+//                               {item.type === 'build' ? `Full Build + ${item.sole?.name ?? 'Sole'}` : 'Upper Only'} · {item.size} · Qty {item.quantity}
+//                             </p>
+//                           </div>
+//                           <p className="font-display text-xl">₹{(unitPrice * item.quantity).toLocaleString('en-IN')}</p>
+//                         </div>
+//                       )
+//                     })}
+//                   </div>
+//                   {selectedAddress && (
+//                     <div className="bg-white border-2 border-[#17191d] p-5 space-y-1">
+//                       <p className="font-mono text-[9px] uppercase tracking-[3px] opacity-40 mb-2">Delivering To</p>
+//                       <p className="font-mono text-[11px] font-bold">{selectedAddress.line1}{selectedAddress.line2 ? `, ${selectedAddress.line2}` : ''}</p>
+//                       <p className="font-mono text-[10px] opacity-60">{selectedAddress.city}, {selectedAddress.state} — {selectedAddress.postalCode}</p>
+//                       <p className="font-mono text-[10px] opacity-60">{selectedAddress.country}{selectedAddress.phone ? ` · ${selectedAddress.phone}` : ''}</p>
+//                       <p className="font-mono text-[10px] opacity-50 mt-2 uppercase">Payment: UPI</p>
+//                     </div>
+//                   )}
+//                   {appliedCoupon && (
+//                     <div className="bg-emerald-50 border-2 border-emerald-300 px-5 py-3">
+//                       <p className="font-mono text-[9px] text-emerald-700 uppercase font-bold">
+//                         Coupon {appliedCoupon.code} — saving ₹{appliedCoupon.discountAmt.toLocaleString('en-IN')}
+//                       </p>
+//                     </div>
+//                   )}
+//                   <div className="flex flex-col gap-3">
+//                     <button onClick={() => !placing && setStep('payment')} disabled={placing}
+//                       className="font-mono text-[10px] font-bold uppercase tracking-[3px] border-2 border-[#17191d] px-6 py-3 w-fit hover:bg-[#17191d] hover:text-white transition-colors disabled:opacity-30">
+//                       ← Edit
+//                     </button>
+//                     <button onClick={placeOrder} disabled={placing}
+//                       className="bg-[#d4604d] text-white font-mono text-[12px] font-bold uppercase tracking-[4px] py-6 text-center hover:bg-[#17191d] transition-colors disabled:opacity-50 flex items-center justify-center gap-3">
+//                       {placing && <Loader2 size={16} className="animate-spin" />}
+//                       {placing ? 'Creating Order...' : `PROCEED TO PAY — ₹${total.toLocaleString('en-IN')} →`}
+//                     </button>
+//                   </div>
+//                 </motion.div>
+//               )}
+//             </AnimatePresence>
+//           </div>
+
+//           {/* Price Summary */}
+//           <div className="lg:sticky lg:top-28 h-fit">
+//             <div className="bg-[#17191d] text-[#e5f1ee] p-8 flex flex-col gap-5">
+//               <p className="font-mono text-[9px] uppercase tracking-[4px] text-[#d4604d] font-bold">Price Breakdown</p>
+//               <div className="flex flex-col gap-3 text-[10px] font-mono uppercase">
+//                 <div className="flex justify-between">
+//                   <span className="opacity-60">Subtotal ({items.reduce((s, i) => s + i.quantity, 0)} items)</span>
+//                   <span>₹{subtotal.toLocaleString('en-IN')}</span>
+//                 </div>
+//                 {appliedCoupon && (
+//                   <div className="flex justify-between text-emerald-400">
+//                     <span>{appliedCoupon.code}</span>
+//                     <span>−₹{appliedCoupon.discountAmt.toLocaleString('en-IN')}</span>
+//                   </div>
+//                 )}
+//                 <div className="flex justify-between">
+//                   <span className="opacity-60">Shipping</span>
+//                   <span>₹{SHIPPING}</span>
+//                 </div>
+//               </div>
+//               <div className="border-t border-[#e5f1ee]/10 pt-5 flex justify-between items-end">
+//                 <p className="font-mono text-[9px] uppercase opacity-60">You Pay</p>
+//                 <p className="font-display text-4xl">₹{total.toLocaleString('en-IN')}</p>
+//               </div>
+//               {appliedCoupon && (
+//                 <div className="bg-emerald-500/20 border border-emerald-400 px-4 py-3">
+//                   <p className="font-mono text-[9px] text-emerald-400 font-bold uppercase">
+//                     Saving ₹{appliedCoupon.discountAmt.toLocaleString('en-IN')}
+//                   </p>
+//                 </div>
+//               )}
+//               <div className="border-t border-[#e5f1ee]/10 pt-4">
+//                 <div className="flex items-center gap-2 mb-1">
+//                   <div className="w-1.5 h-1.5 rounded-full bg-[#d4604d]" />
+//                   <p className="font-mono text-[8px] uppercase opacity-40 tracking-[2px]">Payment Method</p>
+//                 </div>
+//                 <p className="font-mono text-[10px] font-bold uppercase">UPI (GPay / PhonePe / Paytm)</p>
+//                 <p className="font-mono text-[8px] opacity-30 uppercase tracking-[1px] mt-1">QR code shown at next step</p>
+//               </div>
+//             </div>
+//           </div>
+//         </div>
+//       </div>
+//     </div>
+//   )
+// }
+// // app/checkout/page.tsx
+// 'use client'
+
+// import { useState, useEffect, useCallback } from 'react'
+// import { useCart } from '@/context/CartContext'
+// import { motion, AnimatePresence } from 'framer-motion'
+// import { useRouter } from 'next/navigation'
+// import { useKindeBrowserClient } from '@kinde-oss/kinde-auth-nextjs'
+// import { Tag, MapPin, Loader2 } from 'lucide-react'
+// import UPIPayment from '@/components/UPIPayment'
+// import { NAMED_COUPONS,ONE_TIME_CODES } from '@/lib/coupon-data'
+
+// interface Address {
+//   id: string; line1: string; line2?: string; city: string
+//   state: string; postalCode: string; country: string; phone?: string
+// }
+
+// type Step = 'delivery' | 'payment' | 'confirm' | 'upi'
+
+
+// function getMRPCap(mrp: number): number {
+//   if (mrp >= 7500) return 2000
+//   if (mrp >= 5000) return 1500
+//   return 1000
+// }
+
+// const USED_KEY = 'tessch_used_codes_v2'
+// function getUsedCodes(): string[] {
+//   if (typeof window === 'undefined') return []
+//   try { return JSON.parse(localStorage.getItem(USED_KEY) ?? '[]') } catch { return [] }
+// }
+// function markCodeUsed(code: string) {
+//   const used = getUsedCodes()
+//   localStorage.setItem(USED_KEY, JSON.stringify([...new Set([...used, code.toUpperCase()])]))
+// }
+
+// function validateCoupon(
+//   code: string, subtotal: number
+// ): { discountAmt: number; label: string; isOneTime: boolean } | { error: string } {
+//   const upper = code.toUpperCase().trim()
+//   const cap   = getMRPCap(subtotal)
+
+//   const named = NAMED_COUPONS[upper]
+//   if (named) {
+//     const raw = named.type === 'flat' ? named.discount : Math.round(subtotal * named.discount)
+//     return { discountAmt: Math.min(raw, cap), label: named.label, isOneTime: false }
+//   }
+
+//   const found = ONE_TIME_CODES.find(c => c.toUpperCase() === upper)
+//   if (!found) return { error: 'Invalid coupon code.' }
+//   if (getUsedCodes().includes(upper)) return { error: 'This code has already been used.' }
+
+//   const pct = parseInt(found.slice(0, 2), 10)
+//   if (isNaN(pct) || pct <= 0) return { error: 'Invalid code format.' }
+
+//   const raw = Math.round(subtotal * (pct / 100))
+//   return { discountAmt: Math.min(raw, cap), label: `${pct}% off — capped at ₹${cap}`, isOneTime: true }
+// }
+
+// export default function CheckoutPage() {
+//   const { items, subtotal, clearCart } = useCart()
+//   const { isAuthenticated, isLoading }  = useKindeBrowserClient()
+//   const router = useRouter()
+
+//   const [authChecked, setAuthChecked]             = useState(false)
+//   const [step, setStep]                           = useState<Step>('delivery')
+//   const [savedAddresses, setSavedAddresses]       = useState<Address[]>([])
+//   const [selectedAddressId, setSelectedAddressId] = useState('')
+//   const [showNewForm, setShowNewForm]             = useState(false)
+//   const [savingAddr, setSavingAddr]               = useState(false)
+//   const [newAddr, setNewAddr]                     = useState({
+//     line1: '', line2: '', city: '', state: '',
+//     postalCode: '', country: 'India', phone: '',
+//   })
+//   const [coupon, setCoupon]         = useState('')
+//   const [appliedCoupon, setAppliedCoupon] = useState<{
+//     code: string; discountAmt: number; label: string; isOneTime: boolean
+//   } | null>(null)
+//   const [couponError, setCouponError] = useState('')
+//   const [placing, setPlacing]         = useState(false)
+//   const [error, setError]             = useState('')
+//   const [createdOrderId, setCreatedOrderId] = useState('')
+
+//   const SHIPPING    = 170
+//   const discountAmt = appliedCoupon?.discountAmt ?? 0
+//   const total       = Math.max(0, subtotal + SHIPPING - discountAmt)
+
+//   const loadAddresses = useCallback(async () => {
+//     try {
+//       const res = await fetch('/api/address')
+//       if (res.ok) {
+//         const data: Address[] = await res.json()
+//         setSavedAddresses(data)
+//         if (data.length > 0) setSelectedAddressId(data[0].id)
+//         else setShowNewForm(true)
+//       }
+//     } catch { /* ignore */ }
+//   }, [])
+
+//   useEffect(() => {
+//     if (isLoading) return
+//     if (!isAuthenticated) { router.push('/api/auth/login'); return }
+//     setAuthChecked(true)
+//     loadAddresses()
+//   }, [isLoading, isAuthenticated, router, loadAddresses])
+
+//   function applyCouponCode() {
+//     const result = validateCoupon(coupon, subtotal)
+//     if ('error' in result) { setCouponError(result.error); return }
+//     setAppliedCoupon({ code: coupon.toUpperCase().trim(), ...result })
+//     setCouponError('')
+//   }
+
+// async function saveAddress() {
+//   if (!newAddr.line1 || !newAddr.city || !newAddr.state || !newAddr.postalCode) {
+//     setError('Please fill all required address fields.')
+//     return
+//   }
+//   setSavingAddr(true)
+//   try {
+//     const res = await fetch('/api/address', {
+//       method: 'POST',
+//       headers: { 'Content-Type': 'application/json' },
+//       body: JSON.stringify(newAddr),
+//     })
+
+//     if (!res.ok) {
+//       const data = await res.json()
+//       setError(data.error ?? 'Failed to save address')
+//       return
+//     }
+
+//     const saved: Address = await res.json()
+//     setSavedAddresses(prev => [saved, ...prev])
+//     setSelectedAddressId(saved.id)   // ← select it immediately
+//     setShowNewForm(false)
+//     setError('')                      // ← clear any previous errors
+//     setNewAddr({ line1: '', line2: '', city: '', state: '', postalCode: '', country: 'India', phone: '' })
+//   } catch {
+//     setError('Network error. Could not save address.')
+//   } finally {
+//     setSavingAddr(false)
+//   }
+// }
+
+//   async function placeOrder() {
+//     if (!selectedAddressId) { setError('Please select a delivery address.'); return }
+//     if (items.length === 0)  { setError('Your cart is empty.'); return }
+//     setPlacing(true); setError('')
+
+//     try {
+//       const res = await fetch('/api/payments/create-session', {
+//         method: 'POST',
+//         headers: { 'Content-Type': 'application/json' },
+//         body: JSON.stringify({
+//           addressId: selectedAddressId, items, totalAmount: total,
+//           couponCode: appliedCoupon?.code ?? null,
+//           discountAmount: discountAmt, paymentMethod: 'upi',
+//         }),
+//       })
+//       if (!res.ok) throw new Error((await res.json()).error ?? 'Order creation failed')
+//       const { orderId } = await res.json()
+
+//       if (appliedCoupon?.isOneTime) markCodeUsed(appliedCoupon.code)
+
+//       setCreatedOrderId(orderId)
+//       setStep('upi')
+//     } catch (e) {
+//       setError(e instanceof Error ? e.message : 'Something went wrong')
+//     } finally {
+//       setPlacing(false)
+//     }
+//   }
+
+//   const selectedAddress = savedAddresses.find(a => a.id === selectedAddressId)
+
+//   // ── Guards ────────────────────────────────────────────────────────────────
+//   if (isLoading || !authChecked) return (
+//     <div className="min-h-screen bg-[#e5f1ee] flex items-center justify-center gap-3">
+//       <Loader2 size={16} className="animate-spin text-[#17191d]" />
+//       <p className="font-mono text-[11px] uppercase tracking-[3px] text-[#17191d]">Verifying session...</p>
+//     </div>
+//   )
+
+//   if (items.length === 0 && step !== 'upi') return (
+//     <div className="min-h-screen bg-[#e5f1ee] flex items-center justify-center flex-col gap-6 text-[#17191d]">
+//       <p className="font-mono text-[11px] uppercase tracking-[3px] opacity-50">Your cart is empty</p>
+//       <button onClick={() => router.push('/products')}
+//         className="bg-[#17191d] text-white font-mono text-[10px] font-bold uppercase tracking-[3px] px-8 py-4 hover:bg-[#d4604d] transition-colors">
+//         Browse Products →
+//       </button>
+//     </div>
+//   )
+
+//   // ── UPI screen ────────────────────────────────────────────────────────────
+//   if (step === 'upi') return (
+//     <div className="min-h-screen bg-[#e5f1ee] text-[#17191d] pt-28 pb-20 px-6 md:px-12">
+//       <div className="max-w-lg mx-auto">
+//         <div className="mb-8 border-b-2 border-[#17191d]/10 pb-6">
+//           <p className="font-mono text-[10px] uppercase tracking-[4px] text-[#d4604d] font-bold mb-2">
+//             Step 3 — Complete Payment
+//           </p>
+//           <h1 className="font-display text-[clamp(36px,6vw,72px)] leading-none uppercase tracking-tighter">
+//             PAY VIA<br /><span className="text-[#d4604d]">UPI.</span>
+//           </h1>
+//         </div>
+//         <UPIPayment
+//           amount={total}
+//           orderId={createdOrderId}
+//           onConfirmed={() => { clearCart(); router.push('/checkout/success') }}
+//           onCancel={() => { setStep('confirm'); setError('Payment cancelled. You can retry.') }}
+//         />
+//       </div>
+//     </div>
+//   )
+
+//   // ── Main checkout ─────────────────────────────────────────────────────────
+//   return (
+//     <div className="min-h-screen bg-[#e5f1ee] text-[#17191d] pt-28 pb-20 px-6 md:px-12">
+//       <div className="max-w-6xl mx-auto">
+
+//         <div className="mb-10 border-b-2 border-[#17191d] pb-6">
+//           <p className="font-mono text-[10px] uppercase tracking-[4px] text-[#d4604d] font-bold mb-2">
+//             Secure Checkout — UPI Payment
+//           </p>
+//           <h1 className="font-display text-[clamp(36px,6vw,80px)] leading-none uppercase tracking-tighter">
+//             FINALISE<br /><span className="text-[#d4604d]">YOUR ORDER.</span>
+//           </h1>
+//         </div>
+
+//         {/* Step tabs */}
+//         <div className="flex gap-0 mb-12 border-2 border-[#17191d] overflow-hidden w-fit">
+//           {(['delivery', 'payment', 'confirm'] as Step[]).map((s, i) => (
+//             <button key={s} onClick={() => !placing && setStep(s)}
+//               className={`font-mono text-[9px] uppercase tracking-[3px] px-6 py-3 font-bold border-r-2 border-[#17191d] last:border-r-0 transition-colors
+//                 ${step === s ? 'bg-[#17191d] text-white' : !placing ? 'hover:bg-[#d4604d] hover:text-white cursor-pointer' : 'opacity-30 cursor-not-allowed'}`}>
+//               {i + 1}. {s}
+//             </button>
+//           ))}
+//         </div>
+
+//         {error && (
+//           <div className="mb-6 border-2 border-red-400 bg-red-50 px-4 py-3 font-mono text-[11px] text-red-700 uppercase tracking-[1px]">
+//             ⚠ {error}
+//           </div>
+//         )}
+
+//         <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-12">
+//           <div>
+//             <AnimatePresence mode="wait">
+
+//               {/* DELIVERY */}
+//               {step === 'delivery' && (
+//                 <motion.div key="delivery" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="flex flex-col gap-6">
+//                   <div className="flex items-center gap-3">
+//                     <MapPin size={16} className="text-[#d4604d]" />
+//                     <h2 className="font-display text-2xl uppercase">Delivery Address</h2>
+//                   </div>
+
+//                   {savedAddresses.map(addr => (
+//                     <label key={addr.id}
+//                       className={`flex items-start gap-4 p-5 border-[3px] cursor-pointer transition-all ${selectedAddressId === addr.id ? 'border-[#17191d] bg-white' : 'border-[#17191d]/20 hover:border-[#17191d]/50'}`}>
+//                       <input type="radio" name="address" checked={selectedAddressId === addr.id}
+//                         onChange={() => { setSelectedAddressId(addr.id); setShowNewForm(false) }} className="mt-1" />
+//                       <div className="font-mono text-[10px] uppercase leading-relaxed">
+//                         <p className="font-bold">{addr.line1}{addr.line2 ? `, ${addr.line2}` : ''}</p>
+//                         <p className="opacity-60">{addr.city}, {addr.state} — {addr.postalCode}</p>
+//                         <p className="opacity-60">{addr.country}{addr.phone ? ` · ${addr.phone}` : ''}</p>
+//                       </div>
+//                     </label>
+//                   ))}
+
+//                   <button onClick={() => setShowNewForm(v => !v)}
+//                     className="font-mono text-[10px] uppercase tracking-[3px] font-bold text-[#d4604d] border-b border-[#d4604d] w-fit pb-0.5">
+//                     {showNewForm ? '− Cancel' : '+ Add New Address'}
+//                   </button>
+
+//                   {showNewForm && (
+//                     <div className="border-[3px] border-[#17191d]/20 p-6 space-y-4">
+//                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+//                         {[
+//                           { key: 'line1', label: 'Address Line 1 *', span: true },
+//                           { key: 'line2', label: 'Line 2 (optional)', span: true },
+//                           { key: 'city', label: 'City *', span: false },
+//                           { key: 'state', label: 'State *', span: false },
+//                           { key: 'postalCode', label: 'Pincode *', span: false },
+//                           { key: 'country', label: 'Country *', span: false },
+//                           { key: 'phone', label: 'Phone', span: false },
+//                         ].map(({ key, label, span }) => (
+//                           <div key={key} className={span ? 'md:col-span-2' : ''}>
+//                             <label className="font-mono text-[9px] uppercase tracking-[2px] opacity-50 block mb-1">{label}</label>
+//                             <input value={newAddr[key as keyof typeof newAddr]}
+//                               onChange={e => setNewAddr(prev => ({ ...prev, [key]: e.target.value }))}
+//                               className="w-full bg-white border-2 border-[#17191d]/20 font-mono text-[11px] px-3 py-2 focus:border-[#17191d] outline-none transition-colors" />
+//                           </div>
+//                         ))}
+//                       </div>
+//                       <button onClick={saveAddress} disabled={savingAddr}
+//                         className="font-mono text-[10px] font-bold uppercase tracking-[3px] border-2 border-[#17191d] px-6 py-2 hover:bg-[#17191d] hover:text-white transition-colors disabled:opacity-50 flex items-center gap-2">
+//                         {savingAddr && <Loader2 size={12} className="animate-spin" />}
+//                         {savingAddr ? 'Saving...' : 'Save Address'}
+//                       </button>
+//                     </div>
+//                   )}
+
+//                   <button onClick={() => { if (!selectedAddressId) { setError('Select or add an address first'); return } setError(''); setStep('payment') }}
+//                     className="bg-[#17191d] text-white font-mono text-[11px] font-bold uppercase tracking-[4px] py-5 px-12 w-fit hover:bg-[#d4604d] transition-colors mt-4">
+//                     Continue →
+//                   </button>
+//                 </motion.div>
+//               )}
+
+//               {/* PAYMENT / COUPON */}
+//               {step === 'payment' && (
+//                 <motion.div key="payment" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="flex flex-col gap-6">
+//                   <h2 className="font-display text-2xl uppercase">Coupon Code</h2>
+
+//                   <div className="flex items-center gap-4 p-5 border-[3px] border-[#17191d] bg-[#17191d] text-white">
+//                     <div className="w-5 h-5 rounded-full border-2 border-white flex items-center justify-center shrink-0">
+//                       <div className="w-2.5 h-2.5 rounded-full bg-[#d4604d]" />
+//                     </div>
+//                     <div>
+//                       <p className="font-mono text-[11px] font-bold uppercase tracking-[2px]">UPI Payment</p>
+//                       <p className="font-mono text-[9px] mt-0.5 opacity-60">GPay · PhonePe · Paytm · BHIM — QR code at next step</p>
+//                     </div>
+//                   </div>
+
+//                   <div className="bg-emerald-50 border border-emerald-200 px-4 py-3">
+//                     <p className="font-mono text-[9px] text-emerald-700 uppercase tracking-[1px] font-bold">
+//                       🎉 Up to ₹{getMRPCap(subtotal).toLocaleString('en-IN')} discount available on your order
+//                     </p>
+//                   </div>
+
+//                   <div>
+//                     <div className="flex items-center gap-2 mb-3">
+//                       <Tag size={14} className="text-[#d4604d]" />
+//                       <p className="font-mono text-[10px] uppercase tracking-[3px] font-bold">Apply Coupon</p>
+//                     </div>
+
+//                     {appliedCoupon ? (
+//                       <div className="flex items-center justify-between bg-emerald-50 border-2 border-emerald-400 px-4 py-3">
+//                         <div>
+//                           <p className="font-mono text-[10px] font-bold text-emerald-700 uppercase">{appliedCoupon.code}</p>
+//                           <p className="font-mono text-[9px] text-emerald-600">{appliedCoupon.label} — saving ₹{appliedCoupon.discountAmt.toLocaleString('en-IN')}</p>
+//                         </div>
+//                         <button onClick={() => setAppliedCoupon(null)} className="font-mono text-[9px] text-[#17191d]/50 hover:text-red-500 transition-colors">Remove ✕</button>
+//                       </div>
+//                     ) : (
+//                       <div className="flex gap-3">
+//                         <input value={coupon}
+//                           onChange={e => { setCoupon(e.target.value); setCouponError('') }}
+//                           placeholder="Enter code (e.g. TESSCH15)"
+//                           className="flex-1 bg-white border-2 border-[#17191d] font-mono text-[11px] px-4 py-3 focus:outline-none focus:border-[#d4604d] transition-colors placeholder:opacity-30 uppercase" />
+//                         <button onClick={applyCouponCode}
+//                           className="bg-[#17191d] text-white font-mono text-[10px] font-bold uppercase tracking-[2px] px-6 hover:bg-[#d4604d] transition-colors">
+//                           Apply
+//                         </button>
+//                       </div>
+//                     )}
+//                     {couponError && <p className="font-mono text-[9px] text-red-500 mt-2 uppercase">{couponError}</p>}
+//                   </div>
+
+//                   <div className="flex gap-3 mt-2">
+//                     <button onClick={() => setStep('delivery')}
+//                       className="font-mono text-[10px] font-bold uppercase tracking-[3px] border-2 border-[#17191d] px-6 py-3 hover:bg-[#17191d] hover:text-white transition-colors">
+//                       ← Back
+//                     </button>
+//                     <button onClick={() => setStep('confirm')}
+//                       className="flex-1 bg-[#17191d] text-white font-mono text-[11px] font-bold uppercase tracking-[4px] py-4 hover:bg-[#d4604d] transition-colors">
+//                       Review Order →
+//                     </button>
+//                   </div>
+//                 </motion.div>
+//               )}
+
+//               {/* CONFIRM */}
+//               {step === 'confirm' && (
+//                 <motion.div key="confirm" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="flex flex-col gap-6">
+//                   <h2 className="font-display text-2xl uppercase mb-2">Review & Confirm</h2>
+
+//                   <div className="flex flex-col gap-3">
+//                     {items.map(item => {
+//                       const unitPrice = item.type === 'build'
+//                         ? item.upper.price + (item.sole?.price ?? 1299)
+//                         : item.upper.price
+//                       return (
+//                         <div key={item.id} className="flex items-center gap-4 bg-white border-2 border-[#17191d] p-4">
+//                           <img src={item.upper.image} alt="" className="w-14 h-14 object-contain mix-blend-multiply" />
+//                           <div className="flex-1">
+//                             <p className="font-display text-lg uppercase leading-tight">{item.upper.name}</p>
+//                             <p className="font-mono text-[9px] uppercase tracking-[2px] opacity-40">
+//                               {item.type === 'build' ? `Full Build + ${item.sole?.name ?? 'Sole'}` : 'Upper Only'} · {item.size} · Qty {item.quantity}
+//                             </p>
+//                           </div>
+//                           <p className="font-display text-xl">₹{(unitPrice * item.quantity).toLocaleString('en-IN')}</p>
+//                         </div>
+//                       )
+//                     })}
+//                   </div>
+
+//                   {selectedAddress && (
+//                     <div className="bg-white border-2 border-[#17191d] p-5 space-y-1">
+//                       <p className="font-mono text-[9px] uppercase tracking-[3px] opacity-40 mb-2">Delivering To</p>
+//                       <p className="font-mono text-[11px] font-bold">
+//                         {selectedAddress.line1}{selectedAddress.line2 ? `, ${selectedAddress.line2}` : ''}
+//                       </p>
+//                       <p className="font-mono text-[10px] opacity-60">
+//                         {selectedAddress.city}, {selectedAddress.state} — {selectedAddress.postalCode}
+//                       </p>
+//                       <p className="font-mono text-[10px] opacity-60">
+//                         {selectedAddress.country}{selectedAddress.phone ? ` · ${selectedAddress.phone}` : ''}
+//                       </p>
+//                       <p className="font-mono text-[10px] opacity-50 mt-2 uppercase">Payment: UPI</p>
+//                     </div>
+//                   )}
+
+//                   {appliedCoupon && (
+//                     <div className="bg-emerald-50 border-2 border-emerald-300 px-5 py-3">
+//                       <p className="font-mono text-[9px] text-emerald-700 uppercase font-bold">
+//                         Coupon {appliedCoupon.code} — saving ₹{appliedCoupon.discountAmt.toLocaleString('en-IN')}
+//                       </p>
+//                     </div>
+//                   )}
+
+//                   <div className="flex flex-col gap-3">
+//                     <button onClick={() => !placing && setStep('payment')} disabled={placing}
+//                       className="font-mono text-[10px] font-bold uppercase tracking-[3px] border-2 border-[#17191d] px-6 py-3 w-fit hover:bg-[#17191d] hover:text-white transition-colors disabled:opacity-30">
+//                       ← Edit
+//                     </button>
+//                     <button onClick={placeOrder} disabled={placing}
+//                       className="bg-[#d4604d] text-white font-mono text-[12px] font-bold uppercase tracking-[4px] py-6 text-center hover:bg-[#17191d] transition-colors disabled:opacity-50 flex items-center justify-center gap-3">
+//                       {placing && <Loader2 size={16} className="animate-spin" />}
+//                       {placing ? 'Creating Order...' : `PROCEED TO PAY — ₹${total.toLocaleString('en-IN')} →`}
+//                     </button>
+//                   </div>
+//                 </motion.div>
+//               )}
+//             </AnimatePresence>
+//           </div>
+
+//           {/* Price Summary */}
+//           <div className="lg:sticky lg:top-28 h-fit">
+//             <div className="bg-[#17191d] text-[#e5f1ee] p-8 flex flex-col gap-5">
+//               <p className="font-mono text-[9px] uppercase tracking-[4px] text-[#d4604d] font-bold">Price Breakdown</p>
+//               <div className="flex flex-col gap-3 text-[10px] font-mono uppercase">
+//                 <div className="flex justify-between">
+//                   <span className="opacity-60">Subtotal ({items.reduce((s, i) => s + i.quantity, 0)} items)</span>
+//                   <span>₹{subtotal.toLocaleString('en-IN')}</span>
+//                 </div>
+//                 {appliedCoupon && (
+//                   <div className="flex justify-between text-emerald-400">
+//                     <span>{appliedCoupon.code}</span>
+//                     <span>−₹{appliedCoupon.discountAmt.toLocaleString('en-IN')}</span>
+//                   </div>
+//                 )}
+//                 <div className="flex justify-between">
+//                   <span className="opacity-60">Shipping</span>
+//                   <span>₹{SHIPPING}</span>
+//                 </div>
+//               </div>
+//               <div className="border-t border-[#e5f1ee]/10 pt-5 flex justify-between items-end">
+//                 <p className="font-mono text-[9px] uppercase opacity-60">You Pay</p>
+//                 <p className="font-display text-4xl">₹{total.toLocaleString('en-IN')}</p>
+//               </div>
+//               {appliedCoupon && (
+//                 <div className="bg-emerald-500/20 border border-emerald-400 px-4 py-3">
+//                   <p className="font-mono text-[9px] text-emerald-400 font-bold uppercase">
+//                     Saving ₹{appliedCoupon.discountAmt.toLocaleString('en-IN')}
+//                   </p>
+//                 </div>
+//               )}
+//               <div className="border-t border-[#e5f1ee]/10 pt-4">
+//                 <div className="flex items-center gap-2 mb-1">
+//                   <div className="w-1.5 h-1.5 rounded-full bg-[#d4604d]" />
+//                   <p className="font-mono text-[8px] uppercase opacity-40 tracking-[2px]">Payment Method</p>
+//                 </div>
+//                 <p className="font-mono text-[10px] font-bold uppercase">UPI (GPay / PhonePe / Paytm)</p>
+//                 <p className="font-mono text-[8px] opacity-30 uppercase tracking-[1px] mt-1">QR code shown at next step</p>
+//               </div>
+//             </div>
+//           </div>
+//         </div>
+//       </div>
+//     </div>
+//   )
+// }
 // 'use client'
 
 // import { useState, useEffect, useCallback } from 'react'

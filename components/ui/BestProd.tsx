@@ -9,14 +9,9 @@ const BestProd = () => {
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null)
 
   return (
-    /* CRITICAL CHANGE: 
-       w-screen + relative left-1/2 -translate-x-1/2 
-       This forces the section to be exactly as wide as the device screen, 
-       ignoring any parent container padding.
-    */
     <section className="bg-white w-screen relative left-1/2 right-1/2 ml-[-50vw] mr-[-50vw] border-t-2 border-[#17191d] overflow-x-hidden">
       
-      {/* ── HEADER (Full Width) ── */}
+      {/* ── HEADER ── */}
       <div className="flex justify-between items-center border-b-2 border-[#17191d] bg-white px-6 py-4">
         <h2 className="font-display text-4xl md:text-6xl uppercase tracking-tighter leading-none">
           SEASONAL <span className="text-[#d4604d]">BEST</span>
@@ -26,50 +21,57 @@ const BestProd = () => {
         </Link>
       </div>
 
-      {/* ── THE GRID (No Gutters, No Side Padding) ── */}
+      {/* ── THE GRID ── */}
       <div className="grid grid-cols-1 md:grid-cols-3 w-full">
         {Best.map((s: Product, i: number) => (
           <div
             key={s.id}
             onMouseEnter={() => setHoveredIndex(i)}
             onMouseLeave={() => setHoveredIndex(null)}
-            className="group bg-white border-b-2 md:border-b-0 md:border-r-2 last:border-r-0 border-[#17191d] flex flex-col relative"
+            // KEY FIX 1: relative + overflow-hidden on the card itself, remove flex flex-col
+            // so the absolute bottom overlay doesn't push height
+            className="group relative md:border-b-0 md:border-r-2 last:border-r-0 border-[#17191d] overflow-hidden"
+            style={{ aspectRatio: '1' }}
           >
-            {/* 1. THE IMAGE (Forces to touch borders) */}
-            <div className="relative w-full aspect-square bg-[#f2f2f2] overflow-hidden">
-              <img
-                src={s.image}
-                alt={s.name}
-                // Changed to object-contain but zoomed to keep the shoe large without cutting it off
-                className="w-full h-full object-contain mix-blend-multiply scale-100  transition-transform duration-700 ease-in-out"
-              />
-              
-              {/* Category label */}
-              <div className="absolute top-6 left-6 z-20">
-                <span className="font-mono text-[10px] font-bold tracking-widest uppercase bg-[#d4604d] text-white px-3 py-1">
-                    {s.category}
-                </span>
-              </div>
+            {/* IMAGE — fills the entire card */}
+            <img
+              src={s.image}
+              alt={s.name}
+              className="absolute inset-0 w-full h-full object-contain mix-blend-multiply bg-[#f2f2f2] scale-112 group-hover:scale-115 transition-transform duration-700 ease-in-out"
+            />
+
+            {/* Mobile border between cards */}
+            <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-[#17191d] md:hidden" />
+
+            {/* Category badge */}
+            <div className="absolute top-6 left-6 z-20">
+              <span className="font-mono text-[10px] font-bold tracking-widest uppercase bg-[#d4604d] text-white px-3 py-1">
+                {s.category}
+              </span>
             </div>
 
-            {/* 2. THE TEXT OVERLAY (Bolted to the bottom) */}
-            <div className="absolute bottom-0 left-0 w-full p-6 z-20 pointer-events-none">
-              <div className="flex justify-between items-end">
-                <h3 className="font-display text-7xl md:text-8xl uppercase tracking-tighter leading-[0.7] text-[#17191d]">
+            {/* Name + BUILD+ button */}
+            {/* KEY FIX 2: pr-24 on the name row so BUILD+ never overlaps edge, 
+                and BUILD+ is contained within the card bounds */}
+            <div className="absolute bottom-0 left-0 w-full p-6 z-20">
+              <div className="flex justify-between items-end gap-3">
+                <h3 className="font-display text-6xl md:text-7xl lg:text-8xl uppercase tracking-tighter leading-[0.75] text-[#17191d] flex-1 min-w-0">
                   {s.name}
                 </h3>
                 
-                <div className="pointer-events-auto">
-                   <AnimatePresence>
+                {/* KEY FIX 3: shrink-0 + fixed width so it never overflows */}
+                <div className="shrink-0">
+                  <AnimatePresence>
                     {hoveredIndex === i && (
                       <motion.div
-                        initial={{ opacity: 0, x: 20 }}
+                        initial={{ opacity: 0, x: 10 }}
                         animate={{ opacity: 1, x: 0 }}
-                        exit={{ opacity: 0, x: 20 }}
+                        exit={{ opacity: 0, x: 10 }}
+                        transition={{ duration: 0.15 }}
                       >
                         <Link 
                           href="/products"
-                          className="bg-[#17191d] text-white font-mono text-[11px] font-black px-6 py-3 tracking-[3px] uppercase block"
+                          className="bg-[#17191d] text-white font-mono text-[10px] font-black px-4 py-3 tracking-[2px] uppercase block whitespace-nowrap"
                         >
                           BUILD+
                         </Link>
@@ -80,8 +82,8 @@ const BestProd = () => {
               </div>
             </div>
 
-            {/* Hover Shadow Depth */}
-            <div className="absolute inset-0 bg-black/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
+            {/* Hover overlay */}
+            <div className="absolute inset-0 bg-black/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none z-10" />
           </div>
         ))}
       </div>

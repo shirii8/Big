@@ -48,43 +48,17 @@ export default function HomePage() {
         id="home"
         className="relative min-h-screen flex flex-col pt-20 md:pt-32"
       >
-        {/* 1. CINEMATIC VIDEO */}
-        <div className="w-full px-4 md:px-12 relative z-10">
-          <motion.div
-            style={{ scale: videoScale }}
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="relative w-full aspect-[16/9] md:aspect-[2.35/1] overflow-hidden rounded-2xl bg-white shadow-[0_40px_80px_rgba(0,0,0,0.12)] border-[8px] md:border-[16px] border-white group"
-          >
-            <video
-              autoPlay
-              loop
-              muted
-              playsInline
-              className="w-full h-full object-cover grayscale-[20%] group-hover:grayscale-0 transition-all duration-1000"
-            >
-              <source
-                src="https://res.cloudinary.com/dttnc62hp/video/upload/v1775913652/Stop_motion_tessch_shoe_iciz5a.mov"
-                type="video/mp4"
-              />
-            </video>
-            <div className="absolute top-6 left-6 md:top-10 md:left-10 z-20">
-              <div className="bg-[#17191d] text-white font-mono text-[9px] md:text-[11px] px-3 py-1.5 uppercase tracking-[4px] skew-x-[-12deg]">
-                System_Live_Feed // 001
-              </div>
-            </div>
-          </motion.div>
-        </div>
+       
 
         {/* 2. TYPOGRAPHY HEADLINE */}
         <motion.div
           style={{ y: textY }}
-          className="w-full pt-4 px-6 md:px-12 py-16 flex flex-col items-center text-center z-20"
+          className="w-full pt-4 px-6 md:px-12 flex flex-col items-center text-center z-20"
         >
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="flex items-center gap-4 mt-24"
+            className="flex items-center gap-4 mt-4"
           >
             <span className="w-12 h-px bg-[#d4604d]" />
             <span className="font-mono text-[11px] tracking-[6px] uppercase text-[#d4604d] font-black">
@@ -123,6 +97,34 @@ export default function HomePage() {
           </h1>
         </motion.div>
       </section>
+
+       {/* 1. CINEMATIC VIDEO */}
+        <div className="w-full px-4 md:px-12 relative z-10">
+          <motion.div
+            style={{ scale: videoScale }}
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="relative w-full aspect-[16/9] md:aspect-[2.35/1] overflow-hidden rounded-2xl bg-white shadow-[0_40px_80px_rgba(0,0,0,0.12)] border-[8px] md:border-[16px] border-white group"
+          >
+            <video
+              autoPlay
+              loop
+              muted
+              playsInline
+              className="w-full h-full object-cover grayscale-[20%] group-hover:grayscale-0 transition-all duration-1000"
+            >
+              <source
+                src="https://res.cloudinary.com/dttnc62hp/video/upload/v1775913652/Stop_motion_tessch_shoe_iciz5a.mov"
+                type="video/mp4"
+              />
+            </video>
+            <div className="absolute top-2 left-6 md:top-10 md:left-10 z-20">
+              <div className="bg-[#17191d] text-white font-mono text-[9px] md:text-[11px] px-3 py-1.5 uppercase tracking-[4px] skew-x-[-12deg]">
+                System_Live_Feed // 001
+              </div>
+            </div>
+          </motion.div>
+        </div>
 
       {/* ── MANIFESTO & ACTION ROW ── */}
       <section className="w-full max-w-7xl mx-auto px-6 md:px-12 py-8 md:py-12 border-t border-[#17191d]/10">
