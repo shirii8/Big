@@ -101,7 +101,7 @@ function ArchiveRow({
   const [isPaused, setIsPaused] = useState(false);
   const controls = useAnimationControls();
   const tripled = useMemo(() => [...items, ...items, ...items], [items]);
-  
+
   // Calculate dynamically to support responsive card sizes
   const [scrollDistance, setScrollDistance] = useState(items.length * 480);
 
@@ -184,7 +184,7 @@ const ProductCard = memo(
         <div className="flex flex-col gap-0.5 md:gap-1">
           <p className="font-mono text-[7px] md:text-[8px] uppercase opacity-40">From</p>
           <p className="font-display text-lg md:text-2xl lg:text-3xl leading-none mb-1 md:mb-2">
-            ₹{UPPER_PRICE.toLocaleString("en-IN")}
+            ₹{BUILD_PRICE.toLocaleString("en-IN")}
           </p>
           <span className="font-mono text-[8px] md:text-[10px] font-bold text-[#d4604d] border-b border-[#d4604d] pb-0.5 w-fit transition-colors group-hover:text-[#17191d] group-hover:border-[#17191d]">
             VIEW DETAIL
@@ -613,15 +613,14 @@ function ProductDetail({
             <button
               onClick={handleAddToCart}
               disabled={cartState === "loading"}
-              className={`w-full font-mono text-[11px] font-bold uppercase tracking-[3px] py-5 transition-all flex items-center justify-center gap-3 ${
-                cartState === "success"
+              className={`w-full font-mono text-[11px] font-bold uppercase tracking-[3px] py-5 transition-all flex items-center justify-center gap-3 ${cartState === "success"
                   ? "bg-emerald-600 text-white"
                   : cartState === "loading"
                     ? "bg-[#17191d]/60 text-white cursor-wait"
                     : buildChoice === "build"
                       ? "bg-[#d4604d] text-white hover:bg-[#17191d]"
                       : "bg-[#17191d] text-white hover:bg-[#d4604d]"
-              }`}
+                }`}
             >
               {cartState === "loading" && (
                 <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
