@@ -9,78 +9,79 @@ const BestProd = () => {
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null)
 
   return (
-    <section className="px-6 md:px-12 bg-[#e5f1ee] py-12">
+    /* CRITICAL CHANGE: 
+       w-screen + relative left-1/2 -translate-x-1/2 
+       This forces the section to be exactly as wide as the device screen, 
+       ignoring any parent container padding.
+    */
+    <section className="bg-white w-screen relative left-1/2 right-1/2 ml-[-50vw] mr-[-50vw] border-t-2 border-[#17191d] overflow-x-hidden">
       
-      {/* ── HEADER ── */}
-      <div className="flex justify-between items-end mb-12 border-b-2 border-[#17191d] pb-8">
-        <div>
-          <span className="font-mono text-[10px] tracking-[4px] uppercase text-[#d4604d] font-bold">Archive_Curated</span>
-          <h2 className="font-display text-5xl md:text-6xl uppercase tracking-tighter mt-2">
-            Seasonal <span className="text-[#d4604d]">Best</span>
-          </h2>
-        </div>
-        <Link 
-          href="/products" 
-          className="hidden md:block font-mono text-[10px] font-black uppercase tracking-[3px] border-2 border-[#17191d] px-8 py-4 hover:bg-[#17191d] hover:text-white transition-all"
-        >
-          View Range →
+      {/* ── HEADER (Full Width) ── */}
+      <div className="flex justify-between items-center border-b-2 border-[#17191d] bg-white px-6 py-4">
+        <h2 className="font-display text-4xl md:text-6xl uppercase tracking-tighter leading-none">
+          SEASONAL <span className="text-[#d4604d]">BEST</span>
+        </h2>
+        <Link href="/products" className="font-mono text-[10px] font-black tracking-[3px] border-2 border-[#17191d] px-6 py-3 hover:bg-[#17191d] hover:text-white transition-all">
+          VIEW_ALL
         </Link>
       </div>
 
-      {/* ── GRID ── */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-0 border-2 border-[#17191d]">
+      {/* ── THE GRID (No Gutters, No Side Padding) ── */}
+      <div className="grid grid-cols-1 md:grid-cols-3 w-full">
         {Best.map((s: Product, i: number) => (
           <div
             key={s.id}
             onMouseEnter={() => setHoveredIndex(i)}
             onMouseLeave={() => setHoveredIndex(null)}
-            className="group p-10 border-r-2 last:border-r-0 border-[#17191d] bg-white flex flex-col h-full min-h-[520px] relative overflow-hidden transition-colors duration-500"
+            className="group bg-white border-b-2 md:border-b-0 md:border-r-2 last:border-r-0 border-[#17191d] flex flex-col relative"
           >
-            {/* Image Section */}
-            <div className="relative h-64 flex items-center justify-center">
+            {/* 1. THE IMAGE (Forces to touch borders) */}
+            <div className="relative w-full aspect-square bg-[#f2f2f2] overflow-hidden">
               <img
                 src={s.image}
                 alt={s.name}
-                className="max-h-full w-auto object-contain mix-blend-multiply group-hover:scale-110 transition-transform duration-700 ease-out"
+                // Changed to object-contain but zoomed to keep the shoe large without cutting it off
+                className="w-full h-full object-contain mix-blend-multiply scale-100  transition-transform duration-700 ease-in-out"
               />
-            </div>
-
-            {/* Content Section: Pushed to bottom using mt-auto */}
-            <div className="mt-auto pt-10">
-              <h3 className="font-display text-5xl uppercase tracking-tighter leading-none text-[#17191d]">
-                {s.name}
-              </h3>
               
-              {/* Spacer for Padding between Name and Button */}
-              <div className="h-12" /> 
-
-              <div className="relative h-14">
-                <AnimatePresence>
-                  {hoveredIndex === i && (
-                    <motion.div
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: 10 }}
-                      transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
-                      className="absolute inset-0"
-                    >
-                      <Link 
-                        href="/products"
-                        className="flex items-center justify-center w-full h-full bg-[#17191d] text-white font-mono text-[11px] font-black uppercase tracking-[4px] hover:bg-[#d4604d] transition-colors"
-                      >
-                        View Build System <span className="ml-4">→</span>
-                      </Link>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
+              {/* Category label */}
+              <div className="absolute top-6 left-6 z-20">
+                <span className="font-mono text-[10px] font-bold tracking-widest uppercase bg-[#d4604d] text-white px-3 py-1">
+                    {s.category}
+                </span>
               </div>
             </div>
 
-            {/* Decorative Top Accent */}
-            <motion.div 
-              animate={{ height: hoveredIndex === i ? 8 : 0 }}
-              className="absolute top-0 left-0 w-full bg-[#d4604d]"
-            />
+            {/* 2. THE TEXT OVERLAY (Bolted to the bottom) */}
+            <div className="absolute bottom-0 left-0 w-full p-6 z-20 pointer-events-none">
+              <div className="flex justify-between items-end">
+                <h3 className="font-display text-7xl md:text-8xl uppercase tracking-tighter leading-[0.7] text-[#17191d]">
+                  {s.name}
+                </h3>
+                
+                <div className="pointer-events-auto">
+                   <AnimatePresence>
+                    {hoveredIndex === i && (
+                      <motion.div
+                        initial={{ opacity: 0, x: 20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: 20 }}
+                      >
+                        <Link 
+                          href="/products"
+                          className="bg-[#17191d] text-white font-mono text-[11px] font-black px-6 py-3 tracking-[3px] uppercase block"
+                        >
+                          BUILD+
+                        </Link>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              </div>
+            </div>
+
+            {/* Hover Shadow Depth */}
+            <div className="absolute inset-0 bg-black/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
           </div>
         ))}
       </div>

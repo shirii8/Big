@@ -112,24 +112,37 @@ export default function CheckoutPage() {
     setCouponError('')
   }
 
-  async function saveAddress() {
-    if (!newAddr.line1 || !newAddr.city || !newAddr.state || !newAddr.postalCode) return
-    setSavingAddr(true)
-    try {
-      const res = await fetch('/api/address', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newAddr),
-      })
-      if (res.ok) {
-        const saved: Address = await res.json()
-        setSavedAddresses(prev => [saved, ...prev])
-        setSelectedAddressId(saved.id)
-        setShowNewForm(false)
-        setNewAddr({ line1: '', line2: '', city: '', state: '', postalCode: '', country: 'India', phone: '' })
-      }
-    } finally { setSavingAddr(false) }
+async function saveAddress() {
+  if (!newAddr.line1 || !newAddr.city || !newAddr.state || !newAddr.postalCode) {
+    setError('Please fill all required address fields.')
+    return
   }
+  setSavingAddr(true)
+  try {
+    const res = await fetch('/api/address', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(newAddr),
+    })
+
+    if (!res.ok) {
+      const data = await res.json()
+      setError(data.error ?? 'Failed to save address')
+      return
+    }
+
+    const saved: Address = await res.json()
+    setSavedAddresses(prev => [saved, ...prev])
+    setSelectedAddressId(saved.id)   // ← select it immediately
+    setShowNewForm(false)
+    setError('')                      // ← clear any previous errors
+    setNewAddr({ line1: '', line2: '', city: '', state: '', postalCode: '', country: 'India', phone: '' })
+  } catch {
+    setError('Network error. Could not save address.')
+  } finally {
+    setSavingAddr(false)
+  }
+}
 
   async function placeOrder() {
     if (!selectedAddressId) { setError('Please select a delivery address.'); return }

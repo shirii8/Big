@@ -13,10 +13,10 @@ export default function Footer() {
           <div className="flex flex-col justify-between">
             <div>
               <Link href="/" className="flex flex-row text-[32px] tracking-tighter uppercase font-bold leading-none">
-                 <img className="h-8 w-24" src="https://res.cloudinary.com/dttnc62hp/image/upload/q_auto/f_auto/v1776261459/logotext_sa4h8x.svg" alt="" /><span className="text-[#d4604d]">.</span>
+                 <img className="h-8 w-24" src="https://res.cloudinary.com/dttnc62hp/image/upload/q_auto/f_auto/v1776261459/logotext_sa4h8x.svg" alt="" />
               </Link>
               <p className="font-mono text-[10px] uppercase tracking-[2px] mt-4 opacity-60 max-w-[240px]">
-                Modular footwear architecture. <br/> Breaking The Norms!
+                Modular footwear architecture. <br/> Breaking Norms!
               </p>
             </div>
             
@@ -65,11 +65,13 @@ export default function Footer() {
                   <div className="flex flex-col gap-1">
                     <p className="font-display text-xl uppercase tracking-tighter">Mihir Mandloi</p>
                     <p className="font-mono text-[9px] opacity-80 uppercase tracking-widest leading-tight max-w-[180px]">
-                      Co-founder — Strategy, Ops, Supply Chain
+                      Co-founder — Strategy, Ops, Supply Chain <br />
+                      <span className="opacity-100 text-[#d4604d]">IIT KANPUR</span>
                     </p>
+                    
                     <TeamLinkedIn href="https://www.linkedin.com/in/mihirmandloi?utm_source=share_via&utm_content=profile&utm_medium=member_android" />
                   </div>
-                  <img className="h-14 w-14 rounded-full grayscale group-hover:grayscale-0 border border-[#e5f1ee]/20 transition-all object-cover" src="https://res.cloudinary.com/dttnc62hp/image/upload/q_auto/f_auto/v1776242225/WhatsApp_Image_2026-04-13_at_21.19.56_bcmljn.jpg" alt="" />
+                  <img className="h-14 w-14 rounded-full  border border-[#e5f1ee]/20 transition-all object-cover" src="https://res.cloudinary.com/dttnc62hp/image/upload/q_auto/f_auto/v1776242225/WhatsApp_Image_2026-04-13_at_21.19.56_bcmljn.jpg" alt="" />
                 </div>
 
                 {/* 2. PRATHAM SHAH */}
@@ -82,7 +84,7 @@ export default function Footer() {
                     </p>
                     <TeamLinkedIn href="https://www.linkedin.com/in/pratham-shah-iitkanpur?utm_source=share_via&utm_content=profile&utm_medium=member_android" />
                   </div>
-                  <img className="h-14 w-14 rounded-full grayscale group-hover:grayscale-0 border border-[#e5f1ee]/20 transition-all object-cover" src="https://res.cloudinary.com/dttnc62hp/image/upload/q_auto/f_auto/v1776242225/WhatsApp_Image_2026-04-13_at_21.19.58_1_a5upby.jpg" alt="" />
+                  <img className="h-14 w-14 rounded-full  border border-[#e5f1ee]/20 transition-all object-cover" src="https://res.cloudinary.com/dttnc62hp/image/upload/q_auto/f_auto/v1776242225/WhatsApp_Image_2026-04-13_at_21.19.58_1_a5upby.jpg" alt="" />
                 </div>
 
                 {/* 3. SARTHAK PATIL */}
@@ -95,7 +97,7 @@ export default function Footer() {
                     </p>
                     <TeamLinkedIn href="https://www.linkedin.com/in/sarthak-patil-140aa2256?utm_source=share_via&utm_content=profile&utm_medium=member_android" />
                   </div>
-                  <img className="h-14 w-14 rounded-full grayscale group-hover:grayscale-0 border border-[#e5f1ee]/20 transition-all object-cover" src="https://res.cloudinary.com/dttnc62hp/image/upload/q_auto/f_auto/v1776242225/WhatsApp_Image_2026-04-13_at_21.19.58_zl6wzg.jpg" alt="" />
+                  <img className="h-14 w-14 rounded-full  border border-[#e5f1ee]/20 transition-all object-cover" src="https://res.cloudinary.com/dttnc62hp/image/upload/q_auto/f_auto/v1776242225/WhatsApp_Image_2026-04-13_at_21.19.58_zl6wzg.jpg" alt="" />
                 </div>
 
                 {/* 4. DAKSH BATTULA */}
@@ -108,16 +110,10 @@ export default function Footer() {
                     </p>
                     <TeamLinkedIn href="https://www.linkedin.com/in/daksh-battula-48151436a?utm_source=share_via&utm_content=profile&utm_medium=member_android" />
                   </div>
-                  <img className="h-14 w-14 rounded-full grayscale group-hover:grayscale-0 border border-[#e5f1ee]/20 transition-all object-cover" src="https://res.cloudinary.com/dttnc62hp/image/upload/q_auto/f_auto/v1776242225/WhatsApp_Image_2026-04-13_at_21.19.57_j7ztme.jpg" alt="" />
+                  <img className="h-14 w-14 rounded-full  border border-[#e5f1ee]/20 transition-all object-cover" src="https://res.cloudinary.com/dttnc62hp/image/upload/q_auto/f_auto/v1776242225/WhatsApp_Image_2026-04-13_at_21.19.57_j7ztme.jpg" alt="" />
                 </div>
 
               </div>
-            </div>
-            
-            <div className="mt-12 pt-6 border-t border-[#e5f1ee]/10 flex flex-col gap-2">
-              <p className="font-mono text-[8px] uppercase tracking-[3px] opacity-40">Contact</p>
-              <a href="https://www.linkedin.com/company/tesschstore/" className="font-mono text-[10px] font-bold hover:text-[#d4604d] transition-colors tracking-[2px]">@TESSCH.IN</a>
-              <a href="https://www.instagram.com/tesschstore/" className="font-mono text-[10px] font-bold hover:text-[#d4604d] transition-colors tracking-[2px]">@TESSCHSTORE</a>
             </div>
           </div>
 
@@ -133,7 +129,7 @@ export default function Footer() {
           </div>
           
           <div className="flex gap-6">
-            <span className="font-mono text-[9px] opacity-40 uppercase tracking-[2px]">Break the Norms</span>
+            <span className="font-mono text-[9px] opacity-40 uppercase tracking-[2px]">Breaking Norms</span>
           </div>
         </div>
       </div>

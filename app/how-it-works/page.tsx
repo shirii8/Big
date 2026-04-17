@@ -1,13 +1,7 @@
 "use client";
 
-import dynamic from "next/dynamic";
 import { useState, useRef } from "react";
 import { motion, AnimatePresence, useScroll, useTransform } from "framer-motion";
-
-
-// const ModularCanvas = dynamic(() => import("@/components/3d/ModularCanvas"), {
-//   ssr: false,
-// });
 
 const FAQ_DATA = [
   {
@@ -40,221 +34,185 @@ const FAQ_DATA = [
   }
 ];
 
-
-
 const STEPS = [
   {
     num: "01",
     title: "THE FOUNDATION",
     desc: "Your sole is the investment. High-quality, engineered to last years.",
-    detail: "Full-length soft PU midsole + Multi-directional hard PU outsole. Built for a 3-year lifecycle.",
+    detail: "Full-length soft PU midsole + Multi-directional hard PU outsole.",
+    color: "#d4604d"
   },
   {
     num: "02",
     title: "MECHANICAL LOCK",
-    desc: "Just get the new upper into place. 20 seconds. No tools. No waste.",
-    detail: "Interlocking lego-like mechanism tested for high-lateral movement and vertical jumps.",
+    desc: "Just get the new upper into place. 20 seconds. No tools.",
+    detail: "Interlocking lego-like mechanism tested for high-lateral movement.",
+    color: "#17191d"
   },
   {
     num: "03",
     title: "CIRCULAR LOGIC",
-    desc: "Better for style.Better for your wallet. Better for your wardrobe and Better for the planet. Swap only what actually wears out.",
-    detail: "Saves ~40% of total spend. Eliminates 60 % of footwear material waste annually.",
+    desc: "Better for style. Better for your wallet. Better for the planet.",
+    detail: "Saves ~40% of total spend. Eliminates 60% of footwear waste.",
+    color: "#d4604d"
   },
 ];
 
 export default function HowItWorksPage() {
   const [faqOpen, setFaqOpen] = useState(false);
-  const [activeStep, setActiveStep] = useState(0);
   const containerRef = useRef(null);
-  const { scrollYProgress } = useScroll({ target: containerRef });
-  
-  const xLeft = useTransform(scrollYProgress, [0, 0.5], [0, -50]);
-  const xRight = useTransform(scrollYProgress, [0, 0.5], [0, 50]);
+  const { scrollYProgress } = useScroll();
+  const xLeft = useTransform(scrollYProgress, [0, 1], [0, -200]);
 
   return (
-    <div className="bg-[#e5f1ee] text-[#17191d] overflow-x-hidden" ref={containerRef}>
+    <div className="bg-[#e5f1ee] text-[#17191d] selection:bg-[#d4604d] selection:text-white" ref={containerRef}>
       
-      {/* ══ HERO: ARCHITECTURAL HEADER ════════════════════════ */}
-      <section className="relative pt-16 pb-4 px-6 md:px-12 flex flex-col items-center text-center">
-        {/* Background Grid Elements */}
-        {/* Background Grid Elements */}
-<div 
-  className="absolute inset-0 opacity-[0.03] pointer-events-none" 
-  style={{ 
-    backgroundImage: `linear-gradient(#17191d 1px, transparent 1px), linear-gradient(90deg, #17191d 1px, transparent 1px)`, 
-    backgroundSize: '40px 40px',
-    backgroundRepeat: 'repeat' 
-  }} 
-/>
+      {/* ── NOISE OVERLAY (Adds "Texture" to empty space) ── */}
+      <div className="fixed inset-0 pointer-events-none opacity-[0.03] z-50 bg-[url('https://grainy-gradients.vercel.app/noise.svg')]" />
+
+      {/* ══ HERO SECTION ════════════════════════ */}
+      <section className="relative min-h-[80vh] flex flex-col justify-center px-6 md:px-12 overflow-hidden">
+        <div className="absolute top-20 right-[5%] opacity-10 pointer-events-none">
+            <h1 className="text-[4vw] font-display leading-none">Founded <br /> by Young <br /> Frustrated IITIANS</h1>
+        </div>
         
         <motion.div 
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
+          initial={{ opacity: 0, x: -50 }}
+          animate={{ opacity: 1, x: 0 }}
           className="relative z-10"
         >
-          <h4>Technical Blueprint</h4>
-          <h1 className="font-display leading-[0.85] mt-6 tracking-tighter" style={{ fontSize: "clamp(60px, 12vw, 140px)" }}>
+          <div className="flex items-center gap-4 mb-8">
+            <div className="h-[2px] w-12 bg-[#d4604d]" />
+            <span className="font-mono text-xs tracking-widest uppercase">Technical Blueprint</span>
+          </div>
+
+          <h1 className="font-display leading-[0.85] tracking-tighter" style={{ fontSize: "clamp(60px, 15vw, 180px)" }}>
             ONE SOLE.<br />
-            <span className="text-[#d4604d] italic">INFINITE</span> <span className="stroke-text" style={{ WebkitTextStroke: '2px #17191d', color: 'transparent' }}>UPPERS.</span>
+            <span className="text-[#d4604d] italic">INFINITE</span> <br />
+            <span className="stroke-text" style={{ WebkitTextStroke: '2px #17191d', color: 'transparent' }}>UPPERS.</span>
           </h1>
-          <p className="font-mono text-[11px] uppercase tracking-[4px] mt-8 text-[#17191d]/60 max-w-xl mx-auto">
-            Deconstructing the traditional sneaker silhouette into a modular hardware system.
-          </p>
         </motion.div>
+
+       
       </section>
 
-      {/* ══ INTERACTIVE EXPLODED VIEW ═════════════════════════ */}
-    <section className="px-6 md:px-12 py-12 relative bg-[#e5f1ee]"> {/* Reduced from py-24 */}
-  {/* Header Section */}
-  <div className="max-w-7xl mx-auto mb-10 border-l-4 border-[#d4604d] pl-6">
-    <span className="font-mono text-[10px] tracking-[5px] uppercase text-[#d4604d] font-black">
-      System_Architecture // 01
-    </span>
-    <h2 className="font-display text-6xl uppercase tracking-tighter mt-2 text-[#17191d]">
-      The Modular Workflow
-    </h2>
-  </div>
-
-  <div className="max-w-7xl mx-auto">
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-0 border-2 border-[#17191d]">
-      {STEPS.map((s, i) => (
-        <motion.div
-          key={i}
-          onMouseEnter={() => setActiveStep(i)}
-          className={`group p-10 border-r-2 last:border-r-0 border-[#17191d] transition-colors duration-300 flex flex-col h-full min-h-[380px] relative ${
-            activeStep === i 
-            ? "bg-[#17191d] text-[#e5f1ee]" 
-            : "bg-white text-[#17191d] hover:bg-[#17191d]/5"
-          }`}
-        >
-          <div className="flex justify-between items-start mb-12">
-            <span className={`font-mono text-[10px] tracking-[3px] font-bold ${activeStep === i ? "text-[#d4604d]" : "text-[#17191d]/30"}`}>
-              P_{s.num}
+      {/* ══ KINETIC MARQUEE (Kills negative space) ══════════════ */}
+      <div className="bg-[#17191d] py-4 overflow-hidden whitespace-nowrap border-y border-[#d4604d]">
+        <motion.div style={{ x: xLeft }} className="flex gap-20">
+          {[1, 2, 3, 4].map((_) => (
+            <span key={_} className="text-[#e5f1ee] font-display text-4xl italic tracking-tighter opacity-80">
+                MODULAR HARDWARE SYSTEM — WASTE REDUCTION — 3-YEAR CYCLE — INTERLOCKING PINS — 
             </span>
-            <span className="font-mono text-[10px] opacity-20">0{i + 1}</span>
-          </div>
-
-          <h3 className="font-display text-4xl uppercase tracking-tighter leading-[0.85] mb-6">
-            {s.title}
-          </h3>
-
-          <div className="flex-grow">
-            <p className={`text-[15px] leading-snug transition-opacity duration-300 ${activeStep === i ? "opacity-80" : "opacity-40"}`}>
-              {s.desc}
-            </p>
-          </div>
-
-          <AnimatePresence>
-            {activeStep === i && (
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="mt-8 pt-6 border-t border-[#d4604d]/30"
-              >
-                <span className="font-mono text-[11px] text-[#d4604d] font-black uppercase tracking-[2px]">
-                  {s.detail}
-                </span>
-              </motion.div>
-            )}
-          </AnimatePresence>
-
-          {activeStep === i && (
-            <div className="absolute top-0 left-0 w-full h-[6px] bg-[#d4604d]" />
-          )}
+          ))}
         </motion.div>
-      ))}
-    </div>
-  </div>
-</section>
-
-      {/* ══ THE "WHY" SECTION: STATS & LAYERS ═════════════════ */}
-      {/* <section className="py-32 px-6 md:px-12 bg-[#17191d] text-[#e5f1ee] relative overflow-hidden"> */}
-        {/* Large Decorative Text Layer */}
-        {/* <div className="absolute bottom-0 right-0 font-display text-[20vw] rounded-r-4xl leading-none opacity-[0.03] select-none translate-y-1/4">
-          /TESSCH/
-        </div>
-
-        <div className="max-w-6xl mx-auto">
-          <SectionLabel>Impact Report</SectionLabel>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-20 mt-12">
-            <div>
-              <h2 className="font-display text-5xl md:text-7xl tracking-tighter leading-none mb-8">
-                ENGINEERED FOR <br/>
-                <span className="text-[#d4604d]">LONGEVITY.</span>
-              </h2>
-              <p className="text-lg text-[#e5f1ee]/60 leading-relaxed max-w-md">
-                We calculated that 80% of sneaker waste comes from uppers that fray while the sole is still perfectly functional. We simply removed the friction.
-              </p>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
-              {[
-                { val: "30s", label: "Swap Time", sub: "Instant aesthetic shift" },
-                { val: "75%", label: "Less Waste", sub: "Material conservation" },
-                { val: "5-Year", label: "Sole Life", sub: "Built for endurance" },
-                { val: "∞", label: "Possibility", sub: "Community uppers" },
-              ].map((stat, i) => (
-                <div key={i} className="border-l border-[#d4604d]/30 pl-6 py-2">
-                  <div className="font-display text-5xl text-[#d4604d] mb-1">{stat.val}</div>
-                  <div className="font-mono text-[10px] uppercase tracking-widest text-[#e5f1ee]">{stat.label}</div>
-                  <div className="text-[11px] text-[#e5f1ee]/40 mt-1">{stat.sub}</div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div> */}
-      {/* </section> */}
-
- {/* ══ FAQ: MINIMALIST ACCORDION ════════════════════════ */}
-<section className="py-12 px-6 md:px-12 max-w-4xl mx-auto">
-  <h4>Intelligence</h4>
-  
-  {/* ── MAIN TOGGLE ── */}
-  <h2
-    className="font-display text-5xl mb-16 cursor-pointer group flex items-center gap-4 select-none"
-    onClick={() => setFaqOpen(!faqOpen)}
-  >
-    COMMON QUERIES
-    <span className={`text-3xl transition-transform duration-500 ${faqOpen ? 'rotate-45 text-[#d4604d]' : ''}`}>
-      +
-    </span>
-  </h2>
-
-  {/* ── CONDITIONAL RENDER ── */}
-  <div className="space-y-4">
-    {faqOpen && (
-      <div className="animate-in fade-in slide-in-from-top-4 duration-500">
-        {FAQ_DATA.map((item, i) => (
-          <details key={i} className="group border-b border-[#17191d]/10 pb-2">
-            <summary className="list-none cursor-pointer flex justify-between items-center font-display text-xl uppercase hover:text-[#d4604d] transition-colors [&::-webkit-details-marker]:hidden">
-              {item.q}
-              <span className="text-2xl group-open:rotate-45 transition-transform">+</span>
-            </summary>
-            <p className="mt-2 text-[#17191d]/60 leading-relaxed font-medium pl-4 border-l border-[#d4604d]/30">
-              {item.a}
-            </p>
-          </details>
-        ))}
       </div>
-    )}
-  </div>
-</section>
 
-      {/* ══ FINAL CTA ═════════════════════════════════════════ */}
-      {/* <section className="pb-32 px-6 text-center">
-        <div className="max-w-3xl mx-auto p-16 bg-[#d4604d] clip-btn relative overflow-hidden group">
-          <div className="absolute inset-0 bg-[#17191d] translate-y-full group-hover:translate-y-0 transition-transform duration-500" />
-          
-          <div className="relative z-10">
-            <h2 className="font-display text-5xl md:text-7xl text-[#e5f1ee] mb-8">READY TO EVOLVE?</h2>
-            <a href="/products" className="inline-block bg-[#e5f1ee] text-[#17191d] font-mono text-xs font-bold tracking-widest uppercase px-12 py-5 hover:scale-105 transition-transform">
-              EXPLORE THE RANGE →
-            </a>
+      {/* ══ THE WORKFLOW (Card Style for Mobile) ═══════════════ */}
+      <section className="px-6 md:px-12 py-24 relative overflow-hidden">
+        <div className="max-w-7xl mx-auto mb-8">
+          <h2 className="font-display text-7xl md:text-9xl uppercase tracking-tighter leading-none">
+            THE <span className="text-[#d4604d]">LOGIC</span>
+          </h2>
+        </div>
+
+        <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-6">
+          {STEPS.map((s, i) => (
+            <motion.div
+              key={i}
+              whileHover={{ y: -10 }}
+              className="relative group bg-white border-2 border-[#17191d] p-8 md:p-12 min-h-[400px] flex flex-col shadow-[8px_8px_0px_0px_#17191d]"
+            >
+              <div className="flex justify-between items-start mb-16">
+                <span className="font-mono text-4xl font-black text-[#d4604d]">{s.num}</span>
+                <div className="w-10 h-10 border border-[#17191d] rounded-full flex items-center justify-center font-mono text-[10px]">
+                    {s.num}
+                </div>
+              </div>
+
+              <h3 className="font-display text-5xl uppercase tracking-tighter leading-none mb-6">
+                {s.title}
+              </h3>
+              
+              <p className="text-[#17191d] font-medium leading-tight mb-8">
+                {s.desc}
+              </p>
+
+              <div className="mt-auto bg-[#e5f1ee] p-4 border border-dashed border-[#17191d]/30">
+                <p className="font-mono text-[11px] uppercase leading-tight opacity-70">
+                    <span className="text-[#d4604d] font-bold">TECH_SPEC:</span> {s.detail}
+                </p>
+              </div>
+
+              {/* Decorative Corner */}
+              <div className="absolute top-0 right-0 w-8 h-8 bg-[#17191d] clip-path-triangle md:group-hover:bg-[#d4604d] transition-colors" />
+            </motion.div>
+          ))}
+        </div>
+      </section>
+
+      {/* ══ FAQ SECTION ════════════════════════ */}
+      <section className="py-24 px-6 md:px-12 bg-[#17191d] text-[#e5f1ee]">
+        <div className="max-w-4xl mx-auto">
+          <div className="flex flex-col md:flex-row md:items-end justify-between mb-20 gap-6">
+            <h2 className="font-display text-6xl md:text-8xl tracking-tighter uppercase leading-none">
+                System<br/><span className="text-[#d4604d]">Queries</span>
+            </h2>
+            <button 
+                onClick={() => setFaqOpen(!faqOpen)}
+                className="bg-[#d4604d] text-white font-mono text-xs font-bold px-8 py-4 rounded-full hover:bg-[#e5f1ee] hover:text-[#17191d] transition-all"
+            >
+                {faqOpen ? "CLOSE INTERFACE" : "ACCESS ALL FAQ"}
+            </button>
+          </div>
+
+          <div className="space-y-6">
+            {FAQ_DATA.slice(0, faqOpen ? 10 : 3).map((item, i) => (
+              <motion.details 
+                key={i} 
+                initial={{ opacity: 0 }} 
+                whileInView={{ opacity: 1 }}
+                className="group border-b border-[#e5f1ee]/10 pb-6"
+              >
+                <summary className="list-none cursor-pointer flex justify-between items-center font-display text-2xl uppercase hover:text-[#d4604d] transition-colors">
+                  <span className="flex gap-4">
+                    <span className="font-mono text-xs text-[#d4604d] mt-2">0{i+1}</span>
+                    {item.q}
+                  </span>
+                  <span className="text-3xl group-open:rotate-45 transition-transform duration-300">+</span>
+                </summary>
+                <p className="mt-6 text-[#e5f1ee]/60 leading-relaxed font-medium pl-8 border-l-2 border-[#d4604d]">
+                  {item.a}
+                </p>
+              </motion.details>
+            ))}
           </div>
         </div>
-      </section> */}
+      </section>
 
+      {/* ══ STICKY CONTACT/CTA ══════════════════ */}
+      <section className="py-20 px-6 bg-[#d4604d] text-[#17191d] flex flex-col items-center overflow-hidden relative">
+          <motion.div 
+            animate={{ rotate: 360 }}
+            transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+            className="absolute -right-20 -top-20 opacity-10"
+          >
+            <div className="w-64 h-64 border-[40px] border-[#17191d] rounded-full" />
+          </motion.div>
+
+          <h2 className="font-display text-5xl md:text-8xl tracking-tighter mb-8 z-10">UPGRADE YOUR SOLE?</h2>
+          <a href="/products" className="z-10 bg-[#17191d] text-white px-12 py-6 font-mono text-sm font-black tracking-widest uppercase hover:scale-105 transition-transform active:scale-95">
+            BROWSE HARDWARE →
+          </a>
+      </section>
+      
+      <style jsx>{`
+        .clip-path-triangle {
+          clip-path: polygon(100% 0, 0 0, 100% 100%);
+        }
+        .stroke-text {
+          -webkit-text-stroke: 2px #17191d;
+        }
+      `}</style>
     </div>
   );
 }

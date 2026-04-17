@@ -1,6 +1,6 @@
 // app/api/address/route.ts
 import { NextResponse } from 'next/server'
-import {prisma} from '@/lib/db'
+import { prisma } from '@/lib/db'
 import { getKindeServerSession } from '@kinde-oss/kinde-auth-nextjs/server'
 
 export async function GET() {
@@ -13,7 +13,7 @@ export async function GET() {
     orderBy: { createdAt: 'desc' },
   })
 
-  return NextResponse.json(addresses)
+  return NextResponse.json(addresses)  // ← was OUTSIDE the function in your paste
 }
 
 export async function POST(req: Request) {
@@ -28,10 +28,14 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
     }
 
-    // Ensure user exists in DB (Kinde users may not be auto-synced)
+    // Upsert user so Kinde users always exist in DB before address creation
     await prisma.user.upsert({
       where: { id: user.id },
-      update: {},
+      update: {
+        email: user.email ?? '',
+        firstName: user.given_name ?? null,
+        lastName: user.family_name ?? null,
+      },
       create: {
         id: user.id,
         email: user.email ?? '',

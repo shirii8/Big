@@ -190,18 +190,8 @@ export default function HomePage() {
       <FinalDropCTA openModal={openModal} />
 
       {/* ══ FOOTER ══ */}
-      <footer className="border-t border-[#17191d]/5 px-6 md:px-12 py-12 flex justify-between items-center bg-[#e5f1ee]">
-        <div className="flex flex-col gap-1">
-          <p className="font-mono text-[10px] tracking-widest uppercase opacity-40">
-            ©2026 TESSCH® SYSTEM
-          </p>
-          {user && (
-            <p className="font-mono text-[9px] text-[#d4604d] uppercase">
-              Encrypted Session: {user.id?.slice(0, 8)}
-            </p>
-          )}
-        </div>
-        <div className="flex gap-8 items-center font-mono text-[10px] tracking-widest uppercase">
+      
+        {/* <div className="flex gap-8 items-center font-mono text-[10px] tracking-widest uppercase">
           {isAuthenticated && (
             <LogoutLink>
               <button className="text-[#d4604d] hover:line-through transition-all">
@@ -209,14 +199,8 @@ export default function HomePage() {
               </button>
             </LogoutLink>
           )}
-          <a href="#" className="hover:text-[#d4604d]">
-            Instagram
-          </a>
-          <a href="#" className="hover:text-[#d4604d]">
-            Discord
-          </a>
-        </div>
-      </footer>
+        </div> */}
+      
     </div>
   );
 }

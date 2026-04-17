@@ -13,9 +13,12 @@ type BuildChoice = "upper-only" | "build";
 
 const SIZES = ["UK 5", "UK 6", "UK 7", "UK 8", "UK 9", "UK 10", "UK 11"];
 
-const UPPER_PRICE = 1499;
-const SOLE_PRICE = 1299;
-const BUILD_PRICE = UPPER_PRICE + SOLE_PRICE; // 2798
+// const UPPER_PRICE = 1499;
+// const SOLE_PRICE = 1299;
+// const BUILD_PRICE = UPPER_PRICE + SOLE_PRICE; // 2798
+const UPPER_PRICE = 2;       // ← change this
+const SOLE_PRICE = 2;        // ← and this if needed
+const BUILD_PRICE = UPPER_PRICE + SOLE_PRICE; // auto-updates to 4
 
 const DEFAULT_SOLE = {
   id: "sole-default",
@@ -56,7 +59,7 @@ export default function UppersPage() {
           </h1>
           <div className="text-right hidden md:block">
             <p className="font-mono text-[10px] uppercase tracking-[3px] font-bold">
-              Protocol_v.1.04
+              INSTRUCTIONS
             </p>
             <p className="font-mono text-[9px] uppercase tracking-[2px] opacity-40">
               Hover to Pause · Drag to Scroll
