@@ -20,7 +20,7 @@ export const FOUNDATION_STOCK = 40      // launch stock count
 
 // ─── Coupons (single source of truth used by checkout + cart) ─────────────────
 export const COUPONS: Record<string, { discount: number; label: string; type: 'percent' | 'flat' }> = {
-  TESSCH15: { discount: 0.15, label: '15% off — Early Adopter', type: 'percent' },
+  TESSCH30: { discount: 0.15, label: '15% off — Early Adopter', type: 'percent' },
   DROP001: { discount: 0.10, label: '10% off — Drop 001 Launch', type: 'percent' },
   FIRSTBUILD: { discount: 200, label: '₹200 off — First Build', type: 'flat' },
   BUNDLE2: { discount: 0.10, label: '10% off — 2 Uppers + Sole Bundle', type: 'percent' },
