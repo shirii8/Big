@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getKindeServerSession } from '@kinde-oss/kinde-auth-nextjs/server'
 import { prisma } from '@/lib/db'
-import { OrderStatus } from '@prisma/client' // Use standard client path
+import { OrderStatus } from '@/generated/prisma'
 import { sendStatusUpdate } from '@/lib/mailer'
 import { Resend } from 'resend'
 
