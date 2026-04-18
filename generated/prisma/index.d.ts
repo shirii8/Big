@@ -6293,6 +6293,10 @@ export namespace Prisma {
     paymentMethod: string | null
     couponCode: string | null
     discountAmount: number | null
+    utrReference: string | null
+    paymentScreenshot: string | null
+    paymentVerified: boolean | null
+    verificationNote: string | null
     addressId: string | null
     createdAt: Date | null
     updatedAt: Date | null
@@ -6308,6 +6312,10 @@ export namespace Prisma {
     paymentMethod: string | null
     couponCode: string | null
     discountAmount: number | null
+    utrReference: string | null
+    paymentScreenshot: string | null
+    paymentVerified: boolean | null
+    verificationNote: string | null
     addressId: string | null
     createdAt: Date | null
     updatedAt: Date | null
@@ -6323,6 +6331,10 @@ export namespace Prisma {
     paymentMethod: number
     couponCode: number
     discountAmount: number
+    utrReference: number
+    paymentScreenshot: number
+    paymentVerified: number
+    verificationNote: number
     addressId: number
     createdAt: number
     updatedAt: number
@@ -6350,6 +6362,10 @@ export namespace Prisma {
     paymentMethod?: true
     couponCode?: true
     discountAmount?: true
+    utrReference?: true
+    paymentScreenshot?: true
+    paymentVerified?: true
+    verificationNote?: true
     addressId?: true
     createdAt?: true
     updatedAt?: true
@@ -6365,6 +6381,10 @@ export namespace Prisma {
     paymentMethod?: true
     couponCode?: true
     discountAmount?: true
+    utrReference?: true
+    paymentScreenshot?: true
+    paymentVerified?: true
+    verificationNote?: true
     addressId?: true
     createdAt?: true
     updatedAt?: true
@@ -6380,6 +6400,10 @@ export namespace Prisma {
     paymentMethod?: true
     couponCode?: true
     discountAmount?: true
+    utrReference?: true
+    paymentScreenshot?: true
+    paymentVerified?: true
+    verificationNote?: true
     addressId?: true
     createdAt?: true
     updatedAt?: true
@@ -6482,6 +6506,10 @@ export namespace Prisma {
     paymentMethod: string
     couponCode: string | null
     discountAmount: number
+    utrReference: string | null
+    paymentScreenshot: string | null
+    paymentVerified: boolean
+    verificationNote: string | null
     addressId: string
     createdAt: Date
     updatedAt: Date
@@ -6516,6 +6544,10 @@ export namespace Prisma {
     paymentMethod?: boolean
     couponCode?: boolean
     discountAmount?: boolean
+    utrReference?: boolean
+    paymentScreenshot?: boolean
+    paymentVerified?: boolean
+    verificationNote?: boolean
     addressId?: boolean
     createdAt?: boolean
     updatedAt?: boolean
@@ -6535,6 +6567,10 @@ export namespace Prisma {
     paymentMethod?: boolean
     couponCode?: boolean
     discountAmount?: boolean
+    utrReference?: boolean
+    paymentScreenshot?: boolean
+    paymentVerified?: boolean
+    verificationNote?: boolean
     addressId?: boolean
     createdAt?: boolean
     updatedAt?: boolean
@@ -6552,6 +6588,10 @@ export namespace Prisma {
     paymentMethod?: boolean
     couponCode?: boolean
     discountAmount?: boolean
+    utrReference?: boolean
+    paymentScreenshot?: boolean
+    paymentVerified?: boolean
+    verificationNote?: boolean
     addressId?: boolean
     createdAt?: boolean
     updatedAt?: boolean
@@ -6569,12 +6609,16 @@ export namespace Prisma {
     paymentMethod?: boolean
     couponCode?: boolean
     discountAmount?: boolean
+    utrReference?: boolean
+    paymentScreenshot?: boolean
+    paymentVerified?: boolean
+    verificationNote?: boolean
     addressId?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }
 
-  export type OrderOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "userId" | "totalAmount" | "status" | "dodoPaymentId" | "dodoSessionId" | "paymentMethod" | "couponCode" | "discountAmount" | "addressId" | "createdAt" | "updatedAt", ExtArgs["result"]["order"]>
+  export type OrderOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "userId" | "totalAmount" | "status" | "dodoPaymentId" | "dodoSessionId" | "paymentMethod" | "couponCode" | "discountAmount" | "utrReference" | "paymentScreenshot" | "paymentVerified" | "verificationNote" | "addressId" | "createdAt" | "updatedAt", ExtArgs["result"]["order"]>
   export type OrderInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     user?: boolean | UserDefaultArgs<ExtArgs>
     items?: boolean | Order$itemsArgs<ExtArgs>
@@ -6607,6 +6651,10 @@ export namespace Prisma {
       paymentMethod: string
       couponCode: string | null
       discountAmount: number
+      utrReference: string | null
+      paymentScreenshot: string | null
+      paymentVerified: boolean
+      verificationNote: string | null
       addressId: string
       createdAt: Date
       updatedAt: Date
@@ -7045,6 +7093,10 @@ export namespace Prisma {
     readonly paymentMethod: FieldRef<"Order", 'String'>
     readonly couponCode: FieldRef<"Order", 'String'>
     readonly discountAmount: FieldRef<"Order", 'Float'>
+    readonly utrReference: FieldRef<"Order", 'String'>
+    readonly paymentScreenshot: FieldRef<"Order", 'String'>
+    readonly paymentVerified: FieldRef<"Order", 'Boolean'>
+    readonly verificationNote: FieldRef<"Order", 'String'>
     readonly addressId: FieldRef<"Order", 'String'>
     readonly createdAt: FieldRef<"Order", 'DateTime'>
     readonly updatedAt: FieldRef<"Order", 'DateTime'>
@@ -9848,6 +9900,10 @@ export namespace Prisma {
     paymentMethod: 'paymentMethod',
     couponCode: 'couponCode',
     discountAmount: 'discountAmount',
+    utrReference: 'utrReference',
+    paymentScreenshot: 'paymentScreenshot',
+    paymentVerified: 'paymentVerified',
+    verificationNote: 'verificationNote',
     addressId: 'addressId',
     createdAt: 'createdAt',
     updatedAt: 'updatedAt'
@@ -10008,6 +10064,13 @@ export namespace Prisma {
    * Reference to a field of type 'OrderStatus[]'
    */
   export type ListEnumOrderStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'OrderStatus[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'Boolean'
+   */
+  export type BooleanFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Boolean'>
     
   /**
    * Deep Input Types
@@ -10315,6 +10378,10 @@ export namespace Prisma {
     paymentMethod?: StringFilter<"Order"> | string
     couponCode?: StringNullableFilter<"Order"> | string | null
     discountAmount?: FloatFilter<"Order"> | number
+    utrReference?: StringNullableFilter<"Order"> | string | null
+    paymentScreenshot?: StringNullableFilter<"Order"> | string | null
+    paymentVerified?: BoolFilter<"Order"> | boolean
+    verificationNote?: StringNullableFilter<"Order"> | string | null
     addressId?: StringFilter<"Order"> | string
     createdAt?: DateTimeFilter<"Order"> | Date | string
     updatedAt?: DateTimeFilter<"Order"> | Date | string
@@ -10333,6 +10400,10 @@ export namespace Prisma {
     paymentMethod?: SortOrder
     couponCode?: SortOrderInput | SortOrder
     discountAmount?: SortOrder
+    utrReference?: SortOrderInput | SortOrder
+    paymentScreenshot?: SortOrderInput | SortOrder
+    paymentVerified?: SortOrder
+    verificationNote?: SortOrderInput | SortOrder
     addressId?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -10354,6 +10425,10 @@ export namespace Prisma {
     paymentMethod?: StringFilter<"Order"> | string
     couponCode?: StringNullableFilter<"Order"> | string | null
     discountAmount?: FloatFilter<"Order"> | number
+    utrReference?: StringNullableFilter<"Order"> | string | null
+    paymentScreenshot?: StringNullableFilter<"Order"> | string | null
+    paymentVerified?: BoolFilter<"Order"> | boolean
+    verificationNote?: StringNullableFilter<"Order"> | string | null
     addressId?: StringFilter<"Order"> | string
     createdAt?: DateTimeFilter<"Order"> | Date | string
     updatedAt?: DateTimeFilter<"Order"> | Date | string
@@ -10372,6 +10447,10 @@ export namespace Prisma {
     paymentMethod?: SortOrder
     couponCode?: SortOrderInput | SortOrder
     discountAmount?: SortOrder
+    utrReference?: SortOrderInput | SortOrder
+    paymentScreenshot?: SortOrderInput | SortOrder
+    paymentVerified?: SortOrder
+    verificationNote?: SortOrderInput | SortOrder
     addressId?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -10395,6 +10474,10 @@ export namespace Prisma {
     paymentMethod?: StringWithAggregatesFilter<"Order"> | string
     couponCode?: StringNullableWithAggregatesFilter<"Order"> | string | null
     discountAmount?: FloatWithAggregatesFilter<"Order"> | number
+    utrReference?: StringNullableWithAggregatesFilter<"Order"> | string | null
+    paymentScreenshot?: StringNullableWithAggregatesFilter<"Order"> | string | null
+    paymentVerified?: BoolWithAggregatesFilter<"Order"> | boolean
+    verificationNote?: StringNullableWithAggregatesFilter<"Order"> | string | null
     addressId?: StringWithAggregatesFilter<"Order"> | string
     createdAt?: DateTimeWithAggregatesFilter<"Order"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"Order"> | Date | string
@@ -10865,6 +10948,10 @@ export namespace Prisma {
     paymentMethod?: string
     couponCode?: string | null
     discountAmount?: number
+    utrReference?: string | null
+    paymentScreenshot?: string | null
+    paymentVerified?: boolean
+    verificationNote?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     user: UserCreateNestedOneWithoutOrdersInput
@@ -10882,6 +10969,10 @@ export namespace Prisma {
     paymentMethod?: string
     couponCode?: string | null
     discountAmount?: number
+    utrReference?: string | null
+    paymentScreenshot?: string | null
+    paymentVerified?: boolean
+    verificationNote?: string | null
     addressId: string
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -10897,6 +10988,10 @@ export namespace Prisma {
     paymentMethod?: StringFieldUpdateOperationsInput | string
     couponCode?: NullableStringFieldUpdateOperationsInput | string | null
     discountAmount?: FloatFieldUpdateOperationsInput | number
+    utrReference?: NullableStringFieldUpdateOperationsInput | string | null
+    paymentScreenshot?: NullableStringFieldUpdateOperationsInput | string | null
+    paymentVerified?: BoolFieldUpdateOperationsInput | boolean
+    verificationNote?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     user?: UserUpdateOneRequiredWithoutOrdersNestedInput
@@ -10914,6 +11009,10 @@ export namespace Prisma {
     paymentMethod?: StringFieldUpdateOperationsInput | string
     couponCode?: NullableStringFieldUpdateOperationsInput | string | null
     discountAmount?: FloatFieldUpdateOperationsInput | number
+    utrReference?: NullableStringFieldUpdateOperationsInput | string | null
+    paymentScreenshot?: NullableStringFieldUpdateOperationsInput | string | null
+    paymentVerified?: BoolFieldUpdateOperationsInput | boolean
+    verificationNote?: NullableStringFieldUpdateOperationsInput | string | null
     addressId?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -10930,6 +11029,10 @@ export namespace Prisma {
     paymentMethod?: string
     couponCode?: string | null
     discountAmount?: number
+    utrReference?: string | null
+    paymentScreenshot?: string | null
+    paymentVerified?: boolean
+    verificationNote?: string | null
     addressId: string
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -10944,6 +11047,10 @@ export namespace Prisma {
     paymentMethod?: StringFieldUpdateOperationsInput | string
     couponCode?: NullableStringFieldUpdateOperationsInput | string | null
     discountAmount?: FloatFieldUpdateOperationsInput | number
+    utrReference?: NullableStringFieldUpdateOperationsInput | string | null
+    paymentScreenshot?: NullableStringFieldUpdateOperationsInput | string | null
+    paymentVerified?: BoolFieldUpdateOperationsInput | boolean
+    verificationNote?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -10958,6 +11065,10 @@ export namespace Prisma {
     paymentMethod?: StringFieldUpdateOperationsInput | string
     couponCode?: NullableStringFieldUpdateOperationsInput | string | null
     discountAmount?: FloatFieldUpdateOperationsInput | number
+    utrReference?: NullableStringFieldUpdateOperationsInput | string | null
+    paymentScreenshot?: NullableStringFieldUpdateOperationsInput | string | null
+    paymentVerified?: BoolFieldUpdateOperationsInput | boolean
+    verificationNote?: NullableStringFieldUpdateOperationsInput | string | null
     addressId?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -11560,6 +11671,11 @@ export namespace Prisma {
     not?: NestedEnumOrderStatusFilter<$PrismaModel> | $Enums.OrderStatus
   }
 
+  export type BoolFilter<$PrismaModel = never> = {
+    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
+    not?: NestedBoolFilter<$PrismaModel> | boolean
+  }
+
   export type AddressScalarRelationFilter = {
     is?: AddressWhereInput
     isNot?: AddressWhereInput
@@ -11575,6 +11691,10 @@ export namespace Prisma {
     paymentMethod?: SortOrder
     couponCode?: SortOrder
     discountAmount?: SortOrder
+    utrReference?: SortOrder
+    paymentScreenshot?: SortOrder
+    paymentVerified?: SortOrder
+    verificationNote?: SortOrder
     addressId?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -11595,6 +11715,10 @@ export namespace Prisma {
     paymentMethod?: SortOrder
     couponCode?: SortOrder
     discountAmount?: SortOrder
+    utrReference?: SortOrder
+    paymentScreenshot?: SortOrder
+    paymentVerified?: SortOrder
+    verificationNote?: SortOrder
     addressId?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -11610,6 +11734,10 @@ export namespace Prisma {
     paymentMethod?: SortOrder
     couponCode?: SortOrder
     discountAmount?: SortOrder
+    utrReference?: SortOrder
+    paymentScreenshot?: SortOrder
+    paymentVerified?: SortOrder
+    verificationNote?: SortOrder
     addressId?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -11628,6 +11756,14 @@ export namespace Prisma {
     _count?: NestedIntFilter<$PrismaModel>
     _min?: NestedEnumOrderStatusFilter<$PrismaModel>
     _max?: NestedEnumOrderStatusFilter<$PrismaModel>
+  }
+
+  export type BoolWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
+    not?: NestedBoolWithAggregatesFilter<$PrismaModel> | boolean
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedBoolFilter<$PrismaModel>
+    _max?: NestedBoolFilter<$PrismaModel>
   }
 
   export type OrderScalarRelationFilter = {
@@ -12079,6 +12215,10 @@ export namespace Prisma {
     set?: $Enums.OrderStatus
   }
 
+  export type BoolFieldUpdateOperationsInput = {
+    set?: boolean
+  }
+
   export type UserUpdateOneRequiredWithoutOrdersNestedInput = {
     create?: XOR<UserCreateWithoutOrdersInput, UserUncheckedCreateWithoutOrdersInput>
     connectOrCreate?: UserCreateOrConnectWithoutOrdersInput
@@ -12427,6 +12567,11 @@ export namespace Prisma {
     not?: NestedEnumOrderStatusFilter<$PrismaModel> | $Enums.OrderStatus
   }
 
+  export type NestedBoolFilter<$PrismaModel = never> = {
+    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
+    not?: NestedBoolFilter<$PrismaModel> | boolean
+  }
+
   export type NestedEnumOrderStatusWithAggregatesFilter<$PrismaModel = never> = {
     equals?: $Enums.OrderStatus | EnumOrderStatusFieldRefInput<$PrismaModel>
     in?: $Enums.OrderStatus[] | ListEnumOrderStatusFieldRefInput<$PrismaModel>
@@ -12435,6 +12580,14 @@ export namespace Prisma {
     _count?: NestedIntFilter<$PrismaModel>
     _min?: NestedEnumOrderStatusFilter<$PrismaModel>
     _max?: NestedEnumOrderStatusFilter<$PrismaModel>
+  }
+
+  export type NestedBoolWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
+    not?: NestedBoolWithAggregatesFilter<$PrismaModel> | boolean
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedBoolFilter<$PrismaModel>
+    _max?: NestedBoolFilter<$PrismaModel>
   }
 
   export type CartItemCreateWithoutUserInput = {
@@ -12472,6 +12625,10 @@ export namespace Prisma {
     paymentMethod?: string
     couponCode?: string | null
     discountAmount?: number
+    utrReference?: string | null
+    paymentScreenshot?: string | null
+    paymentVerified?: boolean
+    verificationNote?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     items?: OrderItemCreateNestedManyWithoutOrderInput
@@ -12487,6 +12644,10 @@ export namespace Prisma {
     paymentMethod?: string
     couponCode?: string | null
     discountAmount?: number
+    utrReference?: string | null
+    paymentScreenshot?: string | null
+    paymentVerified?: boolean
+    verificationNote?: string | null
     addressId: string
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -12596,6 +12757,10 @@ export namespace Prisma {
     paymentMethod?: StringFilter<"Order"> | string
     couponCode?: StringNullableFilter<"Order"> | string | null
     discountAmount?: FloatFilter<"Order"> | number
+    utrReference?: StringNullableFilter<"Order"> | string | null
+    paymentScreenshot?: StringNullableFilter<"Order"> | string | null
+    paymentVerified?: BoolFilter<"Order"> | boolean
+    verificationNote?: StringNullableFilter<"Order"> | string | null
     addressId?: StringFilter<"Order"> | string
     createdAt?: DateTimeFilter<"Order"> | Date | string
     updatedAt?: DateTimeFilter<"Order"> | Date | string
@@ -13170,6 +13335,10 @@ export namespace Prisma {
     paymentMethod?: string
     couponCode?: string | null
     discountAmount?: number
+    utrReference?: string | null
+    paymentScreenshot?: string | null
+    paymentVerified?: boolean
+    verificationNote?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     user: UserCreateNestedOneWithoutOrdersInput
@@ -13186,6 +13355,10 @@ export namespace Prisma {
     paymentMethod?: string
     couponCode?: string | null
     discountAmount?: number
+    utrReference?: string | null
+    paymentScreenshot?: string | null
+    paymentVerified?: boolean
+    verificationNote?: string | null
     addressId: string
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -13241,6 +13414,10 @@ export namespace Prisma {
     paymentMethod?: StringFieldUpdateOperationsInput | string
     couponCode?: NullableStringFieldUpdateOperationsInput | string | null
     discountAmount?: FloatFieldUpdateOperationsInput | number
+    utrReference?: NullableStringFieldUpdateOperationsInput | string | null
+    paymentScreenshot?: NullableStringFieldUpdateOperationsInput | string | null
+    paymentVerified?: BoolFieldUpdateOperationsInput | boolean
+    verificationNote?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     user?: UserUpdateOneRequiredWithoutOrdersNestedInput
@@ -13257,6 +13434,10 @@ export namespace Prisma {
     paymentMethod?: StringFieldUpdateOperationsInput | string
     couponCode?: NullableStringFieldUpdateOperationsInput | string | null
     discountAmount?: FloatFieldUpdateOperationsInput | number
+    utrReference?: NullableStringFieldUpdateOperationsInput | string | null
+    paymentScreenshot?: NullableStringFieldUpdateOperationsInput | string | null
+    paymentVerified?: BoolFieldUpdateOperationsInput | boolean
+    verificationNote?: NullableStringFieldUpdateOperationsInput | string | null
     addressId?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -13337,6 +13518,10 @@ export namespace Prisma {
     paymentMethod?: string
     couponCode?: string | null
     discountAmount?: number
+    utrReference?: string | null
+    paymentScreenshot?: string | null
+    paymentVerified?: boolean
+    verificationNote?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     user: UserCreateNestedOneWithoutOrdersInput
@@ -13353,6 +13538,10 @@ export namespace Prisma {
     paymentMethod?: string
     couponCode?: string | null
     discountAmount?: number
+    utrReference?: string | null
+    paymentScreenshot?: string | null
+    paymentVerified?: boolean
+    verificationNote?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     items?: OrderItemUncheckedCreateNestedManyWithoutOrderInput
@@ -13442,6 +13631,10 @@ export namespace Prisma {
     paymentMethod?: string
     couponCode?: string | null
     discountAmount?: number
+    utrReference?: string | null
+    paymentScreenshot?: string | null
+    paymentVerified?: boolean
+    verificationNote?: string | null
     addressId: string
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -13492,6 +13685,10 @@ export namespace Prisma {
     paymentMethod?: StringFieldUpdateOperationsInput | string
     couponCode?: NullableStringFieldUpdateOperationsInput | string | null
     discountAmount?: FloatFieldUpdateOperationsInput | number
+    utrReference?: NullableStringFieldUpdateOperationsInput | string | null
+    paymentScreenshot?: NullableStringFieldUpdateOperationsInput | string | null
+    paymentVerified?: BoolFieldUpdateOperationsInput | boolean
+    verificationNote?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     items?: OrderItemUpdateManyWithoutOrderNestedInput
@@ -13507,6 +13704,10 @@ export namespace Prisma {
     paymentMethod?: StringFieldUpdateOperationsInput | string
     couponCode?: NullableStringFieldUpdateOperationsInput | string | null
     discountAmount?: FloatFieldUpdateOperationsInput | number
+    utrReference?: NullableStringFieldUpdateOperationsInput | string | null
+    paymentScreenshot?: NullableStringFieldUpdateOperationsInput | string | null
+    paymentVerified?: BoolFieldUpdateOperationsInput | boolean
+    verificationNote?: NullableStringFieldUpdateOperationsInput | string | null
     addressId?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -13522,6 +13723,10 @@ export namespace Prisma {
     paymentMethod?: StringFieldUpdateOperationsInput | string
     couponCode?: NullableStringFieldUpdateOperationsInput | string | null
     discountAmount?: FloatFieldUpdateOperationsInput | number
+    utrReference?: NullableStringFieldUpdateOperationsInput | string | null
+    paymentScreenshot?: NullableStringFieldUpdateOperationsInput | string | null
+    paymentVerified?: BoolFieldUpdateOperationsInput | boolean
+    verificationNote?: NullableStringFieldUpdateOperationsInput | string | null
     addressId?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -13707,6 +13912,10 @@ export namespace Prisma {
     paymentMethod?: string
     couponCode?: string | null
     discountAmount?: number
+    utrReference?: string | null
+    paymentScreenshot?: string | null
+    paymentVerified?: boolean
+    verificationNote?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -13720,6 +13929,10 @@ export namespace Prisma {
     paymentMethod?: StringFieldUpdateOperationsInput | string
     couponCode?: NullableStringFieldUpdateOperationsInput | string | null
     discountAmount?: FloatFieldUpdateOperationsInput | number
+    utrReference?: NullableStringFieldUpdateOperationsInput | string | null
+    paymentScreenshot?: NullableStringFieldUpdateOperationsInput | string | null
+    paymentVerified?: BoolFieldUpdateOperationsInput | boolean
+    verificationNote?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     user?: UserUpdateOneRequiredWithoutOrdersNestedInput
@@ -13736,6 +13949,10 @@ export namespace Prisma {
     paymentMethod?: StringFieldUpdateOperationsInput | string
     couponCode?: NullableStringFieldUpdateOperationsInput | string | null
     discountAmount?: FloatFieldUpdateOperationsInput | number
+    utrReference?: NullableStringFieldUpdateOperationsInput | string | null
+    paymentScreenshot?: NullableStringFieldUpdateOperationsInput | string | null
+    paymentVerified?: BoolFieldUpdateOperationsInput | boolean
+    verificationNote?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     items?: OrderItemUncheckedUpdateManyWithoutOrderNestedInput
@@ -13751,6 +13968,10 @@ export namespace Prisma {
     paymentMethod?: StringFieldUpdateOperationsInput | string
     couponCode?: NullableStringFieldUpdateOperationsInput | string | null
     discountAmount?: FloatFieldUpdateOperationsInput | number
+    utrReference?: NullableStringFieldUpdateOperationsInput | string | null
+    paymentScreenshot?: NullableStringFieldUpdateOperationsInput | string | null
+    paymentVerified?: BoolFieldUpdateOperationsInput | boolean
+    verificationNote?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }

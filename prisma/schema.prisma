@@ -105,6 +105,10 @@ model Order {
   paymentMethod  String      @default("online")
   couponCode     String?
   discountAmount Float       @default(0)
+  utrReference      String?
+  paymentScreenshot String?
+  paymentVerified   Boolean  @default(false)
+  verificationNote  String?
 
   user      User        @relation(fields: [userId], references: [id])
   items     OrderItem[]

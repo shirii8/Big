@@ -96,15 +96,19 @@ model CartItem {
 }
 
 model Order {
-  id             String      @id @default(uuid())
-  userId         String
-  totalAmount    Float
-  status         OrderStatus @default(PENDING)
-  dodoPaymentId  String?     @unique
-  dodoSessionId  String?     @unique
-  paymentMethod  String      @default("online")
-  couponCode     String?
-  discountAmount Float       @default(0)
+  id                String      @id @default(uuid())
+  userId            String
+  totalAmount       Float
+  status            OrderStatus @default(PENDING)
+  dodoPaymentId     String?     @unique
+  dodoSessionId     String?     @unique
+  paymentMethod     String      @default("online")
+  couponCode        String?
+  discountAmount    Float       @default(0)
+  utrReference      String?
+  paymentScreenshot String?
+  paymentVerified   Boolean     @default(false)
+  verificationNote  String?
 
   user      User        @relation(fields: [userId], references: [id])
   items     OrderItem[]
