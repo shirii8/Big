@@ -1,12 +1,12 @@
 
 import { NextResponse } from 'next/server'
-import {prisma} from '@/lib/db'                               
+import { prisma } from '@/lib/db'
 import { getKindeServerSession } from '@kinde-oss/kinde-auth-nextjs/server'
 
-type TxClient = Parameters<Parameters<typeof prisma.$transaction>[0]>[0]  // ← no @prisma/client needed
+type TxClient = Parameters<Parameters<typeof prisma.$transaction>[0]>[0]
 
 type CartItemInput = {
-  upper: { id: string; price: number }
+  upper: { id: string; name: string; price: number; image: string }
   sole?: { price: number }
   size: string
   quantity: number
@@ -39,22 +39,34 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Invalid address' }, { status: 400 })
     }
 
+    // Resolve variants — always keep cart data as denormalized fallback
     const resolvedItems = await Promise.all(
       items.map(async (item: CartItemInput) => {
         const variant = await prisma.productVariant.findUnique({
           where: { productId_size: { productId: item.upper.id, size: item.size } },
-        })
+          include: { product: true },
+        }).catch(() => null)
+
         const unitPrice = item.type === 'build'
           ? item.upper.price + (item.sole?.price ?? 1299)
           : item.upper.price
+
         return {
           variant,
+          variantId: variant?.id ?? null,
+          productName:  variant?.product?.name  ?? item.upper.name,
+          productImage: variant?.product?.image ?? item.upper.image,
+          size: item.size,
           quantity: item.quantity,
           price: unitPrice,
           productType: item.type === 'build' ? 'build' : 'upper',
         }
       })
     )
+
+    if (resolvedItems.length === 0) {
+      return NextResponse.json({ error: 'No valid items to order' }, { status: 400 })
+    }
 
     const order = await prisma.$transaction(async (tx: TxClient) => {
       const newOrder = await tx.order.create({
@@ -67,18 +79,20 @@ export async function POST(req: Request) {
           paymentMethod: paymentMethod ?? 'upi',
           status: 'PENDING',
           items: {
-            create: resolvedItems
-              .filter((i): i is typeof i & { variant: NonNullable<typeof i.variant> } => i.variant !== null)
-              .map(i => ({
-                variantId: i.variant.id,
-                quantity: i.quantity,
-                price: i.price,
-                productType: i.productType,
-              })),
+            create: resolvedItems.map(i => ({
+              variantId:    i.variantId,
+              quantity:     i.quantity,
+              price:        i.price,
+              productType:  i.productType,
+              productName:  i.productName,
+              productImage: i.productImage,
+              size:         i.size,
+            })),
           },
         },
       })
 
+      // Decrement stock only for resolved variants
       for (const i of resolvedItems) {
         if (i.variant) {
           await tx.productVariant.update({
@@ -97,60 +111,3 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'Failed to create order' }, { status: 500 })
   }
 }
-// import { NextRequest, NextResponse } from 'next/server'
-// import { razorpay } from '@/lib/razorpay'
-// import { getKindeServerSession } from '@kinde-oss/kinde-auth-nextjs/server'
-// import { prisma } from "@/lib/db"
-
-// export async function POST(req: NextRequest) {
-//   const { getUser } = getKindeServerSession()
-//   const user = await getUser()
-  
-//   if (!user?.id) {
-//     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-//   }
-
-//   try {
-//     const {
-//       totalAmount,
-//       addressId,
-//       couponCode,
-//       discountAmount,
-//     } = await req.json()
-
-//     // 1. Validation
-//     if (!totalAmount || totalAmount < 1) {
-//       return NextResponse.json({ error: 'Invalid amount' }, { status: 400 })
-//     }
-
-//     // 2. Razorpay Order Creation
-//     // We use .orders.create (Smallest currency unit: paise)
-//     const order = await razorpay.orders.create({
-//       amount: Math.round(totalAmount * 100), 
-//       currency: 'INR',
-//       receipt: `receipt_${Date.now()}`,
-//       // Razorpay uses 'notes' for custom metadata/metadata
-//       notes: {
-//         userId: user.id,
-//         addressId: addressId || '',
-//         couponCode: couponCode || '',
-//         discountAmount: String(discountAmount || 0),
-//       },
-//     })
-
-//     // 3. Return the Order ID and details
-//     // Your frontend will use 'id' to initialize the Razorpay Checkout modal
-//     return NextResponse.json({ 
-//       id: order.id, 
-//       amount: order.amount, 
-//       currency: order.currency 
-//     })
-
-//   } catch (error) {
-//     console.error('[razorpay create-order error]', error)
-//     return NextResponse.json(
-//       { error: 'Failed to initiate payment' }, 
-//       { status: 500 }
-//     )
-//   }
-// }

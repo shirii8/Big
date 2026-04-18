@@ -15,7 +15,12 @@ interface OrderItem {
   quantity: number
   price: number
   productType: string
-  variant: Variant
+  // Denormalized fields (always present)
+  productName: string
+  productImage: string
+  size: string
+  // Joined variant (may be null if product was not in DB)
+  variant: Variant | null
 }
 interface Address {
   line1: string; line2?: string | null
@@ -218,16 +223,27 @@ export default function AdminOrdersPage() {
                       <div>
                         <h4 className="font-mono text-[10px] uppercase font-bold text-[#d4604d] tracking-[2px] mb-4">Build Queue</h4>
                         <div className="space-y-3">
-                          {order.items.map(item => (
-                            <div key={item.id} className="flex items-center gap-4 bg-white border border-[#17191d]/5 p-3">
-                              <img src={item.variant.product.image} className="w-12 h-12 object-contain mix-blend-multiply" />
-                              <div className="flex-1">
-                                <p className="font-display text-base uppercase leading-tight">{item.variant.product.name}</p>
-                                <p className="font-mono text-[8px] opacity-50 uppercase">{item.variant.size} · {item.productType} · Qty {item.quantity}</p>
+                          {order.items.map(item => {
+                            const name  = item.productName  || item.variant?.product?.name  || '—'
+                            const image = item.productImage || item.variant?.product?.image || ''
+                            const size  = item.size         || item.variant?.size           || '—'
+                            return (
+                              <div key={item.id} className="flex items-center gap-4 bg-white border border-[#17191d]/5 p-3">
+                                {image ? (
+                                  <img src={image} className="w-12 h-12 object-contain mix-blend-multiply" alt={name} />
+                                ) : (
+                                  <div className="w-12 h-12 bg-[#f4f4f0] border border-[#17191d]/10 flex items-center justify-center">
+                                    <Package size={16} className="opacity-20" />
+                                  </div>
+                                )}
+                                <div className="flex-1">
+                                  <p className="font-display text-base uppercase leading-tight">{name}</p>
+                                  <p className="font-mono text-[8px] opacity-50 uppercase">{size} · {item.productType} · Qty {item.quantity}</p>
+                                </div>
+                                <p className="font-mono text-xs font-bold">₹{(item.price * item.quantity).toLocaleString('en-IN')}</p>
                               </div>
-                              <p className="font-mono text-xs font-bold">₹{(item.price * item.quantity).toLocaleString('en-IN')}</p>
-                            </div>
-                          ))}
+                            )
+                          })}
                         </div>
                       </div>
                       
