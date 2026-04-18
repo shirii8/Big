@@ -251,6 +251,11 @@ function ProductDetail({
       router.push("/api/auth/login");
       return;
     }
+
+    if (typeof window !== 'undefined' && (window as any).fbq) {
+      (window as any).fbq('track', 'AddToCart');
+    }
+
     setCartState("loading");
 
     addItem(

@@ -25,7 +25,17 @@ export default function Footer() {
               <div className="flex gap-4">
                 <a href="https://instagram.com/tesschstore" target="_blank" rel="noreferrer" className="font-mono text-[11px] font-bold hover:text-[#d4604d] transition-colors uppercase">Instagram</a>
                 <a href="https://www.linkedin.com/company/tesschstore/" target="_blank" rel="noreferrer" className="font-mono text-[11px] font-bold hover:text-[#d4604d] transition-colors uppercase">Linkedin</a>
-                <a href="mailto:tesschstore@gmail.com" className="font-mono text-[11px] font-bold hover:text-[#d4604d] transition-colors uppercase">Gmail</a>
+                <a 
+                  href="mailto:tesschstore@gmail.com" 
+                  onClick={() => {
+                    if (typeof window !== 'undefined' && (window as any).fbq) {
+                      (window as any).fbq('track', 'Contact');
+                    }
+                  }}
+                  className="font-mono text-[11px] font-bold hover:text-[#d4604d] transition-colors uppercase"
+                >
+                  Gmail
+                </a>
               </div>
             </div>
           </div>

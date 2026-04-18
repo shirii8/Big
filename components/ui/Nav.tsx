@@ -140,7 +140,14 @@ export default function Nav() {
               </button>
             </LoginLink>
             <RegisterLink postLoginRedirectURL="/">
-              <button className="bg-[#17191d] text-[#e5f1ee] rounded-full px-4 py-2 hover:bg-black transition-colors">
+              <button 
+                onClick={() => {
+                  if (typeof window !== 'undefined' && (window as any).fbq) {
+                    (window as any).fbq('track', 'CompleteRegistration');
+                  }
+                }}
+                className="bg-[#17191d] text-[#e5f1ee] rounded-full px-4 py-2 hover:bg-black transition-colors"
+              >
                 Sign up
               </button>
             </RegisterLink>

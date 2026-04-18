@@ -35,6 +35,10 @@ export function ProductDetail({ product, onClose }: { product: Upper; onClose: (
   const { addItem } = useCart()
 
   function handleAddToCart() {
+    if (typeof window !== 'undefined' && (window as any).fbq) {
+      (window as any).fbq('track', 'AddToCart');
+    }
+
     // Pass arguments separately to match the 2-4 expected arguments
     addItem(
       {

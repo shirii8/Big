@@ -230,7 +230,15 @@ export default function CartPage() {
                 </div>
               )}
 
-              <Link href="/checkout" className="bg-[#d4604d] text-white font-mono text-[11px] font-bold uppercase tracking-[4px] py-5 text-center hover:bg-white hover:text-[#17191d] transition-colors">
+              <Link 
+                href="/checkout" 
+                onClick={() => {
+                  if (typeof window !== 'undefined' && (window as any).fbq) {
+                    (window as any).fbq('track', 'InitiateCheckout');
+                  }
+                }}
+                className="bg-[#d4604d] text-white font-mono text-[11px] font-bold uppercase tracking-[4px] py-5 text-center hover:bg-white hover:text-[#17191d] transition-colors"
+              >
                 Proceed to Checkout →
               </Link>
               <Link href="/products" className="font-mono text-[9px] uppercase tracking-[2px] text-center opacity-40 hover:opacity-100 hover:text-[#d4604d] transition-all">

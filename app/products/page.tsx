@@ -3,8 +3,15 @@
 import { motion } from 'framer-motion'
 import Link from 'next/link'
 
+import { useEffect } from 'react'
 
 export default function ProductsPortal() {
+  useEffect(() => {
+    if (typeof window !== 'undefined' && (window as any).fbq) {
+      (window as any).fbq('track', 'ViewContent');
+    }
+  }, []);
+
   return (
     <div className="bg-[#e5f1ee] min-h-screen flex flex-col lg:flex-row pt-20 overflow-hidden text-[#17191d]">
       

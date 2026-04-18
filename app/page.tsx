@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { motion, useScroll, useTransform } from "framer-motion";
 import Link from "next/link";
 import { useKindeBrowserClient } from "@kinde-oss/kinde-auth-nextjs";
@@ -33,6 +33,12 @@ export default function HomePage() {
     setSelectedProduct(p);
     setModalOpen(true);
   };
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && (window as any).fbq) {
+      (window as any).fbq('track', 'ViewContent');
+    }
+  }, []);
 
   return (
     <div className="bg-[#e5f1ee] text-[#17191d] selection:bg-[#d4604d] selection:text-white overflow-x-hidden">

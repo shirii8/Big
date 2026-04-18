@@ -192,7 +192,13 @@ export default function CheckoutPage() {
         <UPIPayment
           amount={total}
           orderId={createdOrderId}
-          onConfirmed={() => { clearCart(); router.push('/') }}
+          onConfirmed={() => { 
+            if (typeof window !== 'undefined' && (window as any).fbq) {
+              (window as any).fbq('track', 'Purchase', { currency: 'INR', value: total });
+            }
+            clearCart(); 
+            router.push('/') 
+          }}
           onCancel={() => { setStep('confirm'); setError('Payment cancelled. You can retry.') }}
         />
       </div>
@@ -849,7 +855,7 @@ export default function CheckoutPage() {
 //                       <div className="flex gap-3">
 //                         <input value={coupon}
 //                           onChange={e => { setCoupon(e.target.value); setCouponError('') }}
-//                           placeholder="Enter code (e.g. TESSCH15)"
+//                           placeholder="Enter code (e.g. TESSCH30)"
 //                           className="flex-1 bg-white border-2 border-[#17191d] font-mono text-[11px] px-4 py-3 focus:outline-none focus:border-[#d4604d] transition-colors placeholder:opacity-30 uppercase" />
 //                         <button onClick={applyCouponCode}
 //                           className="bg-[#17191d] text-white font-mono text-[10px] font-bold uppercase tracking-[2px] px-6 hover:bg-[#d4604d] transition-colors">

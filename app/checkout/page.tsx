@@ -209,7 +209,13 @@ export default function CheckoutPage() {
         <UPIPayment
           amount={total}
           orderId={createdOrderId}
-          onConfirmed={() => { clearCart(); router.push('/') }}
+          onConfirmed={() => { 
+            if (typeof window !== 'undefined' && (window as any).fbq) {
+              (window as any).fbq('track', 'Purchase', { currency: 'INR', value: total });
+            }
+            clearCart(); 
+            router.push('/') 
+          }}
           onCancel={() => { setStep('confirm'); setError('Payment cancelled. You can retry.') }}
         />
       </div>
@@ -502,7 +508,7 @@ export default function CheckoutPage() {
 // }
 
 // const COUPONS: Record<string, { discount: number; label: string }> = {
-//   TESSCH15:   { discount: 0.15, label: '15% off — Early Adopter' },
+//   TESSCH30:   { discount: 0.15, label: '15% off — Early Adopter' },
 //   DROP001:    { discount: 0.10, label: '10% off — Drop 001 Launch' },
 //   FIRSTBUILD: { discount: 200,  label: '₹200 off — First Build' },
 // }
@@ -570,7 +576,7 @@ export default function CheckoutPage() {
 
 //   function applyCoupon() {
 //     const c = COUPONS[coupon.toUpperCase()]
-//     if (!c) { setCouponError('Invalid code. Try TESSCH15, DROP001, or FIRSTBUILD'); return }
+//     if (!c) { setCouponError('Invalid code. Try TESSCH30, DROP001, or FIRSTBUILD'); return }
 //     setAppliedCoupon({ code: coupon.toUpperCase(), ...c })
 //     setCouponError('')
 //   }
@@ -849,7 +855,7 @@ export default function CheckoutPage() {
 //                       ) : (
 //                         <div className="flex gap-3">
 //                           <input value={coupon} onChange={e => { setCoupon(e.target.value); setCouponError('') }}
-//                             placeholder="e.g. TESSCH15"
+//                             placeholder="e.g. TESSCH30"
 //                             className="flex-1 bg-white border-2 border-[#17191d] font-mono text-[11px] px-4 py-3 focus:outline-none focus:border-[#d4604d] transition-colors placeholder:opacity-30 uppercase" />
 //                           <button onClick={applyCoupon} className="bg-[#17191d] text-white font-mono text-[10px] font-bold uppercase tracking-[2px] px-6 hover:bg-[#d4604d] transition-colors">Apply</button>
 //                         </div>

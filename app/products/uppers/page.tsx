@@ -154,6 +154,11 @@ function ProductDetail({ product, onClose }: { product: Product; onClose: () => 
   const handleAddToCart = useCallback(() => {
     if (cartState === 'loading' || cartState === 'success') return
     if (!isAuthenticated) { router.push('/api/auth/login'); return }
+
+    if (typeof window !== 'undefined' && (window as any).fbq) {
+      (window as any).fbq('track', 'AddToCart');
+    }
+
     setCartState('loading')
     addItem({ id: product.id, name: product.name, category: product.category, price: product.priceNum, image: product.image }, size, 'upper-only')
     setCartState('success')
