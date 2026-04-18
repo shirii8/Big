@@ -1,27 +1,37 @@
-
-
 import { NextResponse } from 'next/server'
-import { prisma } from "@/lib/db"
+import { prisma } from '@/lib/db'
 import { getKindeServerSession } from '@kinde-oss/kinde-auth-nextjs/server'
 
 export async function GET() {
-  const { getUser } = getKindeServerSession()
-  const user = await getUser()
-  if (!user?.id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  try {
+    const { getUser } = getKindeServerSession()
+    const user = await getUser()
 
-  const dbUser = await prisma.user.findUnique({ where: { id: user.id } })
-  if (dbUser?.role !== 'ADMIN') {
-    return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    // 1. Security Check
+    const dbUser = await prisma.user.findUnique({ where: { id: user?.id } })
+    if (!dbUser || dbUser.role !== 'ADMIN') {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    // 2. Fetch with deep includes to fix your missing history
+    const orders = await prisma.order.findMany({
+      orderBy: { createdAt: 'desc' },
+      include: {
+        user: true,
+        address: true,
+        items: {
+          include: {
+            variant: {
+              include: { product: true } // This syncs names/images
+            }
+          }
+        }
+      }
+    })
+
+    return NextResponse.json(orders)
+  } catch (error) {
+    console.error("Fetch Error:", error)
+    return NextResponse.json({ error: 'Failed to fetch orders' }, { status: 500 })
   }
-
-  const orders = await prisma.order.findMany({
-    include: {
-      user: { select: { id: true, email: true, firstName: true, lastName: true } },
-      items: { include: { variant: { include: { product: true } } } },
-      address: true,
-    },
-    orderBy: { createdAt: 'desc' },
-  })
-
-  return NextResponse.json(orders)
 }
